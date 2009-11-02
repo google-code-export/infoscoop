@@ -130,8 +130,7 @@ infoscoop/build.properties
 || プロパティ名 || 説明 ||
 || datasource.jndiName || データソースのJNDI名を指定します。このプロパティは、Webアプリケーションサーバに設定したデータソースのJNDI名をデフォルトの「jdbc/infoscoop」に設定した場合、変更の必要はありません。||
 || datasource.schema || リポジトリデータベースのスキーマ名、MySQLの場合は設定は必要ありません。||
-|| datasource.dialect || 利用するデータベースに応じて以下の値を指定します。<br>MySQL：org.hibernate.dialect.MySQLDialect <br>Oracle：org.hibernate.dialect.Oracle10gDialect
-<br>DB2：org.hibernate.dialect.DB2Dialect ||
+|| datasource.dialect || 利用するデータベースに応じて以下の値を指定します。 <br>MySQL: org.hibernate.dialect.MySQLDialect<br>Oracle: org.hibernate.dialect.Oracle10gDialect<br>DB2: org.hibernate.dialect.DB2Dialect ||
 
 他の、プロパティについてはinfoScoopインストールガイドを参照ください。 
 
