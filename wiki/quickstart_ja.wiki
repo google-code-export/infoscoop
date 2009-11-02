@@ -1,0 +1,143 @@
+#summary One-sentence summary of this page.
+
+= infoScoop クイックスタート =
+
+このドキュメントは、デフォルト設定で最短でinfoScoopをセットアップする手順について解説しています。
+詳細な、設定を含むインストール手順については、infoScoop インストールガイド.pdfを参照ください。
+
+
+== 前提条件 ==
+
+infoScoopのセットアップを行う前に、以下の準備が必要です。
+
+=== Apache Antの準備 ===
+
+infoScoopは、WARファイルにデプロイ用の設定する際にANTを利用します。
+ANT 1.6.5以上をインストールしてください。
+
+=== データベースの準備 ===
+
+infoScoopは、以下のDBMSをサポートします。
+
+* MySQL 5.1
+* DB2 9.5, 9.7
+* Oracle10g(Update2以降)
+利用するDBMSにinfoScoopのリポジトリを作成するためのデータベースを作成して下さい。
+
+=== 初期データのインポート ===
+
+初期データはインポートツールinitdb/import.bat(sh)を使用します。
+
+JDBCドライバのコピー
+利用するデータベースのJDBCドライバを含むjarファイルを以下のディレクトリにコピーしてください。
+
+tools/initdb/lib
+
+データベースの設定
+データベースの設定は、bin/datasource.xmlに記述します。
+以下は、デフォルトのMySQLの設定例です。
+{{{
+…省略…
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+  <property name="driverClassName">
+   <value>com.mysql.jdbc.Driver</value>
+  </property>
+  <property name="url">
+   <value>jdbc:mysql://localhost:3306/iscoop?useUnicode=true&amp;characterEncoding=UTF-8</value>
+  </property>
+  <property name="username">
+   <value>root</value>
+  </property>
+  <property name="password">
+   <value>root</value>
+  </property>
+</bean>
+
+…省略…
+
+<property name="hibernateProperties">
+  <props>
+     <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+     <prop key="hibernate.default_schema">iscoop</prop>
+     <prop key="hibernate.show_sql">true</prop>
+  </props>
+</property> 
+
+…省略…
+}}}
+
+注)マルチバイト文字を利用する場合は、マルチバイト文字が利用できる設定でデータベースを作成する必要があります。
+注)DB2はページサイズを32kに指定してください。
+
+=== Webアプリケーションサーバの準備 ===
+
+infoScoopはJ2EEに準拠する、Webアプリケーションサーバ上で動作します。
+infoScoopをデプロイするためのWebアプリケーションサーバを用意してください。
+
+== リポジトリデータベースのセットアップ ==
+
+=== スキーマ定義 ===
+
+用意したデータベースにテーブルを追加します。
+スキーマは対象となるデータベースごとのディレクトリに用意されています。
+ 
+tools/initdb/schema/<データベース名>/<データベース名>init.sql 
+ 
+<データベース名>init.sqlという名前のSQLファイルを実行し、テーブルを定義してください。
+ 
+例) MySQLの場合
+tools/initdb/schema/mysql> mysql -u root -p root < mysqlini.sql
+
+|| プロパティ名 || 説明 ||
+|| driverClassName || JDBCドライバのクラス名<br> デフォルト：com.mysql.jdbc.Driver ||
+|| url || データベースURL<br> デフォルト：jdbc:mysql://localhost:3306/iscoop?useUnicode=true&amp;characterEncoding=UTF-8 ||
+|| username || データベース接続ユーザ名<br> デフォルト：root ||
+|| password || データベース接続ユーザパスワード<br> デフォルト：<空白> ||
+ 
+=== ユーザの追加 ===
+リポジトリデータベースに、追加するユーザを予め指定します。
+ユーザは以下のCSVファイルに記述します。
+tools/initdb/data/accounts/import.csv
+
+SCVは以下の形式です。
+<ユーザID>,<ユーザ名>,<パスワード>
+
+注)adminは、デフォルト設定の管理者ですので、消さないでください。
+
+=== import.bat(sh)の実行 ===
+コマンドラインでimport.bat(sh)を実行してください。
+
+Webアプリケーションサーバにデータソースを定義する
+用意したデータベースを、Webアプリケーションサーバのデータソースとして定義します。
+予めinfoScoopのWARファイルに指定されている、デフォルトのJNDI名はjdbc/infoscoopが指定してあります。
+
+利用するWebアプリケーションサーバのマニュアルにしたがってデータソースを定義してさい。
+
+== Webアプリケーションモジュールのデプロイ ==
+
+=== WARファイルの設定を変更する ===
+infoScoopは、WARファイル形式で配布されます。
+WARファイル内に含まれる各種設定は、WARファイルに各種設定を行うツールremakewar.batで変更することができます。
+remakewar.batは以下のディレクトリにあります。
+infoscoop/remakewar.bat
+
+remakewar.batの実行プロパティは以下のファイルに指定します。
+infoscoop/build.properties
+
+以下、最小構成で必要なプロパティについてのみ説明します。
+
+
+|| プロパティ名 || 説明 ||
+|| datasource.jndiName || データソースのJNDI名を指定します。このプロパティは、Webアプリケーションサーバに設定したデータソースのJNDI名をデフォルトの「jdbc/infoscoop」に設定した場合、変更の必要はありません。||
+|| datasource.schema || リポジトリデータベースのスキーマ名、MySQLの場合は設定は必要ありません。||
+|| datasource.dialect || 利用するデータベースに応じて以下の値を指定します。<br>MySQL：org.hibernate.dialect.MySQLDialect <br>Oracle：org.hibernate.dialect.Oracle10gDialect
+<br>DB2：org.hibernate.dialect.DB2Dialect ||
+
+他の、プロパティについてはinfoScoopインストールガイドを参照ください。 
+
+
+remakewar.bat(sh)を実行すると、distディレクトリが作成されその中にデプロイ用のWARファイルが作成されます。
+
+== WARファイルをデプロイする ==
+
+このWARファイルをWebアプリケーションサーバにデプロイし、コンテキストを起動するとセットアップは完了です。
