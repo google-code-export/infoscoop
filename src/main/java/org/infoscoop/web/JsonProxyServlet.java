@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.web;
 
 import java.io.ByteArrayInputStream;
@@ -26,14 +9,11 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 
 import org.apache.commons.httpclient.HttpMethod;
@@ -43,13 +23,9 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.infoscoop.dao.OAuthTokenDAO;
-import org.infoscoop.dao.model.OAuthToken;
 import org.infoscoop.request.Authenticator;
-import org.infoscoop.request.OAuthAuthenticator;
 import org.infoscoop.request.ProxyRequest;
 import org.infoscoop.request.filter.DetectTypeFilter;
-import org.infoscoop.service.OAuthService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -155,7 +131,7 @@ public class JsonProxyServlet extends HttpServlet {
 		
 		JSONObject result;
 		try {
-			result = invokeJSONProxyRequest( req.getSession(), uid,params,headers );
+			result = invokeJSONProxyRequest( uid,params,headers );
 		} catch( Exception ex ) {
 			if( ex.getCause() != null )
 				ex = ( Exception )ex.getCause();
@@ -184,7 +160,7 @@ public class JsonProxyServlet extends HttpServlet {
 		
 		return singles;
 	}
-	private JSONObject invokeJSONProxyRequest( HttpSession session, String uid,Map<String,String> params,Map<String,List<String>> rheaders ) throws Exception {
+	private JSONObject invokeJSONProxyRequest( String uid,Map<String,String> params,Map<String,List<String>> rheaders ) throws Exception {
 		AuthType authz = AuthType.as( params.get("authz") );
 //		String container = params.get("container");
 //		String gadget = params.get("gadget");
@@ -210,46 +186,7 @@ public class JsonProxyServlet extends HttpServlet {
 		if( uidParamName != null && !"".equals( uidParamName ))
 			headers.put( Authenticator.UID_PARAM_NAME,uidParamName );
 		
-		ProxyRequest proxy = new ProxyRequest(url,contentType.filterType );
-		proxy.setPortalUid( uid );
-		String oauthServiceName = null;
-		String gadgetUrl = null;
 		switch( authz ) {
-		case OAUTH:
-			headers.put("authType","oauth");
-			oauthServiceName = params.get("OAUTH_SERVICE_NAME");
-			gadgetUrl = params.get("gadgetUrl");
-			
-			ProxyRequest.OAuthConfig oauthConfig = proxy.new OAuthConfig(oauthServiceName);
-			oauthConfig.setRequestTokenURL(params.get("requestTokenURL"));
-			oauthConfig.setRequestTokenMethod(params.get("requestTokenMethod"));
-			oauthConfig.setUserAuthorizationURL(params.get("userAuthorizationURL"));
-			oauthConfig.setAccessTokenURL(params.get("accessTokenURL"));
-			oauthConfig.setAccessTokenMethod(params.get("accessTokenMethod"));
-			oauthConfig.setGadgetUrl(gadgetUrl);
-			oauthConfig.setHostPrefix(params.get("hostPrefix"));
-			
-			String[] accessTokenInfo = getAccessToken(uid, oauthConfig.getGadgetUrl(), oauthServiceName, session);
-			String accesstoken = accessTokenInfo[0];
-			String tokensecret = accessTokenInfo[1];
-			
-			if(tokensecret != null)
-				oauthConfig.setTokenSecret(tokensecret);
-				
-			String requesttoken = (String) session.getAttribute(oauthServiceName + ".requesttoken");
-			if(requesttoken != null)
-				oauthConfig.setRequestToken(requesttoken);
-			
-			if(accesstoken != null)
-				oauthConfig.setAccessToken(accesstoken);
-			
-			proxy.setOauthConfig(oauthConfig);
-			break;
-		case SIGNED:
-			headers.put("authType", "signed");
-			headers.put("gadgetUrl", params.get("gadgetUrl"));
-			headers.put("moduleId", params.get("moduleId"));
-			break;
 		case POST_PORTAL_UID:
 			if( uid == null ) break;
 			
@@ -273,6 +210,9 @@ public class JsonProxyServlet extends HttpServlet {
 			headers.put("authpassword",password );
 		}
 		
+		ProxyRequest proxy = new ProxyRequest(url,contentType.filterType );
+		proxy.setPortalUid( uid );
+		
 		if( !HttpMethods.GET.equals( httpMethod ) )
 			proxy.setReqeustBody( new ByteArrayInputStream( postData.getBytes("UTF-8")));
 		
@@ -294,44 +234,26 @@ public class JsonProxyServlet extends HttpServlet {
 		
 		for( Map.Entry<String,String> filterParam : filterParams.entrySet() )
 			proxy.setFilterParameter( filterParam.getKey(),filterParam.getValue() );
-
-		int status = httpMethod.invokeProxyRequest( proxy );
 		
-		String bodyStr = getResponseBodyAsStringWithAutoDetect( proxy );
+		int status = httpMethod.invokeProxyRequest( proxy );
 
-		urlJson.put("body",bodyStr);
-
+		urlJson.put("body",getResponseBodyAsStringWithAutoDetect( proxy ));
+		
 		Map<String,List<String>> responseHeaders = proxy.getResponseHeaders();
 		JSONObject jsonHeaders = new JSONObject();
 		for( String name : responseHeaders.keySet() ) {
 			if( !jsonHeaders.has( name ))
 				jsonHeaders.put( name,new JSONArray());
-			if( "oauthApprovalUrl".equalsIgnoreCase(name)){
-				urlJson.put("oauthApprovalUrl", proxy.getResponseHeader(name));
-				status = 200;
-			} else if (oauthServiceName != null
-					&& name.indexOf(gadgetUrl + "¥t" + oauthServiceName) == 0) {
-				session.setAttribute(name, proxy.getResponseHeader(name));
-			}else{
-				JSONArray array = jsonHeaders.getJSONArray( name );
-				List<String> values = responseHeaders.get( name );
-				for( String value : values )
-					array.put( value );
-			}
+			
+			JSONArray array = jsonHeaders.getJSONArray( name );
+			List<String> values = responseHeaders.get( name );
+			for( String value : values )
+				array.put( value );
 		}
+		
 		urlJson.put("headers",jsonHeaders );
 		urlJson.put("rc",status );
-
-		if(status == 401 && AuthType.OAUTH == authz){
-			OAuthService.getHandle().deleteOAuthToken(uid, gadgetUrl,
-					oauthServiceName);
-			session.removeAttribute(gadgetUrl + "¥t" + oauthServiceName
-					+ ".accesstoken");
-			session.removeAttribute(gadgetUrl + "¥t" + oauthServiceName
-					+ ".tokensecret");
-			log.error("OAuth request is failed:\n" + bodyStr);
-			urlJson.put("oauthError", "OAuth request is failed");
-		}
+		
 		return json;
 	}
 
@@ -366,31 +288,5 @@ public class JsonProxyServlet extends HttpServlet {
 	    }
 	    
 	    return headers;
-	}
-
-	
-	/**
-	 * get access token from session or db.
-	 * 
-	 * @param uid
-	 * @param gadgetUrl
-	 * @param serviceName
-	 * @param session
-	 * @return
-	 */
-	private String[] getAccessToken(String uid, String gadgetUrl,
-			String serviceName, HttpSession session) {
-		String accesstoken = (String) session.getAttribute(gadgetUrl + "¥t"
-				+ serviceName + ".accesstoken");
-		String tokensecret = (String) session.getAttribute(gadgetUrl + "¥t"
-				+ serviceName + ".tokensecret");
-		if (accesstoken != null && tokensecret != null)
-			return new String[] { accesstoken, tokensecret };
-
-		OAuthToken token = OAuthTokenDAO.newInstance().getAccessToken(uid,
-				gadgetUrl, serviceName);
-		if (token == null)
-			return new String[] { null, null };
-		return new String[] { token.getAccessToken(), token.getTokenSecret() };
 	}
 }

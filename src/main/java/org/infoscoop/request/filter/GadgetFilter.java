@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.filter;
 
 import java.io.ByteArrayInputStream;
@@ -87,18 +70,14 @@ public class GadgetFilter extends ProxyFilter {
 		
 		VelocityContext context = new VelocityContext();
 		context.put("baseUrl",baseUrl );
-		context.put("content",replaceContentStr( doc,i18n,urlParameters ) );
+		context.put("content",replaceContentStr( xpath,doc,i18n,urlParameters ) );
 		
 		context.put("widgetId",urlParameters.get( PARAM_MODULE_ID));
 		context.put("staticContentURL",urlParameters.get( PARAM_STATIC_CONTENT_URL ));
 		context.put("hostPrefix",urlParameters.get( PARAM_HOST_PREFIX ));
 		context.put("tabId",urlParameters.get( PARAM_TAB_ID ));
-		context.put("gadgetUrl",urlParameters.get( "url" ));
 		
-		// ModulePrefs
 		context.put("requires", getRequires( xpath,doc ));
-		context.put("oauthServicesJson", getOAuthServicesJson( xpath,doc ));
-		
 		context.put("i18nMsgs", new JSONObject( i18n.getMsgs()));
 		context.put("userPrefs",getUserPrefs( urlParameters ));
 		context.put("dir",i18n.getDirection());
@@ -109,7 +88,7 @@ public class GadgetFilter extends ProxyFilter {
 		
 		return writer.toString().getBytes("UTF-8");
 	}
-
+	
 	private static Map<String,String> getUrlParameters( Map<String,String> filterParameters ) {
 		Map<String,String> parameters = new HashMap<String,String>();
 		for( String key : filterParameters.keySet()) {
@@ -124,7 +103,7 @@ public class GadgetFilter extends ProxyFilter {
 		return parameters;
 	}
 	
-	private static String replaceContentStr( Document doc,I18NConverter i18n,
+	private static String replaceContentStr( XPath xpath,Document doc,I18NConverter i18n,
 			Map<String,String> urlParameters ) throws Exception {
 		NodeList contentNodeList = doc.getElementsByTagName("Content");
 		if( contentNodeList.getLength() == 0 )
@@ -165,7 +144,6 @@ public class GadgetFilter extends ProxyFilter {
 		
 		return requires;
 	}
-	
 	private static JSONObject getRequireParams( XPath xpath,Element require ) throws XPathExpressionException,JSONException {
 		JSONObject params = new JSONObject();
 
@@ -177,39 +155,6 @@ public class GadgetFilter extends ProxyFilter {
 		}
 		
 		return params;
-	}
-	
-	private static String getOAuthServicesJson(XPath xpath, Document doc) throws XPathExpressionException, JSONException {
-		JSONObject services = new JSONObject();
-		NodeList serviceNodes = ( NodeList )xpath.evaluate(
-				"/Module/ModulePrefs/OAuth/Service",doc,XPathConstants.NODESET );
-		for( int j=0;j<serviceNodes.getLength();j++ ) {
-			Element serviceEl = ( Element )serviceNodes.item( j );
-			JSONObject service = new JSONObject();
-			NodeList nodeList = serviceEl.getElementsByTagName("Request");
-			if(nodeList.getLength() > 0){
-				Element requestEl = (Element)nodeList.item(0);
-				service.put("requestTokenURL", requestEl.getAttribute("url"));
-				String method = requestEl.getAttribute("method");
-				if(method != null)
-					service.put("requestTokenMethod", requestEl.getAttribute("method"));
-			}
-			nodeList = serviceEl.getElementsByTagName("Authorization");
-			if(nodeList.getLength() > 0){
-				Element requestEl = (Element)nodeList.item(0);
-				service.put("userAuthorizationURL", requestEl.getAttribute("url"));
-			}
-			nodeList = serviceEl.getElementsByTagName("Access");
-			if(nodeList.getLength() > 0){
-				Element requestEl = (Element)nodeList.item(0);
-				service.put("accessTokenURL", requestEl.getAttribute("url"));
-				String method = requestEl.getAttribute("method");
-				if(method != null)
-					service.put("accessTokenMethod", requestEl.getAttribute("method"));
-			}
-			services.put(serviceEl.getAttribute("name"), service);
-		}
-		return services.toString();
 	}
 	
 	private static JSONObject getUserPrefs( Map<String,String> filterParameters ) {

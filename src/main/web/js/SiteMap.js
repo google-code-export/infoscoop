@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Portal.treeMenuObject = false;
 /**
  * Manage opening and closing status of left tool bar
@@ -181,7 +164,7 @@ IS_SidePanel.prototype.classDef = function () {
 		
 		var openDiv = document.createElement("div");
 		var openImg = document.createElement("img");
-
+		
 		openImg.src = imageURL + opt.image + "_"
 			+ IS_Portal.lang + ((IS_Portal.country == "") ? "" : "_" + IS_Portal.country) + ".gif";
 		openImg.onerror = function(){
@@ -352,9 +335,8 @@ IS_SidePanel.prototype.classDef = function () {
 
 IS_SidePanel.sideMenuAdjusted = function(e){
 	var treeOpen = document.getElementById("siteMenuOpen");
-	var offsetX = parseInt(findPosX(treeOpen));
-	IS_SidePanel.nowWidth = offsetX;
-	IS_SidePanel.currentWidth = offsetX;
+	IS_SidePanel.nowWidth = parseInt(findPosX(treeOpen));
+	IS_SidePanel.currentWidth = parseInt(findPosX(treeOpen));
 	var container = document.getElementById("portal-tree-menucontainer");
 //	container.style.overflow = "visible";
 	
@@ -456,11 +438,7 @@ IS_SidePanel.Drag.dragEnd = function(e) {
 	
 	IS_SidePanel.currentWidth = nowWidth;
 	
-	if(Prototype.Browser.WebKit) {
-		var bar = $("siteMenuOpen");
-		bar.hide();
-		setTimeout(function(){bar.show()}, 0);
-	}
+	var bar = document.getElementById("siteMenuOpen");
 //	IS_SidePanel.Drag.barGhost.innerHTML = "";
 	IS_SidePanel.Drag.barGhost.parentNode.removeChild(IS_SidePanel.Drag.barGhost);
 

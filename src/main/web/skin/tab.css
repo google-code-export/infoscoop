@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 
 /* tabs */
 .infoScoop #tab-container {
@@ -57,6 +40,7 @@
 	vertical-align: bottom;
     margin:0;
     padding:0;
+    font-weight:bold;
 }
 .infoScoop #tabs span.outer {
 	position:relative;
@@ -72,14 +56,10 @@
     background:url("imgs/tabright.gif") no-repeat right top;
     padding:2px 7px 2px 7px;
 	white-space:nowrap;
+    font-size:11px;
 	height:18px;
 	//height:22px;/* for IE */
 	overflow: hidden;
-}
-
-.infoScoop #tabs span.inner table {
-	height: 18px;
-	//height: 22px;/* for IE */
 }
 
 .infoScoop #tabs li .tabLoadingIcon {
@@ -125,13 +105,21 @@
 	padding-left: 0px;
 }
 .infoScoop #tabs .tab .tabTitle{
-	font-weight:bold;
-	font-size:11px;
-	color:gray;
-	white-space:nowrap;
+	position:relative;
+	top:4px;
+	_top: 5px;
+    color:gray;
 }
 .infoScoop #tabs .tab.selected .tabTitle {
     color:#627EB7;
+	top: -6px;
+	_top: -3px;
+}
+.infoScoop #tabs .tab.selected.loading .tabTitle {
+	top: -5px;
+}
+.infoScoop #tabs .tab.loading .tabTitle {
+	top: -3px;
 }
 
 .infoScoop #tabs .Tab_onHover {
@@ -207,10 +195,13 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 
 
 .infoScoop #tabs .tab .selectMenu {
+	position:relative;
 	width: 13px;
 	height: 13px;
-	margin: 3px 1px 3px 4px;
-	//margin-right: 8px;
+	margin-top: 3px;
+	margin-bottom: 3px;
+	margin-left: 4px;
+	margin-right: 1px;
 	cursor:pointer;
 	
 	display: none;
@@ -219,14 +210,6 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 	display: inline;
 }
 
-.infoScoop #tabs .tab .fixedTab {
-	width: 16px;
-	height: 16px;
-	/*margin: -8px 1px 0 -10px;*/
-	position:absolute;
-	top:0;
-	left:0;
-}
 
 .infoScoop .tabMenu {
 	position: absolute;
@@ -294,6 +277,11 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 .infoScoop .tabMenu .resetColumnWidth {
 	background: url(./imgs/changeColumn2.gif ) no-repeat center left;
 }
-.infoScoop .tabMenu .initialize {
-	background: url( ./imgs/init_tab.gif ) no-repeat center left;
+.infoScoop .tabMenuOverlay,
+.infoScoop .widgetMenuOverlay {
+	position:absolute;
+	z-index:40;
+	-moz-opacity:0;
+	opacity:0;
+	filter:alpha(opacity=0);
 }

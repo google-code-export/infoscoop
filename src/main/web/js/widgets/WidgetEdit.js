@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.activeEditForms = [];
 IS_Widget.WidgetEdit = function (widget) {
 	
@@ -58,11 +41,8 @@ IS_Widget.WidgetEdit = function (widget) {
 			if(!contentWidth || contentWidth < 200) contentWidth = 200;
 			var editStyle = widget.elm_widgetEditHeader.style;
 			editStyle.width = contentWidth;
-			var widgetContentPos = Position.cumulativeOffset(elm_widgetContent);
-			if(fixedPortalHeader) 
-				widgetContentPos[1] -= IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;
-			editStyle.top = widgetContentPos[1];
-			editStyle.left = widgetContentPos[0];
+			editStyle.top = findPosY(elm_widgetContent);
+			editStyle.left = findPosX(elm_widgetContent);
 		}
 		
 		var editNode = IS_WidgetConfiguration[widget.widgetType];
@@ -520,7 +500,6 @@ IS_Widget.WidgetEdit = function (widget) {
 		}
 		
 		widget.elm_widgetEditHeader.style.display = "none";
-		IS_Portal.behindIframe.hide();
 		
 		var form = document.forms["frm_" + widget.id];
 		if (form ) {
@@ -848,7 +827,6 @@ IS_Widget.WidgetEdit = function (widget) {
 	
 	this.hideContents = function(){
 		widget.elm_widgetEditHeader.style.display = "none";
-		IS_Portal.behindIframe.hide();
 		this.clearContents();
 		//this.displayContents();
 		
@@ -1007,11 +985,10 @@ IS_Widget.WidgetEdit.makeHelpIcon = function( container,userPref ) {
 	description.className = "description";
 	description.innerHTML = userPref.description;
 	help.appendChild( description );
-	help.style.top = 0;
-	help.style.left = 0;
 	
 	a.observe("mouseover",function( event ) {
 		help.style.display = "block";
+		
 		if( help.offsetWidth > 300 )
 			help.style.width = 300;
 		
@@ -1023,7 +1000,7 @@ IS_Widget.WidgetEdit.makeHelpIcon = function( container,userPref ) {
 			x = x -help.offsetWidth -48;
 		
 		if( y +help.offsetHeight > y_limit )
-			y = y_limit -help.offsetHeight -10;
+			y = y_limit -help.offsetHeight -8;
 		
 		help.style.top = y;
 		help.style.left = x;

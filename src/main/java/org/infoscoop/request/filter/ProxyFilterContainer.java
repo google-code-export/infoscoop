@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.filter;
 
 import java.io.ByteArrayInputStream;
@@ -129,9 +112,7 @@ public class ProxyFilterContainer {
 			if( !allowAllHeader )
 				allowedHeaderNames.addAll( proxy.getAllowedHeaders() );
 		}
-		
-		AuthenticatorUtil.doAuthentication( client,method,request );
-		
+
 		StringBuffer headersSb = new StringBuffer();
 		for (String name : request.getRequestHeaders().keySet()) {
 
@@ -157,6 +138,8 @@ public class ProxyFilterContainer {
 			method.addRequestHeader(new Header(name, value));
 			headersSb.append(name + "=" + value + ",  ");
 		}
+		
+		AuthenticatorUtil.doAuthentication( client,method,request );
 		
 		int cacheStatus = getCache( client,method,request );
 		if( cacheStatus != 0 )

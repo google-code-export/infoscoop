@@ -1,28 +1,8 @@
-<%--
-# infoScoop Calendar
-# Copyright (C) 2010 Beacon IT Inc.
-# 
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see
-# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>.
---%>
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <%@ page contentType="text/html; charset=UTF8" %>
 <%@page import="org.infoscoop.admin.web.PreviewImpersonationFilter"%>
 <%@page import="org.infoscoop.service.PropertiesService"%>
 <%@page import="org.infoscoop.service.ForbiddenURLService" %>
-<%@page import="org.infoscoop.service.PreferenceService" %>
 <%@page import="org.infoscoop.util.RSAKeyManager"%>
 <%@page import="org.infoscoop.web.SessionManagerFilter"%>
 <%String staticContentURL = PropertiesService.getHandle().getProperty("staticContentURL"); %>
@@ -40,6 +20,7 @@ if( isPreview == null )
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="Expires" content="Thu, 01 Dec 1994 16:00:00 GMT">
 	<title></title>
+    
 	<!--start styles css-->
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/styles.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/siteaggregationmenu.css">
@@ -64,11 +45,13 @@ if( isPreview == null )
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/ticker.css">
 	<!--end styles css-->
 
+    <link id="customCss" rel="stylesheet" type="text/css">
 	<!-- prototype-window -->
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/js/lib/prototype-window-1.3/themes/default.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/js/lib/prototype-window-1.3/themes/alphacube.css">
     <link rel="stylesheet" type="text/css" href="portallayout?type=css">
 
+	<!-- script src="js/lib/dojo-2006-03-13/dojo.js"></script-->
     <script src="js/resources/resourceBundle.jsp"></script>
 
     <script src="js/gadget/features/core:rpc:pubsub:infoscoop.js?c=1"></script>
@@ -81,7 +64,6 @@ if( isPreview == null )
 	%>
     <script>
 		<jsp:include page="/prpsrv" flush="true" />
-		
 		var isTabView = false;
 		var imageURL = staticContentURL + "/skin/imgs/";
 
@@ -98,7 +80,6 @@ if( isPreview == null )
 		var localhostPrefix = "<%=request.getScheme()%>://localhost:<%=request.getServerPort()%><%=request.getContextPath()%>"
 
 		var IS_forbiddenURLs = <%= ForbiddenURLService.getHandle().getForbiddenURLsJSON() %>;
-
 	</script>
 
 	<!--start script-->
@@ -117,7 +98,6 @@ if( isPreview == null )
 	<script src="<%=staticContentURL%>/js/lib/rsa/rng.js"></script>
 	<script src="<%=staticContentURL%>/js/lib/rsa/rsa.js"></script>
     <script src="<%=staticContentURL%>/js/lib/extras-array.js"></script>
-    <script src="<%=staticContentURL%>/js/lib/html-sanitizer-minified.js"></script>
     <script src="<%=staticContentURL%>/js/utils/utils.js"></script>
     <script src="<%=staticContentURL%>/js/utils/domhelper.js"></script>
     <script src="<%=staticContentURL%>/js/utils/ajaxpool/ajax.js"></script>
@@ -145,8 +125,6 @@ if( isPreview == null )
     <script src="<%=staticContentURL%>/js/widgets/WidgetEdit.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/maximize/Maximize.js"></script>
     <script src="<%=staticContentURL%>/js/ContentFooter.js"></script>
-    <script src="<%=staticContentURL%>/js/GlobalSetting.js"></script>
-    <script src="<%=staticContentURL%>/js/Theme.js"></script>
     <!-- prototype-window -->
     <script type="text/javascript" src="<%=staticContentURL%>/js/lib/prototype-window-1.3/window.js"></script>
     <script type="text/javascript" src="<%=staticContentURL%>/js/lib/prototype-window-1.3/window_ext.js"></script>
@@ -171,26 +149,13 @@ if( isPreview == null )
     <script src="<%=staticContentURL%>/js/widgets/Message/Message.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/Message/MaximizeMessage.js"></script>
     <!--end script-->
+    <script src="portallayout?type=javascript"></script>
    	<script type="text/javascript">
 		var rsaPK = new RSAKey();
 		rsaPK.setPublic("<%= RSAKeyManager.getInstance().getModulus() %>", "<%= RSAKeyManager.getInstance().getPublicExponent() %>");
 
 		IS_WidgetConfiguration = <jsp:include page="/widconf" flush="true" />;
 		IS_WidgetIcons = <jsp:include page="/gadgeticon" flush="true" />;
-
-		var preference = <%= PreferenceService.getHandle().getPreferenceJSON(uid) %>
-		if(preference.property){
-			IS_Portal.logoffDateTime = new Date( preference.property.logoffDateTime ? preference.property.logoffDateTime : "").getTime();
-			IS_Portal.fontSize = preference.property.fontSize ? preference.property.fontSize : IS_Portal.defaultFontSize;
-			if(preference.property.freshDays) IS_Portal.freshDays = preference.property.freshDays;
-			IS_Portal.lastSaveFailed = preference.property.failed ? getBooleanValue(preference.property.failed) : false;
-			IS_Portal.mergeconfirm = preference.property.mergeconfirm ? getBooleanValue(preference.property.mergeconfirm) : true;
-			IS_Portal.msgLastViewTime = preference.property.msgLastViewTime || -1;
-			if(preference.property.theme)
-				IS_Portal.theme.currentTheme = eval( '(' + preference.property.theme + ')' );
-			IS_Portal.preference = preference.property;
-			IS_Portal.SearchEngines.searchOption = preference.property.searchOption ? eval('(' + preference.property.searchOption+ ')') : {};
-		}
 	</script>
 
     <%
@@ -264,7 +229,7 @@ if( isPreview == null )
 					</td>
 					<td id="siteMenuOpenTd" align="left"><div id="siteMenuOpen"/></td>
 					<td colspan="3" valign="top" align="left">
-						<table width="100%" border="0" cellspacing="0" cellpadding="0" id="command-bar">
+						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tbody>
 								<tr>
 									<td><div id="portal-command"></div></td>
@@ -303,9 +268,5 @@ if( isPreview == null )
 			}
 		};
 		AjaxRequest.invoke(hostPrefix + "/sessionid<% if(isPreview.booleanValue()) { %>?isPreview=<%= isPreview %><% } %>", sessionopt);
-		
-		var scriptElm = document.createElement('script');
-		scriptElm.src = 'portallayout?type=javascript';
-		document.getElementsByTagName('head')[0].appendChild(scriptElm);
 	</script>
 </html>

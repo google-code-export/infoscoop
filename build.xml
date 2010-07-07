@@ -104,9 +104,7 @@
 		<copy todir="${build.main}" file="${src.main.web}/rpc_relay.html"/>
 		<copy todir="${build.main}" file="${src.main.web}/blank.html"/>
 
-
 		<copy todir="${build.main}/js/resources" file="${src.main.web}/js/resources/resourceBundle.jsp"/>
-		<copy todir="${build.main}/js/search" file="${src.main.web}/js/search/searchEngine.jsp"/>
 		
 		<copy todir="${build.main}" file="${src.main.web}/iframe.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/admin/role.jsp"/>
@@ -173,7 +171,6 @@
 			<filelist dir="${src.main.web}/js/lib/rsa/" files="rng.js"/>
 			<filelist dir="${src.main.web}/js/lib/rsa/" files="rsa.js"/>
 			<filelist dir="${src.main.web}/js/lib" files="extras-array.js"/>
-			<filelist dir="${src.main.web}/js/lib" files="html-sanitizer-minified.js"/>
 			<!--filelist dir="${src.main.web}/js/utils" files="utils.js"/-->
 			<filelist dir="${src.main.web}/js/utils/ajaxpool" files="ajax.js"/>
 			<!--filelist dir="${src.main.web}/js" files="properties.js"/-->
@@ -197,9 +194,6 @@
 			<filelist dir="${src.main.web}/js" files="SiteMap.js"/>
 			<filelist dir="${src.main.web}/js" files="TreeMenu.js"/>
 			<filelist dir="${src.main.web}/js" files="AddContentPane.js"/>
-			<filelist dir="${src.main.web}/js" files="ContentFooter.js"/>
-			<filelist dir="${src.main.web}/js" files="GlobalSetting.js"/>
-			<filelist dir="${src.main.web}/js" files="Theme.js"/>
 			<filelist dir="${src.main.web}/js/search" files="SearchEngine.js"/>
 			<filelist dir="${src.main.web}/js/widgets" files="Widget.js"/>
 			<filelist dir="${src.main.web}/js/widgets" files="WidgetHeader.js"/>
@@ -212,6 +206,7 @@
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssCategory.js"/>
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssItemRender.js"/>
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssItemSelection.js"/>
+			<filelist dir="${src.main.web}/js" files="ContentFooter.js"/>
 			<filelist dir="${src.main.web}/js/widgets/information" files="Information.js"/>
 			<filelist dir="${src.main.web}/js/widgets/information" files="Information2.js"/>
 			<filelist dir="${src.main.web}/js/widgets/calendar" files="Calendar.js"/>
@@ -245,28 +240,6 @@
 				<pathelement location="${yuicompressor}"/>
 			</classpath>
 		</java>
-		
-		<concat destfile="${build.main}/js/dist/Portal-SearchEngine.js.tmp" append="false" encoding="utf-8" fixlastline="true">
-			<filelist dir="${src.main.web}/js/lib" files="prototype-1.6.0.3.js"/>
-			<filelist dir="${src.main.web}/js/lib/syntacticx-livepipe-ui/" files="livepipe.js"/>
-			<filelist dir="${src.main.web}/js/lib/syntacticx-livepipe-ui/" files="tabs.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="utils.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="ajax304.js"/>
-			<filelist dir="${src.main.web}/js/utils/ajaxpool" files="ajax.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="Request.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="domhelper.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="msg.js"/>
-			<filelist dir="${src.main.web}/js/search" files="SearchEngine.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="EventDispatcher.js"/>
-			<filelist dir="${src.main.web}/js/commands" files="UpdatePropertyCommand.js"/>
-		</concat>
-		<java jar="${yuicompressor}" fork="true">
-			<arg line="--type js --charset UTF-8 -o &quot;${build.main}/js/dist/Portal-SearchEngine-${build.version}.js&quot; &quot;${build.main}/js/dist/Portal-SearchEngine.js.tmp&quot;"/>
-			<classpath>
-				<pathelement location="${yuicompressor}"/>
-			</classpath>
-		</java>
-
 		<delete>
 			<fileset dir="${build.main}/js/dist" includes="*.tmp"/>
 		</delete>
@@ -423,7 +396,6 @@
 			<filelist dir="${src.admin.web}/js" files="AdminMenuExplorer.js"/>
 			<filelist dir="${src.admin.web}/js" files="AdminForbiddenURL.js"/>
 			<filelist dir="${src.admin.web}/js" files="AdminInformation.js"/>
-			<filelist dir="${src.admin.web}/js" files="AdminAuthentication.js"/>
 		</concat>
 		<java jar="${yuicompressor}" fork="true">
 			<arg line="--type js --charset UTF-8 -o &quot;${build.admin}/js/dist/PortalAdmin.js&quot; &quot;${build.admin}/js/dist/PortalAdmin.js.tmp&quot;"/>
@@ -559,13 +531,6 @@
 			replace="\1.css?${build.timestamp}&quot;"
 			flags="mg"
 			encoding="UTF-8"/>
-		<replaceregexp
-			file="${build.main}/js/search/searchEngine.jsp"
-			match="&lt;!--start script--&gt;.*&lt;!--end script--&gt;"
-			replace="
-&lt;script src=&quot;&lt;%=staticContentURL%&gt;/js/dist/Portal-SearchEngine-${build.version}.js&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;"
-			flags="s"
-			encoding="UTF-8"/>
 	</target>
 	
 	<target name="replaceTag-admin" description="Replace admin script tag">
@@ -696,7 +661,7 @@
     	<copy todir="${release.home}" file="${basedir}/README.ja.txt"/>
 		
 		<antcall target="initdb"/>
-		<antcall target="migration"/>
+		<!--antcall target="migration"/-->
     	
 		<copy todir="${release.home}/${app.main.name}" file="${build.home}/${app.main.name}.war"/>
 		<fixcrlf srcdir="${src.remakewar}/" eol="lf" eof="remove" includes="**/*.sh" />
@@ -710,7 +675,6 @@
 		<mkdir dir="${release.home}/${app.main.name}/Customization/WEB-INF/classes" />
         <mkdir dir="${release.home}/${app.main.name}/Customization/WEB-INF/lib" />
 		<copy todir="${release.home}/${app.main.name}/Customization" file="${src.main.web}/login.jsp"/>
-		<copy todir="${release.home}/${app.main.name}/Customization" file="${src.main.web}/openid_login.jsp.sample"/>
 		<copy todir="${release.home}/${app.main.name}/Customization" file="${src.main.web}/changePassword.jsp"/>
 		<copy todir="${release.home}/${app.main.name}/Customization/WEB-INF" file="${src.main.web}/WEB-INF/weblogic10.xml" />
 		<copy todir="${release.home}/${app.main.name}/Customization/WEB-INF/conf" file="${src.main.web}/WEB-INF/conf/log4j.xml" />

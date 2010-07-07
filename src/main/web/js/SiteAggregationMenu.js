@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_TreeMenu = Class.create();
 IS_TreeMenu.types = {};
 IS_TreeMenu.primaryTypeNames = [];
@@ -343,7 +326,7 @@ IS_TreeMenu.prototype = {
 							this.disabled = true;
 							this.value = IS_R.lb_added;
 						  }
-						  if(alertSetting == 2 && IS_Portal.canAddWidget(false, true)){
+						  if(alertSetting == 2){
 							  setTimeout(addMenuItemFunc.bind(addWidgetButton, menuItem),1000);
 						  }else{
 							  IS_Event.observe(addWidgetButton, 'click',  addMenuItemFunc.bind(addWidgetButton, menuItem), false, 'msgBar');
@@ -592,10 +575,6 @@ IS_SiteAggregationMenu.prototype.classDef = function () {
 		}
 		
 		Event.observe(window, "resize",  IS_SiteAggregationMenu.resetMenu, false);
-		IS_EventDispatcher.addListener("loadMenuComplete","topmenu",function() {
-			IS_Portal.adjustPanelHeight();
-			IS_Portal.adjustIframeHeight();
-		});
 
 		//TODO: loadMenu(opt) in common should be called. by endoh 20090526
 		var url = hostPrefix + "/mnusrv/topmenu";//is_getProxyUrl(siteAggregationMenuURL, "MakeMenu");
@@ -1210,34 +1189,22 @@ IS_SiteAggregationMenu.prototype.classDef = function () {
 		divMenuTitle.id = "m_" + menuItem.id;
 		if (menuItem.href && !menuItem.linkDisabled) {
 			var aTag = document.createElement('a');
+
+			aTag.href = menuItem.href;
 			aTag.appendChild(document.createTextNode(title));
-			if(/^javascript:/i.test( menuItem.href )){
-				aTag.removeAttribute('href');
-				aTag.className = 'scriptlink';
-				var aTagOnClick = function(e) {
-					eval( menuItem.href );
-				}
-				IS_Event.observe(aTag, "click", aTagOnClick, false, "_menu");
-				IS_Event.observe(aTag, "mouseover", function(){this.className = 'scriptlinkhover';}.bind(aTag), false, "_menu");
-				IS_Event.observe(aTag, "mouseout", function(){this.className = 'scriptlink';}.bind(aTag), false, "_menu");
-				
-			}else{
-				
-				aTag.href = menuItem.href;
-				if(menuItem.display == "self") {
-					aTag.target = "_self";
-				} else if(menuItem.display == "newwindow"){
-					aTag.target = "_blank";
-				} else {
+			if(menuItem.display == "self") {
+				aTag.target = "_self";
+			} else if(menuItem.display == "newwindow"){
+				aTag.target = "_blank";
+			} else {
 				if(menuItem.display == "inline")
 					aTag.target="ifrm";
-					var aTagOnClick = function(e) {
-						IS_Portal.buildIFrame(aTag);
-					}
-					IS_Event.observe(aTag, "click", aTagOnClick, false, "_menu");
+				var aTagOnClick = function(e) {
+					IS_Portal.buildIFrame(aTag);
 				}
-				IS_Event.observe(aTag, "mousedown", function(e){Event.stop(e);}, false, "_menu");
+				IS_Event.observe(aTag, "click", aTagOnClick, false, "_menu");
 			}
+			IS_Event.observe(aTag, "mousedown", function(e){Event.stop(e);}, false, "_menu");
 			divMenuTitle.appendChild(aTag);
 		}else{
 			divMenuTitle.appendChild(document.createTextNode(title));
@@ -1638,6 +1605,7 @@ IS_SiteAggregationMenu.prototype.classDef = function () {
 IS_SiteAggregationMenu.getMultiDropDraggable = function(dragElement, menuItem, handle){
 	return new IS_Draggable(dragElement,{
 			handle:handle,
+			scroll:window,
 			revert:false,
 			ghosting: true,
 			dragMode: "menu",
@@ -2123,6 +2091,7 @@ IS_SiteAggregationMenu.getDraggable = function(menuItem, menuIconDiv, menuItemDi
 	menuItemDiv.className = "menuItem";
 	
 	return new IS_Draggable(menuItemDiv,{
+		scroll:window,
 		viewport: viewport,
 		revert:false,
 		ghosting: true,

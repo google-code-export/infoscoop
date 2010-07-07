@@ -1,41 +1,15 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.service;
 
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.infoscoop.dao.GadgetDAO;
 import org.infoscoop.dao.WidgetConfDAO;
-import org.infoscoop.dao.WidgetDAO;
-import org.infoscoop.dao.model.Gadget;
 import org.infoscoop.dao.model.WidgetConf;
 import org.infoscoop.util.I18NUtil;
-import org.infoscoop.util.NoOpEntityResolver;
 import org.infoscoop.util.SpringUtil;
 import org.infoscoop.util.XmlUtil;
 import org.infoscoop.widgetconf.WidgetConfUtil;
@@ -64,54 +38,6 @@ public class WidgetConfService {
 		this.widgetConfDAO = widgetConfDAO;
 	}
 
-	public String getWidgetConfsJson( String uid, Locale locale) throws Exception{
-		try {
-			List<String> useTypes = WidgetDAO.newInstance().getWidgetTypes(uid);
-			List<String> widgetTypes = new ArrayList<String>();
-			List<String> gadgetTypes = new ArrayList<String>();
-			for(String type : useTypes){
-				if(type.indexOf("g_") == 0){
-					if(type.indexOf("g_upload") == 0)
-						gadgetTypes.add(type.substring(10).split("/")[0] + ".xml");
-				}else{
-					widgetTypes.add(type);
-				}
-			}
-			List<WidgetConf> widgetConfs = widgetConfDAO.selectAll();
-			
-			JSONObject json = new JSONObject();
-			for (WidgetConf widgetConf : widgetConfs) {
-				String type = widgetConf.getType();
-
-				json.put(type, WidgetConfUtil.widgetConf2JSONObject(widgetConf
-						.getElement(), null, true));
-			}
-
-			if(!gadgetTypes.isEmpty()){
-				DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-				builderFactory.setValidating(false);
-				DocumentBuilder builder = builderFactory.newDocumentBuilder();
-				builder.setEntityResolver(NoOpEntityResolver.getInstance());
-				List<Gadget> gadgets = GadgetDAO.newInstance().selectConfsByType(gadgetTypes);
-				for(Gadget gadget: gadgets){
-					if (!gadget.getName().equalsIgnoreCase(
-							gadget.getType() + ".xml"))
-						continue;
-					WidgetConfUtil.GadgetContext context = new WidgetConfUtil.GadgetContext().setUrl("upload__" + gadget.getType());
-					Document gadgetDoc = builder.parse(new ByteArrayInputStream(gadget.getData()));
-					JSONObject gadgetJson = WidgetConfUtil.gadget2JSONObject( gadgetDoc.getDocumentElement(), context.getI18NConveter(locale, gadgetDoc),
-							true);
-					json.put("g_upload__" + gadget.getType() + "/gadget",WidgetConfUtil.gadgetJSONtoPortalGadgetJSON(gadgetJson) );
-				}
-			}
-			return I18NUtil.resolve(I18NUtil.TYPE_WIDGET, json.toString(1),
-					locale, true);
-		} catch (Exception e) {
-			log.error("Unexpected error occurred.", e);
-			throw e;
-		}
-	}
-	
 	public String getWidgetConfsJson( Locale locale, boolean useClient ) throws Exception{
 		try {
 			List<WidgetConf> widgetConfs = widgetConfDAO.selectAll();
@@ -199,10 +125,9 @@ public class WidgetConfService {
 	/**
 	 * @param type
 	 * @param widgetConfJSON JSON format widgetConf
-	 * @param authServiceList isn't used in current version.
 	 * @throws Exception
 	 */
-	public void updateWidgetConf(String type, String widgetConfJSON, String authServiceList) throws Exception {
+	public void updateWidgetConf(String type, String widgetConfJSON) throws Exception {
 		try {
 			WidgetConf conf = widgetConfDAO.get(type);
 			Element confEl = conf.getElement();

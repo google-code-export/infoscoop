@@ -18,7 +18,7 @@ public class SQLDef{
 	private String schema;
 	
 	public SQLDef(String schema){
-		this.schema = schema != null ? schema : "";
+		this.schema = schema;
 	}
 	
 	String text;

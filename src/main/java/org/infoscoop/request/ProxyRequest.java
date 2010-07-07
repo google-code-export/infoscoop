@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request;
 
 import java.io.BufferedInputStream;
@@ -38,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 import org.apache.commons.collections.MultiHashMap;
 import org.apache.commons.httpclient.Credentials;
@@ -71,7 +55,6 @@ public class ProxyRequest{
 	private static Log log = LogFactory.getLog(ProxyRequest.class);
 	
 	public static final String ALLOW_CIRCULAR_REDIRECT = "X-IS-ALLOWCIRCULARREDIRECT";
-	public static final String DISABLE_CACHE = "X-IS-DISABLE-CACHE";
 	
 	/**
 	 * Socket Connection Timeout 
@@ -132,8 +115,7 @@ public class ProxyRequest{
     
     private String redirectURL;
     
-    private OAuthConfig oauthConfig;
-	public ProxyRequest( String url, String filterType){
+    public ProxyRequest( String url, String filterType){
         this.filterType = filterType;
         this.originalURL = url;
 		this.escapedOriginalURL = escapeURL( this.originalURL );
@@ -158,8 +140,6 @@ public class ProxyRequest{
     	ignoreHeaderNames.add("authcredentialid");
     	ignoreHeaderNames.add(Authenticator.UID_PARAM_NAME.toLowerCase());
     	ignoreHeaderNames.add(Authenticator.PASSWD_PARAM_NAME.toLowerCase());
-    	
-    	this.putResponseHeader("X-IS-INTRANET", Boolean.toString(this.proxy.isIntranet()));
 	}
     
 	public void setTimeout(int timeout){
@@ -169,12 +149,7 @@ public class ProxyRequest{
 	}
 	   
 	public boolean allowUserPublicCache(){		
-		return (
-				(proxy.getCacheLifeTime()>0)&& 
-				this.getRequestHeader(DISABLE_CACHE) == null && 
-				this.getRequestHeaders("authCredentialId") == null &&
-				this.getRequestHeaders("authType") == null
-		);
+		return ((proxy.getCacheLifeTime()>0)&& this.getRequestHeaders("authCredentialId") == null && this.getRequestHeaders("authType") == null);
 	}
 	
     /**
@@ -750,76 +725,6 @@ public class ProxyRequest{
 		}
 		return returnStream.toByteArray();
 	}
-	
-    public OAuthConfig getOauthConfig() {
-		return oauthConfig;
-	}
-
-	public void setOauthConfig(OAuthConfig oauthConfig) {
-		this.oauthConfig = oauthConfig;
-	}
-
-	public class OAuthConfig {
-		String serviceName;
-		String requestTokenURL;
-		String requestTokenMethod;
-		String userAuthorizationURL;
-		String accessTokenURL;
-		String accessTokenMethod;
-		
-		String requestToken;
-		String accessToken;
-		String tokenSecret;
-		
-		String gadgetUrl;
-		String hostPrefix;
-
-		public String getGadgetUrl() {
-			return gadgetUrl;
-		}
-
-		public void setGadgetUrl(String gadgetUrl) {
-			this.gadgetUrl = gadgetUrl;
-		}
-
-		public String getHostPrefix() {
-			return hostPrefix;
-		}
-
-		public void setHostPrefix(String hostPrefix) {
-			this.hostPrefix = hostPrefix;
-		}
-
-		public OAuthConfig(String serviceName){
-			this.serviceName = serviceName;
-		}
-		
-		public void setRequestToken(String requestToken) {
-			this.requestToken = requestToken;
-		}
-		public void setAccessToken(String accessToken) {
-			this.accessToken = accessToken;
-		}
-		public void setTokenSecret(String tokenSecret) {
-			this.tokenSecret = tokenSecret;
-		}
-		
-		public void setRequestTokenURL(String requestTokenURL) {
-			this.requestTokenURL = requestTokenURL;
-		}
-		public void setRequestTokenMethod(String requestTokenMethod) {
-			this.requestTokenMethod = requestTokenMethod;
-		}
-		public void setUserAuthorizationURL(String userAuthorizationURL) {
-			this.userAuthorizationURL = userAuthorizationURL;
-		}
-		public void setAccessTokenURL(String accessTokenURL) {
-			this.accessTokenURL = accessTokenURL;
-		}
-		public void setAccessTokenMethod(String accessTokenMethod) {
-			this.accessTokenMethod = accessTokenMethod;
-		}
-	}
 
 }
 
@@ -888,5 +793,7 @@ class HeadersMap implements Map<String, List<String>>{
 	public Collection<List<String>> values() {
 		throw new UnsupportedOperationException("no implements");
 	}
+
+
 
 }

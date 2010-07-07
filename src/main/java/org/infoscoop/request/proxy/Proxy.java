@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.proxy;
 
 import java.util.Set;
@@ -39,7 +22,7 @@ public class Proxy {
 	private boolean allowAllHeader = false;
 	private Set<String> allowedHeaders;
 	private Set<String> sendingCookies;
-	private boolean isIntranet = false;
+	private boolean isDefault;
 
 	public String getHost() {
 		return host;
@@ -106,12 +89,12 @@ public class Proxy {
 		return this.proxyCredential;
 	}
 
-	public void setIntranet(boolean intranet) {
-		this.isIntranet = intranet;
+	public void setDefault(boolean isDefault) {
+		this.isDefault = isDefault;
 	}
 
-	public boolean isIntranet(){
-		return this.isIntranet;
+	public boolean isDefault(){
+		return this.isDefault;
 	}
 
 	public void setSendingCookies( Set<String> sendingCookies ) {

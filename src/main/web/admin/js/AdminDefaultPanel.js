@@ -1144,9 +1144,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			this.buildDynamicWidgetsList(jsonRole);
 			if(dynamicDiv) dynamicDiv.style.display = "";
 			if(tabNameDiv) tabNameDiv.style.display = "";
-			$("tab_"+this.displayTabId+"_disableCustomizedArea").checked = jsonRole.disabledDynamicPanel;
-			if(jsonRole.disabledDynamicPanel)
-				$("tab_"+this.displayTabId+"_panelDynamicDiv").hide();
 		}
 
 		// Replace to the permission ID currently displayed
@@ -1352,31 +1349,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			labelSetDynamicLegend.appendChild(document.createTextNode(ISA_R.alb_customizedArea));
 			labelSetDynamicDiv.appendChild(labelSetDynamicLegend);
 			editAreaDiv.appendChild(labelSetDynamicDiv);
-
-			var disableCustomizedAreaId = "tab_"+this.displayTabId+"_disableCustomizedArea";
-			labelSetDynamicDiv.appendChild(
-				$.DIV(
-					{},
-					$.INPUT(
-						{
-							id: disableCustomizedAreaId,
-							type: "checkbox",
-							onchange: {
-								handler: function(e){
-									var disabledDynamicPanel = $("tab_"+self.displayTabId+"_disableCustomizedArea").checked;
-									if(disabledDynamicPanel)
-										$("tab_"+self.displayTabId+"_panelDynamicDiv").hide();
-									else
-										$("tab_"+self.displayTabId+"_panelDynamicDiv").show();
-									self.setNewValue("disabledDynamicPanel", disabledDynamicPanel);
-								},
-								id: ["_adminPanelTab","_adminPanel"]
-							}
-						}
-					),
-					$.LABEL({"htmlFor": disableCustomizedAreaId}, ISA_R.alb_disableCustomizedArea)
-				)
-			);
 
 			var editDynamicDiv = document.createElement("div");
 			editDynamicDiv.id = "tab_"+this.displayTabId+"_panelDynamicDiv";
@@ -1911,8 +1883,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 					  widgetJSON.properties = ISA_CommonModals.EditorForm.getProperty(widgetJSON);
 					  widgetJSON.ignoreHeader = ISA_CommonModals.EditorForm.isIgnoreHeader();
 					  if(!widgetJSON.ignoreHeader) delete widgetJSON.ignoreHeader;
-					  widgetJSON.noBorder = ISA_CommonModals.EditorForm.isNoBorder();
-					  if(!widgetJSON.noBorder) delete widgetJSON.noBorder;
 
 					  widgetJSON.title = ISA_Admin.trim($("formTitle").value);
 					  widgetJSON.href =  $("formHref").value;
@@ -1935,7 +1905,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 					setDefaultValue: false,
 					disableMiniBrowserHeight: true,
 					showIgnoreHeaderForm:true,
-					showNoBorderForm:true,
 					displayACLFieldSet:false,
 					disableDisplayRadio:true,
 					omitTypeList:['Ranking','Ticker','MultiRssReader']
@@ -2685,9 +2654,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				break;
 			case "dynamicpanel":
 				displayRole.dynamicPanel = newValue;
-				break;
-			case "disableddynamicpanel":
-				displayRole.disabledDynamicPanel = newValue;
 				break;
 			default:
 				break;

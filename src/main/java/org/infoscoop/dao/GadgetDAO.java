@@ -1,25 +1,9 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+
 
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Expression;
@@ -115,12 +99,5 @@ public class GadgetDAO extends HibernateDaoSupport {
 				.add( Expression.eq( Gadget.PROP_TYPE,type ))
 				.add( Expression.eq( Gadget.PROP_PATH,path ))
 				.addOrder( Order.asc( Gadget.PROP_NAME )));
-	}
-
-	public List<Gadget> selectConfsByType(List<String> types) {
-		return super.getHibernateTemplate().findByCriteria(
-				DetachedCriteria.forClass(Gadget.class).add(
-						Expression.in(Gadget.PROP_NAME, types)).add(
-						Expression.eq(Gadget.PROP_PATH, "/")));
 	}
 }

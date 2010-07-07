@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 @charset "UTF-8";
 a:link {color:#0000cc; }
 a:visited { color:#551a8b; }
@@ -44,12 +27,6 @@ a
 a:hover
 {
 	text-decoration: underline;
-}
-
-fieldset {
-	border-radius: 7px;
-	-webkit-border-radius: 7px;
-	-moz-border-radius: 7px;
 }
 
 /** message bar */
@@ -92,14 +69,6 @@ fieldset {
 	margin-top:0px;
 	padding-top:0px;
 
-}
-
-body.fixedPortalHeader {
-  overflow: auto;
-}
-
-body.fixedPortalHeader #panels .panel{
-  overflow: auto;
 }
 
 .column {
@@ -453,14 +422,6 @@ div#search-iframe div.search_tabs{
 }
 .tabs .tab.selected .title {
 	color: #627EB7;
-}
-
-
-#editsearchoption {
-	color : #7777CC;
-	cursor : pointer;
-	font-size : 13px;
-	border-bottom : solid 1px #7777CC;
 }
 
 /* IFrameToolbar */

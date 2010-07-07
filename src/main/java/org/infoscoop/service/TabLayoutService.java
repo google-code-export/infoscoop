@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.service;
 
 import java.util.ArrayList;
@@ -203,13 +186,7 @@ public class TabLayoutService {
 					xml.append("\n");
 					// DynamicPanel tab is not needed if it is commandbar
 					if (!COMMANDBAR_TAB_ID.equals(tabId)) {
-						xml.append("<panel type=\"DynamicPanel\"");
-						Boolean disabledDynamicPanel = (Boolean) map
-								.get("disabledDynamicPanel");
-						if (disabledDynamicPanel != null
-								&& disabledDynamicPanel)
-							xml.append(" disabled=\"true\"");
-						xml.append(">");
+						xml.append("<panel type=\"DynamicPanel\">");
 						JSONObject dynamicJson = new JSONObject((String) map
 								.get("dynamicPanel"));
 						newDynamicPanelMap.put(map.get("roleOrder"), dynamicJson);
@@ -308,8 +285,6 @@ public class TabLayoutService {
 		
 		if ( widget.has("ignoreHeader") && widget.getBoolean("ignoreHeader"))
 			xml.append(" ignoreHeader=\"true\"");
-		if ( widget.has("noBorder") && widget.getBoolean("noBorder"))
-			xml.append(" noBorder=\"true\"");
 		
 		xml.append(">").append("\n");
 		
@@ -400,7 +375,6 @@ public class TabLayoutService {
 					tablayout.getStaticPanelJsonWithComment() : tablayout.getStaticPanelJson());
 			value.put("layout", tablayout.getLayout());
 			value.put("dynamicPanel", tablayout.getDynamicPanelJson());
-			value.put("disabledDynamicPanel", tablayout.isDisabledDynamicPanel());
 			
 			result.put(value.getString("id"), value);
 			
