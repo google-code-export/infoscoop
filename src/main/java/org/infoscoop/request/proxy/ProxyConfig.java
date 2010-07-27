@@ -1,31 +1,14 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.proxy;
 
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 import org.apache.commons.digester.Digester;
 import org.apache.commons.httpclient.Credentials;
@@ -51,7 +34,7 @@ public class ProxyConfig {
 
 	private static long lastCheckedTime;
 	private static String m_lastmodified;
-	
+
 	public static ProxyConfig getInstance() {
 		long elapsedtime = new Date().getTime() - lastCheckedTime;
 		if(elapsedtime > 30000){
@@ -142,6 +125,7 @@ public class ProxyConfig {
 
 		if (matchCase == null) {
 			matchCase = config.getDefaultCase();
+			proxy.setDefault(true);
 		}
 
 		if (matchCase != null) {
@@ -163,7 +147,6 @@ public class ProxyConfig {
 			proxy.setCacheLifeTime(matchCase.getCacheLifeTime());
 			proxy.setAllowedHeaders( matchCase.getAllowedHeaders());
 			proxy.setSendingCookies(matchCase.getSendingCookies());
-			proxy.setIntranet(matchCase.getIntranet());
 		}
 		proxy.setUrl(resultUrl);
 		return proxy;
@@ -180,10 +163,5 @@ public class ProxyConfig {
 				log.info("Replace: " + url + " to " + resultUrl);
 		}
 		return resultUrl;
-	}
-	
-	public static void main(String args[]) throws IOException, SAXException{
-		String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><proxy-config>	<case cacheLifeTime=\"\" id=\"1268977857421\" intranet=\"true\" pattern=\"^https://localhost:8443/infoscoop/(.*)\" replacement=\"http://localhost:8081/infoscoop/$1\" type=\"direct\"></case></proxy-config>";
-		init(new InputSource(new StringReader(xml)));
 	}
 }

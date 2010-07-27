@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 //Default value settings of private property
 var useTab = is_getPropertyBoolean(useTab, true);
 
@@ -31,7 +14,6 @@ var displayInlineHost = is_toUserPrefArray(is_getPropertyString(displayInlineHos
 var accessLogEntry = is_getPropertyBoolean(accessLogEntry, false);
 
 var sideMenuTabs = is_toUserPrefArray(is_getPropertyString(sideMenuTabs, "sidemenu|addContent|mySiteMap"));
-var defaultTheme = is_getPropertyString(defaultTheme, false);
 
 var hostPrefix = (isTabView)? findHostURL(false).replace(/\/tab.*/, "") : findHostURL(false);
 var proxyServerURL = hostPrefix + "/proxy";
@@ -45,6 +27,7 @@ IS_Portal.fontSize = "";
 IS_Portal.msgLastViewTime = -1;
 
 IS_Portal.freshDays = freshDays;
+IS_Portal.thema = "default";
 //IS_Portal.sidePanel = new Object();
 IS_Portal.buildVersion = "";
 IS_Portal.lastSaveFailed = false;
@@ -61,20 +44,10 @@ IS_Portal.defaultFontSize = "100%";
 IS_Portal.start = function() {
 	var self = this;
 
-	if(defaultTheme){
-		try{
-			IS_Portal.theme.defaultTheme = eval( '(' + defaultTheme + ')' );
-		}catch(e){
-			msg.error('The defaultTheme property is invalid, please contact to administrator:' + e);
-		}
-	}
-	IS_Portal.theme.setTheme(IS_Portal.theme.currentTheme);
-	
 	IS_Portal.startIndicator();
 	
 	var fontSize = getActiveStyle( document.body, "font-size");
 	IS_Portal.defaultFontSize = (fontSize.charAt(fontSize.length-1)=="%" ? fontSize : Math.round(parseInt(fontSize)/16*100) + "%" );
-	IS_Portal.setFontSize(null, true);
 	
 	var opt = {
 	  method: 'get' ,
@@ -95,13 +68,11 @@ IS_Portal.start = function() {
 
 	var header = document.getElementById("portal-header");
 	header.innerHTML = IS_Customization.header;
-	
-	IS_Portal.SearchEngines.init();
 
 	var command = document.getElementById("portal-command");
 	command.innerHTML = IS_Customization.commandbar;
 	IS_Portal.buildFontSelectDiv();
-	IS_Portal.buildGlobalSettingModal();
+	IS_Portal.buildPortalPreference();
 	IS_Portal.Trash.initialize();
 	IS_Portal.buildAdminLink();
 	IS_Portal.buildCredentialList();
@@ -113,12 +84,7 @@ IS_Portal.start = function() {
 	IS_Portal.sidePanel = new IS_SidePanel();
 	IS_Portal.refresh = new IS_AutoReload();
 	
-	if(fixedPortalHeader) {
-		Event.observe(window, 'resize', IS_Portal.adjustPanelHeight, false);
-		IS_EventDispatcher.addListener("adjustedMessageBar","",IS_Portal.adjustPanelHeight);
-		IS_EventDispatcher.addListener("adjustedMessageBar","",IS_Portal.adjustIframeHeight);
-		IS_EventDispatcher.addListener("changeTab","",IS_Portal.adjustPanelHeight);
-	}
+	var divSiteMenu = $("portal-site-aggregation-menu");
 	Event.observe(window, 'resize', IS_Portal.adjustSiteMenuHeight, false);
 	Event.observe(window, 'resize', IS_Portal.adjustIframeHeight, false);
 	Event.observe(window, 'resize', IS_Portal.adjustGadgetHeight , false);
@@ -146,10 +112,6 @@ IS_Portal.start = function() {
 	
 	var panelBody = document.body;
 	
-	if(fixedPortalHeader) {
-		Element.addClassName(panelBody, "fixedPortalHeader");
-	}
-	
 	IS_Portal.droppableOption = {};
 	
 	//widget to panel
@@ -162,7 +124,6 @@ IS_Portal.start = function() {
 	};
 	widopt.onHover = IS_DroppableOptions.onHover;
 	widopt.onDrop = function(element, lastActiveElement, widget, event) {
-		if(!IS_Portal.canAddWidget()) return;
 		var widgetGhost = IS_Draggable.ghost;
 		if( !Browser.isSafari ||( widgetGhost && widgetGhost.style.display != "none")){
 			var ghostColumnNum = (widgetGhost.col)? widgetGhost.col.getAttribute("colNum"):1;
@@ -216,8 +177,6 @@ IS_Portal.start = function() {
 	var menuopt = {};
 	menuopt.accept = "menuItem";
 	menuopt.onDrop = function(element, lastActiveElement, menuItem, event) {
-		if(!IS_Portal.canAddWidget()) return;
-		
 		var widgetGhost = IS_Draggable.ghost;
 		var ghostColumnNum = (widgetGhost.col)? widgetGhost.col.getAttribute("colNum"):1;
 		
@@ -380,7 +339,6 @@ IS_Portal.start = function() {
 
 		var min = 10000000;
 		var nearGhost = null;
-		var scrollOffset = IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;//IS_Portal.columnsObjs must be in the panel.
 		for ( var i=1; i <= IS_Portal.tabs[IS_Portal.currentTabId].numCol; i++ ) {
 			var col = IS_Portal.columnsObjs[IS_Portal.currentTabId]["col_dp_" + i];
 			for (var j=0; j<col.childNodes.length; j++ ) {
@@ -391,10 +349,10 @@ IS_Portal.start = function() {
 				
 				if(dragMode == "menu"){
 					var left = findPosX(div);
-					var top = findPosY(div) - scrollOffset;
+					var top = findPosY(div);
 				}else{
 					var left = div.posLeft;
-					var top = div.posTop - scrollOffset;
+					var top = div.posTop;
 				}
 				
 				var tmp = Math.sqrt(Math.pow(x-left,2)+ Math.pow(y-top,2));
@@ -422,15 +380,10 @@ IS_Portal.start = function() {
 	
 	// multidrop to panel
 	var multimenuopt = {};
-	multimenuopt.accept = function(element, widgetType, classNames){
-		return (classNames.detect( 
-          function(v) { return ["menuGroup", "multiDropHandle"].include(v) } ) &&
- 			(widgetType != "mapWidget") );
-	};
+	multimenuopt.accept = ["menuGroup", "multiDropHandle"];
 	multimenuopt.onHover = IS_DroppableOptions.onHover;
 	
 	IS_Portal.droppableOption.onMultiMenuDrop = function(element, lastActiveElement, menuItem, event, originFunc, modalOption){
-		if(!IS_Portal.canAddWidget()) return;
 		var confs = IS_SiteAggregationMenu.createMultiDropConf.call(self, element, lastActiveElement, menuItem, event, IS_Portal.droppableOption.onMultiMenuDrop, modalOption);
 		
 		var widgetGhost = IS_Draggable.ghost;
@@ -605,7 +558,11 @@ IS_Portal.closeIFrame = function () {
 	IS_Event.unloadCache("_search");
 	
 	//Clear iframe in IS_Portal.searchEngines
-	IS_Portal.SearchEngines.clearIFrames();
+	var sIframe;
+	for(var i = 0; i < IS_Portal.searchEngines.length; i++){
+		sIframe = IS_Portal.searchEngines[i].iframe;
+		if(sIframe) sIframe.src = "";
+	}
 	
 //	IS_WidgetsContainer.adjustColumnWidth();
 	IS_Widget.adjustDescWidth();
@@ -614,7 +571,6 @@ IS_Portal.closeIFrame = function () {
 	//TODO Should be removed
 	IS_Widget.Maximize.adjustMaximizeWidth();
 	IS_Widget.WidgetHeader.adjustHeaderWidth();
-	IS_Portal.adjustPanelHeight(null);
 	
 	IS_Portal.SearchEngines.clearTemp();
 	
@@ -727,17 +683,6 @@ IS_Portal.getPropertys = function(properties, feed) {
 	}
 }
 
-IS_Portal.adjustPanelHeight = function(e){
-	if(!fixedPortalHeader) return;
-	if(IS_Widget.MaximizeWidget) return;//Fixed Issue 149: Fragment Minibrowser shows a little off from the position whrere it should be when it maximized.
-	var panels = $("panels");
-	if(!panels.visible) return;
-	var adjustHeight = getWindowSize(false) - findPosY($("panels")) - $("tab-container").getHeight() - 5;
-	if(Browser.isIE) adjustHeight -= 3;
-	if(IS_Portal.tabs[IS_Portal.currentTabId])
-		IS_Portal.tabs[IS_Portal.currentTabId].panel.style.height = adjustHeight + "px";
-}
-
 IS_Portal.adjustSiteMenuHeight = function(e, siteManuObj) {
 	var siteManuObj = document.getElementById("portal-maincontents-table");
 	if(siteManuObj) {
@@ -838,9 +783,8 @@ if(!isTabView){
 		}else{
 			IS_Portal.start();
 		}
-		
 		if( Browser.isSafari1 )
-		  IS_Portal.deleteCache();//TODO:Should be delted at calling index.jsp
+			IS_Portal.deleteCache();//TODO:Should be delted at calling index.jsp
 	});
 }
 
@@ -980,6 +924,80 @@ IS_Portal.buildIframeToolBar = function() {
 	$("iframeUrl").parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = "100%";
 }
 
+/*
+IS_Portal.buildErrReportTool  function(){
+	var reportDiv = document.createElement("div");
+	reportDiv.style.cssFloat = "right";
+	reportDiv.id = "iframe_reportTool_form";
+	
+	var reportButton = document.createElement("input");
+	reportButton.type = "button";
+	reportButton.id = reportDiv.id + "_button";
+	Event.observe(reportButton, 'click', IS_Portal.errorReport, false);
+
+	var indicator = document.createElement("img");
+	indicator.src = imageURL+"ajax-loader.gif";
+	indicator.style.top = "3px";
+	indicator.id = reportDiv.id + "_indicatorMini";
+	indicator.style.visibility = "hidden";
+	
+	reportDiv.appendChild(reportButton);
+	reportDiv.appendChild(indicator);
+	IS_Portal.setReportLabel(reportButton);
+	
+	return reportDiv;
+}
+
+IS_Portal.setReportLabel = function(reportButton){
+	if(reportButton){
+		reportButton.value = IS_R.lb_obstacleReort;
+		reportButton.disabled = false;
+
+		var reportDiv = document.createElement("div");
+		var indicator =  document.getElementById("iframe_reportTool_form_indicatorMini");
+		//indicator.style.visibility ="hidden";
+	}
+}
+
+IS_Portal.errorReport = function(){
+	var indicator =  document.getElementById("iframe_reportTool_form_indicatorMini");
+	indicator.style.visibility ="visible";
+	
+	var opt = {
+		method: 'post' ,
+		asynchronous:true,
+		onSuccess: reportFinished,
+		onFailure: function(t) {
+			msg.error(IS_R.getResource(IS_R.lb_obstacleReortfailure,[t.status,t.statusText,text,encoding]));
+			reportFinished();
+			var reportButton = $("iframe_reportTool_form_button");
+			reportButton.value = IS_R.lb_reportFailure;
+
+		},
+		onException: function(r, t){
+			msg.error(IS_R.getResource(IS_R.lb_obstacleReortexception,[t]));
+			reportFinished();
+			var reportButton = $("iframe_reportTool_form_button")
+			reportButton.value = IS_R.lb_reportFailure;
+		}
+	};
+	
+	var reportURL = IS_Portal.currentLink.url;
+	var url = hostPrefix + "/erpsrv?url=" + encodeURIComponent(reportURL);
+	AjaxRequest.invoke(url, opt);
+	
+	function reportFinished(){
+		var reportButton = $("iframe_reportTool_form_button");
+		
+		if(reportButton && (reportURL == IS_Portal.currentLink.url)){
+			reportButton.value = IS_R.lb_reportFinished;
+			reportButton.disabled = true;
+			indicator.style.visibility ="hidden";
+			window.ifrm.location.href = IS_Portal.currentLink.url;
+		}
+	}
+}
+*/
 IS_Portal.isInlineUrl = function(url){
 	if(!url || !displayInlineHost) return false;
 	if(!url.match(/\w+:[\/]+([^\/]*)/)) return false;
@@ -990,40 +1008,6 @@ IS_Portal.isInlineUrl = function(url){
 		}
 	}
 	return false;
-}
-
-IS_Portal.showIframe = function(url){
-	var iframeToolBar = $("iframe-tool-bar");
-	if(iframeToolBar.innerHTML == "")
-		IS_Portal.buildIframeToolBar();
-	
-	IS_Portal.CommandBar.changeIframeView();
-	
-	var divIFrame = $("search-iframe");
-	if ( divIFrame ) {
-		divIFrame.style.display = "none";
-	}
-	
-	var divIFrame = $("portal-iframe");
-
-	var divIS_PortalWidgets = document.getElementById("panels");
-	divIS_PortalWidgets.style.display="none";
-	IS_Portal.widgetDisplayUpdated();
-
-	divIFrame.style.display="";
-	var iframe = $("ifrm");
-	iframe.src = url? url : "";
-	setTimeout(IS_Portal.adjustIframeHeight.bind(iframe, null, iframe), 1);
-
-	IS_Portal.refresh.cancel();
-}
-
-IS_Portal.openIframe = function(url){
-	if(IS_Widget.MiniBrowser.isForbiddenURL(url)){
-		window.open("", url);
-		return;
-	}
-	IS_Portal.showIframe(url);
 }
 
 IS_Portal.buildIFrame = function (aTag) {
@@ -1060,7 +1044,31 @@ IS_Portal.buildIFrame = function (aTag) {
 		}
 	}
 			
-	IS_Portal.showIframe();
+	var iframeToolBar = $("iframe-tool-bar");
+	if(iframeToolBar.innerHTML == "")
+		IS_Portal.buildIframeToolBar();
+	
+//	iframeToolBar.style.display = "block";
+	IS_Portal.CommandBar.changeIframeView();
+	
+	var divIFrame = $("search-iframe");
+	if ( divIFrame ) {
+		divIFrame.style.display = "none";
+	}
+	
+						
+	var divIFrame = $("portal-iframe");
+
+	var divIS_PortalWidgets = document.getElementById("panels");
+	divIS_PortalWidgets.style.display="none";
+	IS_Portal.widgetDisplayUpdated();
+
+	divIFrame.style.display="";
+	var iframe = $("ifrm");
+	iframe.src = "";
+	setTimeout(IS_Portal.adjustIframeHeight.bind(iframe, null, iframe), 1);
+
+	IS_Portal.refresh.cancel();
 };
 
 if( Browser.isSafari1 ){
@@ -1719,6 +1727,28 @@ if( Browser.isSafari1 ) {
 	}
 }
 
+IS_Portal.setThema = function(thema){
+	var head = document.getElementsByTagName('head')[0];
+	var customCss = document.getElementById('customCss');
+
+	//Send to Server
+	IS_Widget.setPreferenceCommand("thema", IS_Portal.thema);
+
+	if(thema == "default"){
+		customCss.href = "";
+		IS_Portal.thema = null;
+		return;
+	}
+	var newCustomCss = document.createElement('link');
+	newCustomCss.id = 'customCss';
+	newCustomCss.rel = 'stylesheet';
+	newCustomCss.type = 'text/css';
+	newCustomCss.href = staticContentURL +'/skin/' + thema + '/styles.css';
+	head.replaceChild(newCustomCss, customCss);
+	//head.appendChild(newCustomCss);
+	IS_Portal.thema = thema;
+}
+
 IS_Portal.windowOverlay = function(id, tag){
 	var overlay = document.createElement(tag);
 	overlay.className = "windowOverlay";
@@ -1848,6 +1878,312 @@ IS_Portal.unsetMouseMoveEvent = function(){
 
 IS_Portal.closeIS_PortalObjects = function(){
 	if(Browser.isIE) IS_SiteAggregationMenu.closeMenu();
+}
+
+IS_Portal.prefsObj = [];
+IS_Portal.prefsEls = [];
+IS_Portal.buildPortalPreference = function() {
+	var currentMenu;
+	var preferenceDiv = $("portal-preference");
+	var prefPage;
+	
+	var allSettingBody;
+	var rssReaderSettingBody;
+	
+	var booleanArray = [{value:"true",display_value:IS_R.lb_makeEffective}, {value:"false",display_value:IS_R.lb_invalidate}];
+	var dateArray = [];
+	for(var dateNum=0;dateNum<10;dateNum++){
+		dateArray.push({value:dateNum + 1,display_value:dateNum + 1 + IS_R.lb_businessDate});
+	}
+	
+	var createPreferenceBody = function(){
+		var preferenceDiv = document.createElement("div");
+		preferenceDiv.className = "preferencePage";
+		
+		var prefTable = document.createElement("table");
+		prefTable.className = "preferenceTable";
+		prefTable.cellPadding = 0;
+		prefTable.cellSpacing = 0;
+		
+		var prefTBody = document.createElement("tbody");
+		var prefTr = document.createElement("tr");
+
+		var prefTd = document.createElement("td");
+
+		prefPage = document.createElement("div");
+		prefPage.style.height = "100%";
+		
+		
+		prefPage.appendChild(buildShowAllSettingBody());
+		prefPage.appendChild(buildRssSettingBody());
+		prefPage.appendChild(buildCustomizeReset());
+
+		
+		prefTable.appendChild(prefTBody);
+		prefTBody.appendChild(prefTr);
+
+		prefTr.appendChild(prefTd);
+		prefTd.appendChild(prefPage);
+		prefPage.appendChild(document.createElement("div"));
+		
+		var preferenceHeader = document.createElement("div");
+		preferenceHeader.className = "preferenceHeader";
+		preferenceDiv.appendChild( preferenceHeader );
+		
+		var closeButton = document.createElement("div");
+		closeButton.className = "preferenceClose command";
+		closeButton.innerHTML = IS_R.lb_close;
+		preferenceHeader.appendChild( closeButton );
+		IS_Event.observe( closeButton,"click",function() { Control.Modal.close()} );
+		
+		var prefTitle = document.createElement("div");
+		prefTitle.className = "pageTitle";
+		prefTitle.innerHTML = IS_R.lb_setupAll;
+
+		preferenceHeader.appendChild(prefTitle);
+		
+		preferenceDiv.appendChild(prefTable);
+		
+		return preferenceDiv;
+		
+	}
+	function createFooterDiv( content ) {
+		var footerDiv = document.createElement("div");
+		footerDiv.style.width = "100%";
+		footerDiv.style.textAlign = "right";
+		
+		footerDiv.appendChild( content );
+		
+		return footerDiv;
+	}
+	function createExecButton() {
+		var execButton = document.createElement("input");
+		execButton.type = "button";
+		execButton.value = IS_R.lb_changeApply;
+		Event.observe(execButton, "click", applyPreference );
+		
+		return createFooterDiv( execButton );
+	}
+	function applyPreference(){
+		for(name in IS_Portal.prefsEls){
+			if(IS_Portal.prefsObj && typeof IS_Portal.prefsEls[name] != "function"){
+				IS_Portal.prefsObj[name] = IS_Portal.prefsEls[name].value;
+			}
+		}
+		
+		//Send command
+		var isAllRefresh = false;
+		if(IS_Portal.prefsObj.freshDays && IS_Portal.prefsObj.freshDays != ""){
+			IS_Portal.freshDays = IS_Portal.prefsObj.freshDays;
+			var tempFreshDays = IS_Portal.getFreshDays(IS_Portal.freshDays);
+			
+			freshDays = tempFreshDays;
+			isAllRefresh = true;
+			
+			//Send to Server
+			IS_Widget.setPreferenceCommand("freshDays", IS_Portal.freshDays);
+		}
+		if(IS_Portal.prefsObj.fontSize){
+	//		IS_Portal.applyFontSize(IS_Portal.prefsObj.fontSize);
+			setTimeout(IS_Portal.applyFontSize.bind(this, IS_Portal.prefsObj.fontSize), 10);
+		}
+		if(IS_Portal.prefsObj.mergeconfirm){
+			IS_Portal.mergeconfirm = getBooleanValue(IS_Portal.prefsObj.mergeconfirm);
+			IS_Widget.setPreferenceCommand("mergeconfirm", IS_Portal.mergeconfirm);
+		}
+		
+		IS_Portal.applyPreference(IS_Portal.currentTabId, true, isAllRefresh);
+		
+		for(var tabId in IS_Portal.widgetLists){
+			if(typeof IS_Portal.widgetLists[tabId] == "function") continue;
+			
+			if(tabId != IS_Portal.currentTabId){
+				// It doesn't apply to non-active tab.
+				IS_Portal.tabs[tabId].applyPreference = true;
+				IS_Portal.applyPreference(tabId, false, isAllRefresh);
+			}
+		}
+	}
+	
+	function buildShowAllSettingBody(){
+		var wfs = createFieldSet(IS_R.lb_generalSetting);
+		
+		var freshDaysOpt = {name: "freshDays", display_name: IS_R.lb_freshdaysTerm};
+		appendOption(wfs, freshDaysOpt, dateArray, IS_Portal.freshDays);
+		
+		var mergeconfirmOpt = {name: "mergeconfirm", display_name: IS_R.lb_mergeConfirmDialog};
+		appendOption(wfs, mergeconfirmOpt, booleanArray, new String(IS_Portal.mergeconfirm));
+		
+		wfs.appendChild( createExecButton());
+		
+		return wfs;
+	}
+	
+	function buildRssSettingBody(){
+		var wfs = createFieldSet(IS_R.lb_rssViewSetting);
+		
+		var rssReaderConf = IS_Widget.getConfiguration("RssReader");
+		if(!rssReaderConf){
+			var msg = IS_R.ms_rssreaderUnreadable;
+			wfs.innerHTML = msg;
+			msg.warn(msg);
+			return;
+		}
+		
+		if(rssReaderConf.UserPref.doLineFeed){
+			appendOption(wfs, rssReaderConf.UserPref.doLineFeed, booleanArray);
+		}
+		if(rssReaderConf.UserPref.showDatetime){
+			appendOption(wfs, rssReaderConf.UserPref.showDatetime, booleanArray);
+		}
+		if(rssReaderConf.UserPref.detailDisplayMode){
+			appendOption(wfs, rssReaderConf.UserPref.detailDisplayMode, rssReaderConf.UserPref.detailDisplayMode.EnumValue);
+		}
+		if(rssReaderConf.UserPref.itemDisplay){
+			appendOption(wfs, rssReaderConf.UserPref.itemDisplay, rssReaderConf.UserPref.itemDisplay.EnumValue);
+		}
+		if(rssReaderConf.UserPref.scrollMode){
+			appendOption(wfs, rssReaderConf.UserPref.scrollMode, rssReaderConf.UserPref.scrollMode.EnumValue);
+		}
+		
+//		if(Browser.isIE){
+//			lastp.style.marginBottom = "10px";
+//		}
+		
+		wfs.appendChild( createExecButton());
+		
+		return wfs;
+	}
+	
+	function buildCustomizeReset() {
+		var fs = createFieldSet( IS_R.lb_initialize );
+		
+		var description = document.createElement("div");
+		description.innerHTML = 
+			IS_R.lb_clearConfigurationDesc1 +"<br/>"
+			+IS_R.lb_clearConfigurationDesc2;
+		fs.appendChild( description );
+		
+		var initButton = document.createElement("input");
+		initButton.type = "button";
+		initButton.value = IS_R.lb_clearConfigurationButton;
+		IS_Event.observe( initButton,"click",function() {
+			Control.Modal.close();
+			
+			if( !confirm( IS_R.ms_clearConfigurationConfirm ))
+				return;
+			
+			IS_Request.asynchronous = false;
+			IS_Request.CommandQueue.fireRequest();
+			
+			var opt = {
+				method: 'get' ,
+				asynchronous:false,
+				onSuccess: function(req){
+					window.location.reload( true );
+				},
+				onFailure: function(t) {
+					var msg = IS_R.ms_clearConfigurationFailed;
+					alert( msg );
+					msg.error( msg );
+				}
+			};
+			AjaxRequest.invoke(hostPrefix +  "/widsrv?reset=true", opt);
+		});
+		var initField = createField("",initButton );
+		fs.appendChild( initField );
+		
+		return fs;
+	}
+	
+	function createFieldSet(title){
+		var fieldSet = document.createElement("fieldSet");
+		var legEnd = document.createElement("legEnd");
+		fieldSet.appendChild(legEnd);
+		legEnd.innerHTML = title;
+		return fieldSet;
+	}
+	
+	function createField( labelContent, valueContent ){
+		if( typeof( labelContent ) == "string")
+			labelContent = document.createTextNode( labelContent );
+		
+		if( typeof( valueContent ) == "string")
+			valueContent = document.createTextNode( valueContent );
+		
+		var itemTable = document.createElement("table");
+		itemTable.cellPadding = "3px";
+		itemTable.cellSpacing = 0;
+		itemTable.style.width = "100%";
+		
+		var itemTBody = document.createElement("tbody");
+		var itemTr = document.createElement("tr");
+		itemTr.className = "option";
+		var itemLeftTd = document.createElement("td");
+		var itemRightTd = document.createElement("td");
+		itemRightTd.className = "rightTd";
+		
+		itemTable.appendChild(itemTBody);
+		itemTBody.appendChild(itemTr);
+		itemTr.appendChild(itemLeftTd);
+		itemTr.appendChild(itemRightTd);
+		
+		var titleLabel = document.createElement("label");
+		titleLabel.style.fontWeight = "bold";
+		titleLabel.appendChild( labelContent );
+		
+		itemLeftTd.appendChild(titleLabel);
+		itemRightTd.appendChild( valueContent );
+		
+		return itemTable;
+	}
+	function appendOption( el, obj, selectOptions, selectValue) {
+		var selectEl = document.createElement("select");
+		selectEl.id = "pref_" + obj.name;
+		selectEl.style.width = "150px";
+		
+		//Head is empty
+		var optEl = document.createElement("option");
+		optEl.setAttribute("value", "");
+		optEl.appendChild(document.createTextNode(IS_R.lb_changeNotApply));
+		selectEl.appendChild(optEl);
+		
+		for(var i=0;i<selectOptions.length;i++){
+			if(typeof selectOptions[i] == "function") continue;
+			optEl = document.createElement("option");
+			optEl.setAttribute("value", selectOptions[i].value);
+			optEl.appendChild(document.createTextNode(selectOptions[i].display_value));
+			selectEl.appendChild(optEl);
+			if(selectValue == selectOptions[i].value){
+				optEl.selected =true;
+			}
+		}
+		
+		IS_Portal.prefsEls[obj.name] = selectEl;
+		
+		var field = createField( " "+obj.display_name,selectEl );
+		el.appendChild( field );
+		
+		return field;
+	}
+
+
+	var showModal = function(){
+		IS_Portal.currentModal.update(createPreferenceBody());
+	}
+	
+	if(preferenceDiv){
+		IS_Portal.currentModal = new Control.Modal(preferenceDiv,{contents: "", containerClassName:"preference"});
+		
+		preferenceDiv.title = IS_R.lb_setting;
+		Event.observe(preferenceDiv, "click", showModal, false);
+		
+
+		if(preferenceDiv.parentNode)//Setting of command bar width.
+			preferenceDiv.parentNode.style.width = preferenceDiv.offsetWidth;
+	}
+
+	
 }
 
 IS_Portal.buildCredentialList = function(){
@@ -2109,13 +2445,13 @@ IS_Portal.unDisplayMsgBar = function(id){
 
 IS_Portal.behindIframe = {
 	init:function(){
-		//if(!Browser.isIE)return;
+		if(!Browser.isIE)return;
 		this.behindIframe = $(document.createElement('iframe'));
 		this.behindIframe.border = 0;
 		this.behindIframe.style.margin = 0;
 		this.behindIframe.style.padding = 0;
 		this.behindIframe.id = "is_portal_behind_iframe";
-		this.behindIframe.frameBorder = 0;
+		this.behindIframe.frameborder = 0;
 		this.behindIframe.style.position = "absolute";
 		this.behindIframe.src = "./blank.html";
 		document.getElementsByTagName('body')[0].appendChild(this.behindIframe);
@@ -2123,7 +2459,7 @@ IS_Portal.behindIframe = {
 	},
 	
 	show:function(element){
-		//if(!Browser.isIE)return;
+		if(!Browser.isIE)return;
 		Position.prepare();
 		var pos = Position.cumulativeOffset(element);
 		this.behindIframe.style.top = pos[1] + "px";
@@ -2131,16 +2467,14 @@ IS_Portal.behindIframe = {
 		this.behindIframe.style.width = element.offsetWidth;
 		this.behindIframe.style.height = element.offsetHeight;
 		if(element.style.zIndex)
-			this.behindIframe.style.zIndex = element.style.zIndex -1;
-		else
-			this.behindIframe.style.zIndex = 0;
+		  this.behindIframe.style.zIndex = element.style.zIndex -1 ;
 		this.behindIframe.show();
 		
 		this.current = element;
 	},
 	
 	hide:function(){
-		//if(!Browser.isIE)return;
+		if(!Browser.isIE)return;
 		this.behindIframe.style.left = 0 + "px";
 		this.behindIframe.style.top = 0 + "px";
 		this.behindIframe.style.width = 0;
@@ -2160,7 +2494,6 @@ IS_Portal.CommandBar = {
 			if(commandBarItems[i].nodeType != 1)continue;
 			
 			var itemDiv = commandBarItems[i].getElementsByTagName('div')[0];
-			if(!/^disabled/.test(itemDiv.id)) this.hasCommandBar = true;
 			var itemId = itemDiv.id.replace(/^s_/, "");
 			
 			var cmdBarWidget = IS_Portal.getWidget(itemId, IS_Portal.currentTabId);
@@ -2169,9 +2502,7 @@ IS_Portal.CommandBar = {
 			}
 			this.commandbarWidgetDivs[itemId] = itemDiv;
 		}
-		if(!this.hasCommandBar){
-			$("command-bar").hide();
-		}
+		
 	},
 	changeDefaultView : function(){
 		this.toggleView(false);

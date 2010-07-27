@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.RssReader = IS_Class.create();
 IS_Widget.RssReader.prototype.classDef = function() {
 	var widget;
@@ -27,7 +10,7 @@ IS_Widget.RssReader.prototype.classDef = function() {
 	this.initialize = function(widgetObj){
 		self = this;
 		widget = widgetObj;
-		isStatic = widget.panelType == "StaticPanel" && widget.isStaticHeight;
+		isStatic = widget.panelType == "StaticPanel";
 		isDroppable = (isStatic || !(widget.id.indexOf("previewWidget_") < 0));
 		
 		// Flag for EditGridReader
@@ -253,7 +236,7 @@ IS_Widget.RssReader.prototype.classDef = function() {
 		}
 	}
 	
-	function handleReloadWidgetEvent(newUrl){
+	function handleReloadWidgetEvent(newUrl){console.info('handleReloadWidgetEvent:'+newUrl);
 		if(newUrl) {
 			var oldUrl = widget.getUserPref("url");
 			IS_EventDispatcher.removeListenerList('reloadWidget', oldUrl);
@@ -331,8 +314,8 @@ IS_Widget.RssReader.prototype.classDef = function() {
 		}
 		//var start = new Date();
 		//Fix bug: no error occurs in spite of invalid rss format with userProxy=false, and it shows message of "no new information" 
+		
 		var rss = IS_Widget.parseRss( response );
-		rss.isIntranet = /true/.test(response.getResponseHeader('X-IS-INTRANET'));
 		
 		var allError = false;
 		if (rss) {
@@ -705,7 +688,7 @@ IS_Widget.RssReader.prototype.classDef = function() {
 		
 		return parseInt( itemsnum );
 	}
-	this.getHeightChangeUnit = function() {
+	this.getHeightChangeUnit = function() { // henna nihonngo  -.-
 		if( this.rssContentView )
 			return this.rssContentView.render.getDefaultHeight( this.rssContentView.renderContext );
 		
@@ -1214,8 +1197,7 @@ IS_Widget.RssReader.prototype.classDef = function() {
 			if( IS_Portal.SearchEngines.matchRssSearch( widget.getUserPref("url")) )
 			  div.style.display = "block";
 		} else {
-			IS_Portal.SearchEngines.loadConf();
-			setTimeout(this.searchApplyIconStyle.bind(this, div), 200);
+			setTimeout(this.searchApplyIconStyle.bind(this, div), 100);
 		}
 	};
 
@@ -1490,7 +1472,7 @@ IS_Widget.RssReader.RssContentView.prototype.classDef = function() {
 	this.initialize = function( widget,rssContent,opt ){
 		self = this;
 		this.widget = widget;
-		this.isStatic = widget.panelType == "StaticPanel" && widget.isStaticHeight;
+		this.isStatic = widget.panelType == "StaticPanel";
 		this.isCanvas = opt.isCanvas;
 		this.rssContent = rssContent;
 		

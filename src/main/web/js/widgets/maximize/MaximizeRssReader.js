@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.MaximizeRssReader = IS_Class.create();
 IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 	var widget;
@@ -1088,7 +1071,7 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		this.lazyAdjusting = true;
 		setTimeout( this.adjustMaximizeHeight.bind( this ),100 );
 	}
-	this.adjustMaximizeHeight = function() {
+	this.adjustMaximizeHeight = function() {console.log("#adjustMaximizeHeight");
 		this.lazyAdjusting = false;
 		
 		var maximizeHeight = getWindowSize(false) -findPosY( widget.elm_widget ) -65;
@@ -1135,8 +1118,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 			rssDetailTd.style.height = detailHeight;
 			if( Browser.isFirefox )
 				rssDetailTable.style.display = detailTdDisplay;
-			
-			widget.elm_widget.style.height = maximizeHeight;
 		}catch(e){
 
 			msg.warn( IS_R.getResource( IS_R.ms_errorOnWindowResize,[e]));

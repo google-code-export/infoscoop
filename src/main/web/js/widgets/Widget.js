@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 var IS_Widget = IS_Class.create();
 
 IS_Widget.DROP_WIDGET = "dropWidget";
@@ -160,10 +143,7 @@ IS_Widget.prototype.classDef = function() {
 			if(!this.title) this.title = "";
 			widgetsXml.title = this.title;
 		}
-
-		if(typeConf.ModulePrefs && typeConf.ModulePrefs.height)
-		  typeConf.height = typeConf.ModulePrefs.height;
-		  
+		
 		this.hasMaximizeView = ( typeConf.Maximize != undefined);
 		
 		if(widgetsXml.href)
@@ -194,7 +174,7 @@ IS_Widget.prototype.classDef = function() {
 			},this );
 		}
 		
-		return userPref[name];// This statement should be (userPref[name] || "")
+		return userPref[name];
 	}
 	
 	this.getBoolUserPref = function(name){
@@ -378,7 +358,7 @@ IS_Widget.prototype.classDef = function() {
 			self.elm_widgetContent.style.height = widgetHeight - headerHeight;
 			self.elm_widgetContent.style.overflow = "auto";//Autocomplete misalignment problem occurs if "overflow=hidden" is set in IE
 			if(!Browser.isIE)self.elm_widgetContent.style.overflowX = "hidden";//Fix 484
-			self.staticWidgetHeight = widgetHeight - headerHeight;
+			self.staticWidgetHeight = container.offsetHeight - headerHeight;
 		}else{
 			self.elm_widgetContent.style.height = "50px";
 			setTimeout(this._setStaticWidgetHeight.bind(this), 10);
@@ -408,7 +388,6 @@ IS_Widget.prototype.classDef = function() {
 	}
 	
 	var isStatic;
-	this.isStaticHeight = false;
 	var isMaximize;
 
 	this.build = function() {
@@ -420,7 +399,6 @@ IS_Widget.prototype.classDef = function() {
 		this.elm_widget = divWidget;
 		divWidget.className = "widget";
 		divWidget.id = self.id;
-		if(isStatic) divWidget.style.margin = 0;
 		
 		var divWidgetShade = document.createElement("div");
 		this.elm_widgetShade = divWidgetShade;
@@ -549,9 +527,6 @@ IS_Widget.prototype.classDef = function() {
 			}
 		}
 		
-		var container = $("s_" + this.id);
-		self.isStaticHeight = !!(isStatic && container && container.style.height);
-		
 		//Instantiate implemented class only if contents type of widget is javascript
 		if(contentsType =="javascript" && this.widgetType != "notAvailable"){
 			var className = contentsDef.className;
@@ -571,7 +546,7 @@ IS_Widget.prototype.classDef = function() {
 		}
 		
 		var hasBorder = typeConf.border;
-		if((hasBorder && /false/.test(hasBorder) || /FALSE/.test(hasBorder)) || getBooleanValue(this.widgetConf.noBorder)) {
+		if(hasBorder && /false/.test(hasBorder) || /FALSE/.test(hasBorder)) {
 			divWidgetBox.style.border = "0";
 		}
 		
@@ -581,9 +556,10 @@ IS_Widget.prototype.classDef = function() {
 		var end = new Date();
 		msg.debug(this.id + " build time: " + (end - start));
 		
-		var widgetHeight = typeConf.height;
 		
-		if(isStatic && self.isStaticHeight && (!this.content || !this.content.disableSetSaticWidgetHeight)){
+		var widgetHeight = typeConf.height;
+		if(isStatic && (!this.content || !this.content.disableSetSaticWidgetHeight)){
+			var container = $("s_" + this.id);
 			if(container){
 				self._setStaticWidgetHeight();
 			}
@@ -693,13 +669,12 @@ IS_Widget.prototype.classDef = function() {
 	}
 	this.getGadgetUrl = function() {
 		return ( !/^g__Maximize__/.test( this.widgetType )?
-				 this.widgetType.substring(2) : this.widgetType.substring( 13 ));
+				this.widgetType.substring(2) : this.widgetType.substring( 13 ));
 	}
 	this.loadHtmlIfram = function( url, viewType ){
 		var form = $("postGadgetSrvForm");
 		if( !form ) {
 			form = document.createElement("form");
-			form.style.margin = 0;
 			form.id = "postGadgetSrvForm";
 			form.method = "POST";
 			document.body.appendChild( form );
@@ -709,7 +684,8 @@ IS_Widget.prototype.classDef = function() {
 			form.removeChild( form.firstChild );
 		
 		var gadgetParams = $H( this.getGadgetParameters( url,viewType ));
-		form.action = this.gadgetProxyUrl +"?"+gadgetParams.toQueryString();
+		form.action = ( this.isUploadGadget() ? proxyServerURL : gadgetProxyURL )
+			+"?"+gadgetParams.toQueryString();
 		
 		var url = this.getGadgetUrl();
 		var params = {
@@ -719,10 +695,9 @@ IS_Widget.prototype.classDef = function() {
 		};
 		
 		this.getUserPrefKeys().each( function( key ) {
-			if(this.getUserPref( key ))
-			  params["up_"+key] = this.getUserPref( key );
+			params["up_"+key] = this.getUserPref( key );
 		},this );
-
+		
 		$H( params ).each( function( entry ) {
 			var input = document.createElement("input");
 			input.type = "hidden";
@@ -796,13 +771,6 @@ IS_Widget.prototype.classDef = function() {
 		return s;
 	}
 	
-	this.gadgetProxyUrlRegexp = new RegExp("https?://\*.+");
-	this.getGadgetProxyUrl = function(){
-		if(this.gadgetProxyUrlRegexp.test( gadgetProxyURL )){
-			return gadgetProxyURL.replace(/\*/, 's'+this.id.substr(2));
-		}else
-		  return gadgetProxyURL;
-	}
 	this.initIframe = function( isOuter ) {
 		self.elm_widgetContent.innerHTML = "";
 		
@@ -833,7 +801,7 @@ IS_Widget.prototype.classDef = function() {
 		self.iframe.style.padding = 0;
 		self.iframe.style.width = "100%";
 		
-		if(isStatic && self.isStaticHeight) {
+		if( this.panelType == "StaticPanel" ) {
 			if( !isOuter )
 				self.iframe.scrolling = "auto";
 			
@@ -849,9 +817,8 @@ IS_Widget.prototype.classDef = function() {
 		self.elm_widgetContent.appendChild(self.iframe);
 		
 		if( this.isGadget() ) {
-			this.gadgetProxyUrl = this.isUploadGadget() ? proxyServerURL : this.getGadgetProxyUrl();
 			if( !this.isUploadGadget()) {
-				var relayUrl = this.gadgetProxyUrl.substring( 0,this.gadgetProxyUrl.lastIndexOf("/") +1 ) +"rpc_relay.html";
+				var relayUrl = gadgetProxyURL.substring( 0,gadgetProxyURL.lastIndexOf("/") +1 ) +"rpc_relay.html";
 				gadgets.rpc.setRelayUrl( self.iframe.id,relayUrl );
 			} else {
 				gadgets.rpc.setRelayUrl( self.iframe.id,hostPrefix+"/rpc_relay.html");
@@ -900,7 +867,7 @@ IS_Widget.prototype.classDef = function() {
 				this.headerContent.turnBack();
 			
 			this.elm_widgetContent.style.display = "block";
-			if( this.isGadget() && !self.isStaticHeight)
+			if( this.isGadget() && !isStatic)
 				this.elm_widgetContent.style.height = "auto";
 			
 			IS_EventDispatcher.newEvent('loadComplete', self.id, null);
@@ -968,7 +935,7 @@ IS_Widget.prototype.classDef = function() {
 			this.elm_widgetContent.innerHTML = IS_R.lb_setupUnfinished;
 			this.elm_widgetContent.style.fontSize = "14px";
 			this.elm_widgetContent.style.display = "block";
-			if( this.isGadget() && !self.isStaticHeight)
+			if( this.isGadget() && !isStatic)
 				this.elm_widgetContent.style.height = "auto";
 			
 			return;
@@ -1536,18 +1503,14 @@ IS_Widget.prototype.classDef = function() {
 	}
 	
 	this.adjustMaximize = function(){
+		
 		Position.prepare();
 		var panelsDiv = $('panels');
-		
-		//Fixed Issue 149: Fragment Minibrowser shows a little off from the position whrere it should be when it maximized.
-		if(fixedPortalHeader && Browser.isIE)
-			IS_Portal.tabs[IS_Portal.currentTabId].panel.style.height = "auto";
-		
 		var pos = Position.cumulativeOffset(panelsDiv);
 		this.elm_widget.style.top=pos[1];
 		this.elm_widget.style.left=pos[0];
 		this.elm_widget.style.width = panelsDiv.offsetWidth;
-		
+
 		var tabPanel = $('panel' + this.tabId.substr(3));
 		var widgetDivList = tabPanel.getElementsByClassName('widgetBox');
 		for(i = 0; i < widgetDivList.length; i++){
@@ -1569,19 +1532,16 @@ IS_Widget.prototype.classDef = function() {
 			this.headerContent.widgetEdit.cancel();
 		
 		scrollTo(0, 0);
-		
+		//document.body.style.overflow = "hidden";
 		this.tempIFrameHeight = this.iframe.style.height;
 		this.elm_widget.style.position = "absolute";
 		this.elm_widget.style.zIndex = 1000;
 		//widget.elm_widgetContent.style.width=document.body.offsetWidth;
-		
-
 		if( Browser.isFirefox ) {
 			var widgetList = IS_Portal.widgetLists[this.tabId];
 			for( var i in widgetList ) if( widgetList.hasOwnProperty( i )) { 
 				var w = widgetList[i];
 				if( w == this || !w.iframe ) continue;
-				
 				w.iframe.style.visibility = "hidden";
 			}
 		}
@@ -1602,6 +1562,8 @@ IS_Widget.prototype.classDef = function() {
 	}
 	
 	this.defaultTurnbackMaximize = function(){
+		//document.body.style.overflow = "";
+		
 		var tabPanel = $('panel' + this.tabId.substr(3));
 		var widgetDivList = tabPanel.getElementsByClassName('widgetBox');
 		for(i = 0; i < widgetDivList.length; i++){

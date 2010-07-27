@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.web;
 
 import java.io.IOException;
@@ -50,7 +33,7 @@ public class SearchConfServlet extends HttpServlet {
 			res.setHeader("Content-Type", "text/xml; charset=UTF-8");
 			Writer w = res.getWriter();
 			SearchEngineService service = (SearchEngineService) SpringUtil.getBean("searchEngineService");
-			String searchConf = service.getSearchEngineXmlWithAcl();
+			String searchConf = service.getSearchEngine();
 			searchConf = I18NUtil.resolveForXML(I18NUtil.TYPE_SEARCH, searchConf, req
 					.getLocale());
 			w.write(searchConf);

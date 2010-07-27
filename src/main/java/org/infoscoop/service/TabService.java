@@ -1,27 +1,9 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,7 +26,6 @@ import org.infoscoop.dao.model.TabLayout;
 import org.infoscoop.dao.model.UserPref;
 import org.infoscoop.dao.model.Widget;
 import org.infoscoop.util.SpringUtil;
-import org.json.JSONArray;
 import org.w3c.dom.Element;
 
 public class TabService {
@@ -52,15 +33,10 @@ public class TabService {
 	
 	private static final String TABID_HOME = "0";
 	private TabDAO tabDAO;
-	private WidgetDAO widgetDAO;
 
 	
 	public void setTabDAO(TabDAO tabDAO) {
 		this.tabDAO = tabDAO;
-	}
-	
-	public void setWidgetDAO(WidgetDAO widgetDAO) {
-		this.widgetDAO = widgetDAO;
 	}
 	
 	public static TabService getHandle() {
@@ -112,7 +88,7 @@ public class TabService {
 	 * @throws DBAccessException 
 	 */
 	public Collection getWidgetsNode(String uid, String defaultUid) throws Exception {
-		Collection<Object[]> tabList = new ArrayList<Object[]>();
+		Collection tabList = new ArrayList();
 		Map tabLayoutsMap = TabLayoutService.getHandle().getMyTabLayout();
 		
 		if(uid != null){
@@ -174,27 +150,15 @@ public class TabService {
 				}
 			}
 			
-			Map<String, Widget> widgetMap = new HashMap<String, Widget>();
-			for( Widget widget: tabLayout.getDynamicPanelXmlWidgets( uid )) {
+			Map widgetMap = new HashMap();
+			for( Iterator widgets=tabLayout.getDynamicPanelXmlWidgets( uid ).iterator();widgets.hasNext();) {
+				Widget widget = ( Widget )widgets.next();
 				widgetMap.put( widget.getWidgetid(),widget );
 			}
 			
-			List<Widget> exists = WidgetDAO.newInstance().getExistsWidgets( uid,new ArrayList( widgetMap.keySet()) );
-			for( Widget widget : exists){
-				if(tab.getTabId().equals(widget.getTabid())){
-					widgetMap.remove( widget.getWidgetid());
-				}else{
-					long now = new Date().getTime();
-					UserPref childrenPref = widgetMap.get(widget.getWidgetid()).getUserPrefs().get("children");
-					if(childrenPref != null){
-						JSONArray children = new JSONArray(childrenPref.getValue());
-						for(int j = 0; j < children.length(); j++){
-							WidgetDAO.newInstance().deleteWidget(uid, widget.getTabid(), children.getString(j), now);
-						}
-					}
-					WidgetDAO.newInstance().deleteWidget(uid, widget.getTabid(), widget.getWidgetid(), now);
-				}
-			}
+			List exists = WidgetDAO.newInstance().getExistsWidgets( uid,new ArrayList( widgetMap.keySet()) );
+			for( Iterator widgets=exists.iterator();widgets.hasNext();)
+				widgetMap.remove( (( Widget )widgets.next()).getWidgetid());
 			
 			tabDAO.getHibernateTemplate().saveOrUpdateAll( widgetMap.values() );
 			WidgetDAO.newInstance().updateUserPrefs( widgetMap.values() );
@@ -220,7 +184,7 @@ public class TabService {
 				String tabType = tab.getType();
 				
 				if("static".equals(tabType.toLowerCase()) && widgetTabId.equals(tempTabId)){
-					tab.setOrder(Integer.valueOf(tempTabNumber));
+					tab.setOrder(new Integer(tempTabNumber));
 					
 					if(!tempDefaultUid.equals(widgetDefaultUid) || !tempLastModified.equals(widgetLastModified)){
 						// Replace StaticPanel if tabLayout and defaultUid are different.
@@ -235,12 +199,6 @@ public class TabService {
 						}
 						
 						tab.setName(layout.getTabName());
-						tab.setDisabledDynamicPanelBool(layout.isDisabledDynamicPanel());
-						if (layout.isDisabledDynamicPanel()
-								&& trashDynamicPanelWidgets(tab)) {
-							//notify user of putting all gadgets of the dynamic panel in the trash box.
-							tab.setTrashDynamicPanelWidgets(true);
-						}
 						replaceStaticPanel( uid, tab, staticPanelWidgets );
 //						tab.setStaticPanelXml(layout.getStaticPanel());
 						break;
@@ -250,18 +208,6 @@ public class TabService {
 		}
 		
 		return currentTabList;
-	}
-	
-	private boolean trashDynamicPanelWidgets(Tab tab) {
-		List<Widget> widgets = tabDAO.getDynamicWidgetList(tab);
-		if (widgets.size() == 0)
-			return false;
-		long now = new Date().getTime();
-		for (Widget widget : widgets) {
-			widgetDAO.deleteWidget(widget.getUid(), widget.getTabid(), widget
-					.getWidgetid(), now);
-		}
-		return true;
 	}
 	
 	private List createDynamicTabIdList( Collection tabList ) {
@@ -433,7 +379,7 @@ public class TabService {
 //		WidgetDAO.newInstance().addTab(newTab);
 		
 		// Delete differences here
-		// Delete existing (can not update key��
+		// Delete existing (can not update key）
 		tabDAO.deleteTab( staticTab );
 //		WidgetDAO.newInstance().updateTab( tab );
 		
@@ -551,11 +497,7 @@ public class TabService {
 		
 	}
 	
-	public void clearConfigurations(String uid) throws Exception {
-		clearConfigurations(uid, null);
-	}
-	
-	public void clearConfigurations( String uid, Integer tabId ) throws Exception{
+	public void clearConfigurations( String uid ) throws Exception{
 		if( uid == null )
 			return;
 		
@@ -563,16 +505,10 @@ public class TabService {
 		Element prefEl = preference.getElement();
 		PreferenceService.removeProperty(prefEl, "freshDays");
 		PreferenceService.removeProperty(prefEl, "mergeconfirm");
-		PreferenceService.removeProperty(prefEl, "searchOption");
-		PreferenceService.removeProperty(prefEl, "theme");
 		preference.setElement(prefEl);
-		if(tabId == null){
-			WidgetDAO.newInstance().deleteWidget( uid );
-			TabDAO.newInstance().deleteTab( uid );
-		}else{
-			WidgetDAO.newInstance().deleteWidget( uid, tabId );
-			TabDAO.newInstance().deleteTab( uid, tabId );	
-		}
+		WidgetDAO.newInstance().deleteWidget( uid );
+		TabDAO.newInstance().deleteTab( uid );
+		
 		SessionDAO.newInstance().setForceReload( uid );
 		
 		log.info("reset user data ["+uid+"]");

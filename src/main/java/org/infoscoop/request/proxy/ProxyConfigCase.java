@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.proxy;
 
 import java.util.HashSet;
@@ -48,8 +31,6 @@ public class ProxyConfigCase {
 	private String replacement;
 
 	private Set<String> allowedHeaders;
-	
-	private boolean isIntranet = false;
 
 	public String getPattern() {
 		return pattern;
@@ -90,14 +71,6 @@ public class ProxyConfigCase {
 
 	public void setCacheLifeTime(int cacheLifeTime) {
 		this.cacheLifeTime = cacheLifeTime;
-	}
-
-	public boolean getIntranet() {
-		return isIntranet;
-	}
-
-	public void setIntranet(boolean isIntranet) {
-		this.isIntranet = isIntranet;
 	}
 
 	public String getReplacement() {

@@ -1,39 +1,27 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.service;
 
-import java.util.Collection;
+import java.io.CharArrayWriter;
+import java.io.StringReader;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.xpath.XPathAPI;
 import org.infoscoop.dao.SearchEngineDAO;
 import org.infoscoop.dao.model.Searchengine;
-import org.infoscoop.util.RoleUtil;
-import org.infoscoop.util.XmlUtil;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 public class SearchEngineService {
 
@@ -100,29 +88,6 @@ public class SearchEngineService {
 	/**
 	 * @param engineId
 	 * @param itemsMap
-	 * @throws Exception
-	 */
-	public synchronized void updateSearchEngineAttr(String name, String value) throws Exception {
-		if (log.isInfoEnabled()) {
-			log.info("updateSearchEngineAttr: name=" + name + ", value=" + value);
-		}
-
-		// Obtain data and transfer the result to Document.
-		Searchengine temp = (Searchengine)this.searchEngineDAO.selectTemp();
-		Document document = temp.getDocument();
-
-		// Search for node matches engineId
-		Element element = document.getDocumentElement();
-		element.setAttribute(name, value);
-		temp.setDocument( document );
-		// Update
-		this.searchEngineDAO.update(temp);
-
-	}
-
-	/**
-	 * @param engineId
-	 * @param itemsMap
 	 * @param childTag
 	 * @throws Exception 
 	 */
@@ -148,14 +113,8 @@ public class SearchEngineService {
 		AdminServiceUtil.removeSelf(node);
 
 		// Create element to be updated
-		Element childElement = null;
-		if (childTag.equals("auths")) {
-			Collection auths = (Collection) itemsMap.get("auths");
-			if (auths != null)
-				childElement = MenuAuthorization.createAuthsElement(document,
-						auths);
-		}else if (!"rssPattern".equals(childTag)) {
-			childElement = document.createElement(childTag);
+		Element childElement = document.createElement(childTag);
+		if (!"rssPattern".equals(childTag)) {
 			for (Iterator it = itemsMap.entrySet().iterator(); it.hasNext();) {
 				Map.Entry pattern = (Map.Entry)it.next();
 				String key = (String)pattern.getKey() ;
@@ -163,14 +122,12 @@ public class SearchEngineService {
 				childElement.setAttribute(key, value);
 			}
 		} else {
-			childElement = document.createElement(childTag);
 			String key = (String) itemsMap.keySet().iterator().next();
 			childElement.appendChild(document.createTextNode((String) itemsMap.get(key)));
 		}
 
 //		parentNode.appendChild(childElement);
-		if (childElement != null)
-			parentNode.insertBefore(childElement, parentNode.getFirstChild());
+		parentNode.insertBefore(childElement, parentNode.getFirstChild());
 
 		temp.setDocument( document );
 		// Update
@@ -281,7 +238,6 @@ public class SearchEngineService {
 
 	/**
 	 * For Management Page
-	 * 
 	 * @return String
 	 * @throws Exception
 	 */
@@ -300,42 +256,27 @@ public class SearchEngineService {
 		else
 			tempEntity.setData(entity.getData());
 		this.searchEngineDAO.update(tempEntity);
-
-		StringBuffer jsonString = new StringBuffer();
-		jsonString.append("ISA_SearchEngine.setSearchEngine(");
-		Document doc = entity.getDocument();
-		String newwindow = doc.getDocumentElement().getAttribute("newwindow");
-		jsonString.append( ("true".equalsIgnoreCase(newwindow) ? "true" : "false" ) ).append(",");
-		Element defaultSearch = (Element) XPathAPI.selectSingleNode(doc,
-				"/searchEngines/defaultSearch");
-		if (defaultSearch != null)
-			jsonString.append(makeJSON(defaultSearch));
-		jsonString.append(",");
-		Element rssSearch = (Element) XPathAPI.selectSingleNode(doc,
-				"/searchEngines/rssSearch");
-		if (defaultSearch != null)
-			jsonString.append(makeJSON(rssSearch));
-		jsonString.append(");");
-		return jsonString.toString();
+		
+		SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+		MakeSearchEngineHandler handler = new MakeSearchEngineHandler();
+		parser.parse(new InputSource(new StringReader(entity.getData())), handler);
+		return handler.getJSONPString();
 	}
-	
-	public String getSearchEngineXmlWithAcl() throws Exception {
-		Searchengine entity = this.searchEngineDAO
-				.select(SearchEngineDAO.SEARCHENGINE_FLAG_NOT_TEMP);
-		if (entity == null) {
+
+	/**
+	 * @return String
+	 * @throws Exception 
+	 */
+	public String getSearchEngine() throws Exception {
+		// Obtain data
+		Searchengine entity =  this.searchEngineDAO.select(SearchEngineDAO.SEARCHENGINE_FLAG_NOT_TEMP);
+		if (entity== null) {
 			log.error("searchengine not found.");
 			return "";
 		}
-		Document doc = entity.getDocument();
-		Element root = doc.getDocumentElement();
-		Node newRoot = root.cloneNode(true);
-		Element defaultSearch = (Element) XPathAPI.selectSingleNode(newRoot,
-				"defaultSearch");
-		checkAcl(defaultSearch);
-		Element rssSearch = (Element) XPathAPI.selectSingleNode(newRoot,
-				"rssSearch");
-		checkAcl(rssSearch);
-		return XmlUtil.dom2String(newRoot);
+
+		return entity.getData();
+
 	}
 
 	/**
@@ -356,89 +297,137 @@ public class SearchEngineService {
 		entity.setData(tempEntity.getData());
 		this.searchEngineDAO.update(entity);
 	}
-
-	private JSONObject makeJSON(Element searchEngine)
-			throws Exception {
-		NodeList searchEngines = searchEngine
-				.getElementsByTagName("searchEngine");
-		JSONObject json = new JSONObject();
-		for (int i = 0; i < searchEngines.getLength(); i++) {
-			Element searchEl = (Element) searchEngines.item(i);
-			
-			String id = searchEl.getAttribute("id");
-			JSONObject searchObj = new JSONObject();
-			searchObj.put("id", id);
-			searchObj.put("title", searchEl.getAttribute("title"));
-			searchObj.put("retrieveUrl", searchEl.getAttribute("retrieveUrl"));
-			String defaultSelected = searchEl.getAttribute("defaultSelected");
-			searchObj.put("defaultSelected", (defaultSelected != null ? "TRUE".equalsIgnoreCase(defaultSelected) : false) );
-			searchObj.put("encoding", searchEl.getAttribute("encoding"));
-			
-			// rssPattern
-			Element rssPattern = (Element) XPathAPI.selectSingleNode(searchEl,"rssPattern");
-			if(rssPattern != null){
-				searchObj.put("rssPattern", rssPattern.getTextContent());
-			}
-
-			// countRule
-			Element countRule = (Element) XPathAPI.selectSingleNode(searchEl,
-					"countRule");
-			if(countRule != null){
-				JSONObject countJson = new JSONObject();
-				countJson.put("method", countRule.getAttribute("method"));
-				countJson.put("value", countRule.getAttribute("value"));
-				String useCache = countRule.getAttribute("useCache");
-				countJson.put("useCache", (useCache !=null  ? "TRUE".equalsIgnoreCase(useCache) : false) );
-				searchObj.put("countRule", countJson);
-			}
-			// auths
-			Element authsEl = (Element) XPathAPI.selectSingleNode(searchEl,
-					"auths");
-			if (authsEl != null) {
-				searchObj.put("auths", MenuAuthorization
-						.createAuthsJson(authsEl));
-			}
-
-			json.put(id, searchObj);
-		}
-		return json;
-	}
 	
-	private void checkAcl(Element searchEngine) throws Exception {
-		if (searchEngine == null)
-			return;
-		NodeList searchEngines = searchEngine
-				.getElementsByTagName("searchEngine");
-		for (int i = 0; i < searchEngines.getLength(); i++) {
-			Element searchEl = (Element) searchEngines.item(i);
-			
-			String retrieveUrl = searchEl.getAttribute("retrieveUrl");
-			
-			Element authsEl = (Element) XPathAPI.selectSingleNode(searchEl,	"auths");
-			if(authsEl != null){
-				NodeList roles = authsEl.getElementsByTagName("auth");
-				boolean isPermitted = false;
-				for (int j = 0; j < roles.getLength(); j++) {
-					Element auth = (Element) roles.item(j);
-					String type = auth.getAttribute("type");
-					String regx = auth.getAttribute("regx");
-					List<String> matchStrList = RoleUtil.getPermittedMatchList(type, regx);
-					if(matchStrList != null){
-						AdminServiceUtil.removeSelf(authsEl);
-						for(int k = 0; k < matchStrList.size(); k++){
-							retrieveUrl = retrieveUrl.replaceAll("%\\{" + type + "(\\[" + k + "\\])?\\}", matchStrList.get(k));
-						}
-						if(!matchStrList.isEmpty()){
-							searchEl.setAttribute("retrieveUrl", retrieveUrl);
-						}
-						isPermitted = true;
-						break;
+	/**
+	 * InnerClass
+	 */
+	private static class MakeSearchEngineHandler extends DefaultHandler{
+		private CharArrayWriter buf = new CharArrayWriter();
+		private StringBuffer defaultSearchArray = new StringBuffer();
+		private StringBuffer rssSearchArray = new StringBuffer();
+		boolean firstEngineElement = true;
+		boolean endEngineElement = false;
+		boolean close = false;
+		Stack idStack = new Stack(); 
+		long start = System.currentTimeMillis();
+		public void startDocument() throws SAXException {
+			defaultSearchArray.append("{");
+			rssSearchArray.append("{");
+		}
+		
+		public String getJSONPString(){
+			return "ISA_SearchEngine.setSearchEngine("
+					+ defaultSearchArray.toString() + ","
+					+ rssSearchArray.toString() + ");";
+		}
+		public void endDocument() throws SAXException {
+			defaultSearchArray.append("}");
+			rssSearchArray.append("}");
+		}
+		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+			StringBuffer stringbuffer = new StringBuffer();
+			StringBuffer stringbufferId = new StringBuffer();
+
+			buf.reset();
+			endEngineElement = false;
+			if(qName.equals("defaultSearch")||qName.equals("rssSearch")){
+				idStack.push(qName);
+				firstEngineElement = true;
+			}else if(qName.equals("searchEngine")){
+				String engineId = attributes.getValue("id");
+
+				if(!firstEngineElement){
+					if(!close){
+						stringbuffer.append("}");
 					}
+					stringbuffer.append(",");
+					stringbufferId.append(",");
 				}
-				if (!isPermitted)
-					AdminServiceUtil.removeSelf(searchEl);
+				
+				close = false;
+				firstEngineElement = false;
+				
+				stringbuffer.append(engineId).append(":");
+				stringbuffer.append("{");
+				stringbuffer.append("id:").append(JSONObject.quote(engineId));
+				stringbuffer.append(",title:").append(JSONObject.quote(attributes.getValue("title")));
+				String retrieveUrl = attributes.getValue("retrieveUrl");
+				if(retrieveUrl != null){
+					stringbuffer.append(",retrieveUrl:").append(JSONObject.quote(retrieveUrl));
+				}
+				String encoding = attributes.getValue("encoding");
+				if(encoding != null){
+					stringbuffer.append(",encoding:").append(JSONObject.quote(encoding));
+				}
+				appendDivision(stringbuffer);
+			}else if(qName.equals("countRule")){
+				boolean firstAttribute = true;
+				stringbuffer.append(",countRule:{");
+				String method = attributes.getValue("method");
+				if(method != null){
+					if(!firstAttribute)
+						stringbuffer.append(",");
+					stringbuffer.append("method:").append(JSONObject.quote(method));
+					firstAttribute = false;
+				}
+				String value = attributes.getValue("value");
+				if(value != null){
+					if(!firstAttribute)
+						stringbuffer.append(",");
+					stringbuffer.append("value:").append(JSONObject.quote(value));
+					firstAttribute = false;
+				}
+				appendDivision(stringbuffer);
+			}else if(qName.equals("rssPattern")){
+				stringbuffer.append(",rssPattern:");
+				appendDivision(stringbuffer);
 			}
 		}
+		public void characters(char[] ch, int start, int length) throws SAXException {
+			buf.write(ch, start, length);
+		}
+		
+		public void endElement(String uri, String localName, String qName) throws SAXException {
+			if(qName.equals("defaultSearch")||qName.equals("rssSearch")){
+				if (!firstEngineElement) {
+					appendDivision("}");
+				}
+				idStack.clear();
+			}else if(qName.equals("searchEngine")){
+				if(endEngineElement && !close){
+					appendDivision("}");
+					close = true;
+				}
+				endEngineElement = true;
+			}else if(qName.equals("countRule")){
+				appendDivision("}");
+			}else if(qName.equals("rssPattern")){
+				appendDivision(JSONObject.quote(buf.toString()));
+			}
+			buf.reset();
+		}
+		
+		/**
+		 * @param string
+		 */
+		private void appendDivision(String string){
+			appendDivision(new StringBuffer(string));
+		}
+
+		/**
+		 * @param stringbuffer
+		 */
+		private void appendDivision(StringBuffer stringbuffer){
+			String peek = "";
+			if(!idStack.isEmpty())
+				peek = idStack.peek().toString();
+			
+			if("defaultSearch".equals(peek)){
+				defaultSearchArray.append(stringbuffer);
+			}else if("rssSearch".equals(peek)){
+				rssSearchArray.append(stringbuffer);
+			}
+		}
+
 	}
-	
 }

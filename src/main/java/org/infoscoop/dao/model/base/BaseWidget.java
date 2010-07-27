@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao.model.base;
 
 import java.io.Serializable;
@@ -43,7 +26,6 @@ public abstract class BaseWidget  implements Serializable {
 	public static String PROP_DEFAULTUID = "Defaultuid";
 	public static String PROP_TABID = "Tabid";
 	public static String PROP_IGNOREHEADER = "Ignoreheader";
-	public static String PROP_NOBORDER = "Noborder";
 	public static String PROP_HREF = "Href";
 	public static String PROP_ISSTATIC = "Isstatic";
 	public static String PROP_TITLE = "Title";
@@ -90,7 +72,6 @@ public abstract class BaseWidget  implements Serializable {
 	private java.lang.String type;
 	private java.lang.Integer isstatic;
 	private java.lang.Integer ignoreheader;
-	private java.lang.Integer noborder;
 	private java.lang.String menuid;
 	private java.lang.Long createdate = 0L;
 
@@ -335,13 +316,7 @@ public abstract class BaseWidget  implements Serializable {
 		this.ignoreheader = ignoreheader;
 	}
 
-	public java.lang.Integer getNoborder() {
-		return noborder;
-	}
 
-	public void setNoborder(java.lang.Integer noborder) {
-		this.noborder = noborder;
-	}
 
 	/**
 	 * Return the value associated with the column: MENUID

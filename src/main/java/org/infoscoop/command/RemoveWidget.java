@@ -1,35 +1,17 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.command;
 
-import java.util.List;
 import java.util.Map;
+
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.command.util.XMLCommandUtil;
-import org.infoscoop.dao.OAuthTokenDAO;
 import org.infoscoop.dao.TabDAO;
 import org.infoscoop.dao.WidgetDAO;
-import org.infoscoop.dao.model.OAuthToken;
 import org.infoscoop.dao.model.UserPref;
 import org.infoscoop.dao.model.Widget;
 import org.infoscoop.service.AuthCredentialService;
+import org.json.JSONObject;
 
 /**
  * The command class executed when a widget is deleted.
@@ -99,19 +81,6 @@ public class RemoveWidget extends XMLCommandProcessor {
         		AuthCredentialService.getHandle().removeCredential(widget.getUid(), authCredentialId);
         	}
 
-			// if Gadget, delete oauth token.
-			if (widget.getType().startsWith("g_")) {
-				OAuthTokenDAO oauthTokenDAO = OAuthTokenDAO.newInstance();
-				String gadgetUrl = widget.getType().substring(2);
-				List<OAuthToken> tokens = oauthTokenDAO.getAccessTokens(uid,
-						gadgetUrl);
-				if (tokens.size() > 0) {
-					int count = widgetDAO
-							.getWidgetCountByType(widget.getType());
-					if (count == 0)
-						oauthTokenDAO.deleteOAuthToken(tokens);
-				}
-			}
         } catch (Exception e) {			
             String reason = "Failed to delete the widget.";
             log.error("Failed to execute the command of RemoveWidget", e);

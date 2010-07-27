@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 var IS_Class = {
 	create: function() {
 		return function() {
@@ -99,6 +82,7 @@ function findPosX(obj) {
         obj = (obj.offsetParent)? obj.offsetParent : null;
     }
     return pos;
+
 }
 
 function findPosY(obj) {
@@ -142,9 +126,6 @@ function findHostURL(flag) {
 		if ( path.charAt(0) == '/' ) {
 			path = path.substr(1);
 		}
-		if( path.indexOf('/') == -1 )
-		  return host;
-		  
 		if((p = path.lastIndexOf('/')) != -1){
 			return host + "/" + path.substring(0,p);
 		}
@@ -532,6 +513,185 @@ function isUndefined(varName){
     	return ( variable.replace(/\s/,"").length == 0 )
     
     return false
+}
+
+function MenuPullDown(element, widgetId, eventKey){
+	this.targetElement = element;
+	this.eventKey = eventKey;
+	this.menuOptList = [];
+	
+	var isInit = false;
+	
+	this.addMenu = function(opt){
+		this.menuOptList.push(opt);
+	}
+	
+	this.build = function(){
+		var menuDiv = document.createElement("div");
+		menuDiv.id = (this.eventKey + "_menu");
+		menuDiv.className = "widgetMenu";
+		menuDiv.style.display = "none";
+		for(var i=0;i<this.menuOptList.length;i++){
+			var itemDiv = createItem(this.eventKey, this.menuOptList[i]);
+			itemDiv.id = "hm_" + widgetId + "_" + this.menuOptList[i].type;
+			menuDiv.appendChild( itemDiv );
+		}
+		document.body.appendChild(menuDiv);
+		
+		
+		this.elm_menu = menuDiv;
+		isInit = true;
+		
+		function createItem( eventKey, opt ) {
+			var className = opt.className || "";
+			
+			var borderDiv = document.createElement("div");
+			borderDiv.style.borderBottom = '1px solid #EEE';
+			
+			var itemDiv = document.createElement( opt.anchor ? "a":"span");
+			itemDiv.className = className + " item";
+			itemDiv.style.borderBottom = 'none';
+			//itemDiv.style.position = "relative";
+			
+			if( opt.anchor )
+				itemDiv.href = "javascript:void(0)";
+			
+			if (opt.icon) {
+				itemDiv.appendChild( opt.icon );
+				/*
+				$(opt.icon).setStyle({
+					position: "absolute",
+					top: 0,
+					left: 0
+				});
+				*/
+			}
+			
+			var content = document.createElement("span");
+			content.style.whiteSpace = 'nowrap';
+			content.style.paddingLeft = '2px';
+			content.style.position = "relative";
+			content.style.top = -2;
+			
+			if (opt.label) {
+				var labelSpan = document.createElement("s");
+				content.appendChild(document.createTextNode(opt.label));
+			}
+			
+			if( opt.buildMenuFunc )
+			  content.appendChild(opt.buildMenuFunc());
+			 
+			if( opt.content )
+				content.appendChild( opt.content );
+			
+			itemDiv.appendChild( content );
+			
+			if( opt.handler )
+				IS_Event.observe( itemDiv, "click", opt.handler, false, this.eventKey );
+			
+			borderDiv.appendChild( itemDiv );
+			
+			return borderDiv;
+		}
+		
+		var iframe = document.createElement("iframe");
+		iframe.id = (this.eventKey + "_overlay");
+		iframe.className = "widgetMenuOverlay";
+		iframe.border = "0";
+		iframe.frameBorder = "0";
+		iframe.src = "./blank.html";
+		document.body.appendChild(iframe);
+		
+		var closer = document.createElement("div");
+		closer.id = (this.eventKey + "_closer");
+		closer.className = "widgetMenuCloser";
+		document.body.appendChild( closer );
+		
+		var handleHideMenu = this.hide.bind( this );
+		IS_Event.observe(closer, 'click',handleHideMenu, true, this.eventKey);
+	}
+	
+	this.show = function(element){
+		if(!isInit) {
+			this.build();
+			
+			// Because IE freezes and FF cannot get the proper position
+			return setTimeout( this.show.bind( this,element ),10 );
+		}
+		
+		var closer = $(this.eventKey + "_closer");
+		
+		closer.style.width = Math.max(document.body.scrollWidth, document.body.clientWidth);
+		closer.style.height = Math.max(document.body.scrollHeight, document.body.clientHeight);
+		closer.style.display = "";
+		
+		var overlay = $(this.eventKey + "_overlay");
+		if (!isInit && this.elm_menu.style.display != "none") {
+			this.elm_menu.style.display = overlay.style.display = "none";
+		} else {
+			this.elm_menu.style.display = overlay.style.display = "block";
+			//calculate far left on menu
+			Position.prepare();
+			var showToolsDiv = element;
+			var xy = Position.cumulativeOffset(showToolsDiv);
+			var offset= xy[0];
+			var winX = $(document.body).offsetWidth -( Browser.isIE ? 22 : 0);
+			if( (offset + this.elm_menu.offsetWidth ) > winX ){//if the width of the whole menu is bigger than the distance between the left end of top menu and the right end of window
+				offset = (winX  - this.elm_menu.offsetWidth) - 10;
+			}
+			
+			this.elm_menu.style.left = overlay.style.left = offset;
+			this.elm_menu.style.top = overlay.style.top = (xy[1] + showToolsDiv.offsetHeight);
+			
+			overlay.style.width = this.elm_menu.offsetWidth+10;
+			overlay.style.height = this.elm_menu.offsetHeight;
+			
+			Position.prepare();
+			var tail = Position.cumulativeOffset( showToolsDiv )[1] + this.elm_menu.offsetHeight;
+			var limit = getWindowHeight() +document.body.scrollTop;
+			
+			if( !( tail < limit ))
+				document.body.scrollTop += tail -limit +16;
+		}
+		IS_Event.observe(window, 'resize', this.handleHideMenu, false, this.eventKey);
+	}
+	
+	this.hide = function(e) {
+		var menu = this.elm_menu;
+		var selectMenu = this.targetElement;
+		var overlay = $(this.eventKey + "_overlay");
+		var changeColumnSelect = $(this.id +"_menu_change_column_select");
+		var closer = $(this.eventKey + "_closer");
+		
+		IS_Event.stopObserving( window,'resize',this.handleHideMenu );
+		if( e ) {
+			var element = Event.element( e );
+			if( element && (Element.childOf( element, menu ) || selectMenu && Element.childOf( element,selectMenu ) ||
+				menu.style.display == "none")) return;
+		}
+		
+		if( menu ) menu.style.display = "none";
+		if( overlay ) overlay.style.display = "none";
+		if( closer ) closer.style.display = "none";
+		
+		// Forcus remains when using IE
+		if( Browser.isIE )
+			document.body.focus();
+	}
+	
+	this.handleHideMenu = this.hide.bind( this );
+	
+	this.destroy = function(){
+		var menu = this.elm_menu;
+		var overlay = $(this.eventKey + "_overlay");
+		var closer = $(this.eventKey + "_closer");
+		if(menu) Element.remove(menu);
+		if(overlay) Element.remove(overlay);
+		if(closer) Element.remove(closer);
+		
+		if( Browser.isIE )
+			document.body.focus();
+	}
 }
 
 function PullDown(opt){

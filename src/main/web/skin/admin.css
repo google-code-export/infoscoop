@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 body {margin : 0px ;padding : 0px ;}
 body {margin : 0 ;padding : 0 ;/* font-family : osaka, arial ; */}
 
@@ -617,52 +600,4 @@ color:#000000;
 
 #admins,#roles {
 	clear: both;
-}
-
-/**
- * OAuth Container Certification form
- */
-#oauthContainerCertForm {
-	clear:both;
-	padding:10px 20px;
-	width:600px;
-}
-
-#oauthContainerCertForm ul{
-	list-style:none;
-	font-family:Tahoma;
-	color:#055A78;
-	margin:0;
-	padding:0;
-}
-
-#oauthContainerCertForm li{
-	padding:6px;
-	background:#eeeeee;
-	margin-bottom:1px;
-}
-
-#oauthContainerCertForm label {
-	float:left;
-	width:140px;
-	text-align:right;
-	margin-right:7px;
-	line-height:23px;
-}
-
-#oauthContainerCertForm input,
-#oauthContainerCertForm textarea {
-	padding:4px;
-	border:1px solid #999999;
-	width:340px;
-}
-
-#oauthContainerCertForm textarea {
-	width:380px;
-	height:200px;
-}
-
-#oauthContainerCertForm p.note {
-	padding-left:150px;
-	font-size:90%;
 }

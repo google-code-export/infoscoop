@@ -137,7 +137,8 @@
 		</property>
 		<property name="transactionAttributes">
 			<props>
-				<prop key="*">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
+				<prop key="update*">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
+				<prop key="*">PROPAGATION_SUPPORTS,readOnly</prop>
 			</props>
 		</property>
 	</bean>
@@ -222,9 +223,6 @@
 			<bean class="org.infoscoop.service.TabService">
 				<property name="tabDAO">
 					<ref bean="tabDAO" />
-				</property>
-				<property name="widgetDAO">
-					<ref bean="widgetDAO" />
 				</property>
 			</bean>
 		</property>
@@ -362,9 +360,6 @@
 				</property>
 				<property name="gadgetIconDAO">
 					<ref bean="gadgetIconDAO" />
-				</property>
-				<property name="oauthConsumerDAO">
-					<ref bean="oauthConsumerDAO" />
 				</property>
 			</bean>
 		</property>
@@ -526,33 +521,6 @@
 		<property name="transactionAttributes">
 			<props>
 				<prop key="newSessionId">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
-			</props>
-		</property>
-	</bean>
-	<bean id="OAuthService"
-		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
-		<property name="target">
-			<bean
-				class="org.infoscoop.service.OAuthService">
-				<property name="oauthConsumerDAO">
-					<ref bean="oauthConsumerDAO" />
-				</property>
-				<property name="oauthTokenDAO">
-					<ref bean="oauthTokenDAO" />
-				</property>
-				<property name="oauthCertificateDAO">
-					<ref bean="oauthCertificateDAO" />
-				</property>
-			</bean>
-		</property>
-		<property name="transactionManager">
-			<ref bean="hibernateTransactionManger" />
-		</property>
-		<property name="transactionAttributes">
-			<props>
-				<prop key="save*">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
-				<prop key="delete*">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
-				<prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
 			</props>
 		</property>
 	</bean>

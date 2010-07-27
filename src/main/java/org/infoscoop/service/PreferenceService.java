@@ -1,44 +1,19 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 
 package org.infoscoop.service;
 
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.dao.PreferenceDAO;
 import org.infoscoop.dao.model.Preference;
 import org.infoscoop.util.SpringUtil;
-import org.infoscoop.util.Xml2Json;
-import org.json.JSONObject;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 public class PreferenceService{
 
 	private static Log log = LogFactory.getLog(PreferenceService.class);
-	private static final String formatFullDate = "yyyy/MM/dd HH:mm:ss 'GMT'Z";
-	private static final String formatW3C = "yyyy-MM-dd'T'HH:mm:ssZ";
 
 	private PreferenceDAO preferenceDAO;
 	
@@ -61,48 +36,14 @@ public class PreferenceService{
 	 * @return
 	 * @throws Exception
 	 */
-	public String getPreferenceJSON(String uid) throws Exception{
+	public Preference getPrefEntity(String uid) throws Exception{
 		Preference entity = preferenceDAO.select(uid);
 		if(entity == null){
 			entity = new Preference();
 			entity.setUid(uid);
 			entity.setElement(Preference.newElement(uid));
 		}
-		
-		Node node = entity.getElement();
-		
-		JSONObject prefObj;
-		if(node != null){
-			Xml2Json x2j = new Xml2Json();
-			String rootPath = "/preference";
-			x2j.addSkipRule(rootPath);
-			x2j.addPathRule(rootPath + "/property", "name", true, true);
-			String prefJsonStr = x2j.xml2json((Element)node);
-			prefObj = new JSONObject(prefJsonStr);
-
-			// convert the logoffDateTime to the format for javascript.
-			if(prefObj.has("property")){
-				JSONObject prefPropObj = prefObj.getJSONObject("property");
-				if(prefPropObj.has("logoffDateTime")){
-					String logoffDateTime = prefPropObj.getString("logoffDateTime");
-					Date logoffDate = new SimpleDateFormat( formatW3C ).parse(logoffDateTime);
-					prefPropObj.put("logoffDateTime",
-							new SimpleDateFormat( formatFullDate ).format(logoffDate));
-					//prefPropObj.put("logoffDateTime",logoffDateTime );
-				}
-			}
-
-			// remove failed flag
-			boolean isChanged = PreferenceService.updateProperty((Element)node, "failed", "false");
-			if(isChanged && uid !=null){
-				entity.setElement((Element)node);
-				PreferenceService.getHandle().update(entity);
-			}
-			
-		}else{
-			prefObj = new JSONObject();
-		}
-		return prefObj.toString();
+		return entity;
 	}
 	
 	/**
@@ -159,11 +100,12 @@ public class PreferenceService{
 		for(int i=0;i<propList.getLength();i++){
 			property = (Element)propList.item(i);
 			if(property.getAttribute("name").equals(field)){
-				node.removeChild(property);
-				return true;
+				break;
 			}
 		}
-		return false;
+		if(property == null) return false;
+		node.removeChild(property);
+		return true;
 	}
 	public void update(Preference preference){
 		this.preferenceDAO.update(preference);

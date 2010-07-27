@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 /******************************
  * Related to tab
  */
@@ -92,6 +75,26 @@ IS_Portal.buildTabs = function(){
 	Get the id number of tab that is added next.
 */
 IS_Portal.getNextTabNumber = function(){
+	/*
+	// The smallest number that has not been used become id number
+	var tabNumber = false;
+	var tabNumberList = new Array();
+	for(var i=0; i < IS_Portal.tabList.length; i++){
+		tabNumberList.push( parseInt( IS_Portal.tabList[i].id.substring(3) ) );
+	}
+	tabNumberList.sort( function(a,b){ return (a-b); } );
+	for(var i=0; i < tabNumberList.length; i++){
+		if( (i==0 && 0<tabNumberList[i]) || (i!=0 && (tabNumberList[i]+1)<tabNumberList[i+1]  ) ){
+			tabNumber = i+1;
+			break;
+		}
+	}
+	
+	if(!tabNumber){
+		tabNumber = IS_Portal.tabList.length;
+	}
+	
+	*/
 	// +1 to the largest tab number in use.
 	if( IS_Portal.tabList.length == 0 ) return 0;
 	
@@ -116,9 +119,8 @@ IS_Portal.getNextTabNumber = function(){
 	@param name Name of tab adding.
 	@param type Panel type of the tab adding (Include static panel:static/Exclude:dynamic)
 	@param numCol Column number of the tab adding.
-	@disabledDynamicPanel disable dynamic panel.
 */
-IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disabledDynamicPanel, isInitialize){
+IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, isInitialize){
 	/**
 		For managing tab information object
 		@param id id of tab
@@ -128,7 +130,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 		@param panel Div element of panel that correspond tab
 		@param tabNumber Number of displaying order of tab.
 	*/
-	var Tab = function(id, name, type, tab, panel, tabNumber, columnsWidth, disabledDynamicPanel){
+	var Tab = function(id, name, type, tab, panel, tabNumber, columnsWidth){
 		this.id = id;
 		this.name = name;
 		this.type = type;
@@ -139,7 +141,6 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 		this.isColumnBuilt = false;
 		if(columnsWidth)
 			this.columnsWidth = columnsWidth;
-		this.disabledDynamicPanel = disabledDynamicPanel;
 			
 		this.refresh = function(e){
 			Element.addClassName( tab,"loading");
@@ -150,8 +151,6 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 			if( window.confirm(IS_R.getResource(IS_R.ms_deleteTabConfirm,[this.name]))){
 				IS_Portal.deleteTab(this.tab);
 			}
-			
-			IS_Portal.behindIframe.hide();
 			return false;
 		}
 		this.rename = function(newname){
@@ -194,7 +193,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 	}
 	
 	var addTabDiv = document.getElementById("addTab");
-	var tabDiv = IS_Portal.buildTab( idNumber, name, disabledDynamicPanel);
+	var tabDiv = IS_Portal.buildTab( idNumber, name);
 	
 	if(useTab){
 //		var tabsContiner = addTabDiv.previousSibling;
@@ -212,7 +211,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 //	IS_Portal.subWidgetLists[tabDiv.id] = new Object();
 	IS_Portal.columnsObjs[tabDiv.id] = {};
 	
-	var tabObj = new Tab(tabDiv.id, name, type, tabDiv, panelDiv, IS_Portal.tabList.length, columnsWidth, disabledDynamicPanel);
+	var tabObj = new Tab(tabDiv.id, name, type, tabDiv, panelDiv, IS_Portal.tabList.length, columnsWidth);
 	IS_Portal.tabs[tabObj.id] = tabObj;
 	
 	IS_Portal.tabList.push(tabDiv);
@@ -238,17 +237,22 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 	@param tabNumber ID numebr of creating tab
 	@param name Name of creating tab
 */
-IS_Portal.buildTab = function( tabNumber, name, disabledDynamicPanel){
+IS_Portal.buildTab = function( tabNumber, name){
 	// Creating tab
 	var tab = document.createElement("li");
 	tab.id = "tab"+tabNumber;
 	tab.setAttribute("href",( tab.href = "#panel"+tabNumber ));
 	tab.className = "tab";
-	
+   	
 	var outerSpan = document.createElement('span');
 	outerSpan.className = 'outer';
 	var innerSpan = document.createElement('span');
 	innerSpan.className = 'inner';
+	
+	var tabLoadingIcon = document.createElement("img");
+	tabLoadingIcon.src = imageURL +"indicator.gif";
+	tabLoadingIcon.id = tab.id+"_loadingIcon";
+	tabLoadingIcon.className = "tabLoadingIcon";
 	
 	IS_EventDispatcher.addListener("tabLoadCompleted",tab.id,function() {
 			Element.removeClassName( tab,"loading");
@@ -257,46 +261,32 @@ IS_Portal.buildTab = function( tabNumber, name, disabledDynamicPanel){
 			Element.addClassName( tab,"loading");
 		},null,false );
 	
-	var tabTr = $.TR();
+	innerSpan.appendChild( tabLoadingIcon );
 	
-	tabTr.appendChild(
-		$.TD({},
-			$.IMG({src:imageURL +"indicator.gif", id:tab.id+"_loadingIcon", className:"tabLoadingIcon"})
-		)
-	);
+	// Creating tab name
+	var titleSpan = document.createElement("span");
+	titleSpan.id = tab.id + "_title";
+	titleSpan.className = "tabTitle";
+	titleSpan.appendChild( document.createTextNode( name ) );
+	innerSpan.appendChild(titleSpan);
 	
-	if(disabledDynamicPanel){
-		tabTr.appendChild(
-			$.TD({width:6},
-				$.IMG({src:imageURL+"pin-small.gif", className:"fixedTab", title:IS_R.ms_thisIsFixedTab})
-			)
-		);
-	}
+	var selectMenuImg = document.createElement("img");
+	selectMenuImg.id = tab.id+"_selectMenu";
+	selectMenuImg.src = imageURL+"bullet_arrow_down.gif"
+	selectMenuImg.className = "selectMenu";
+	innerSpan.appendChild( selectMenuImg );
+	IS_Event.observe(selectMenuImg, 'click', IS_Portal.showTabMenu.bind(selectMenuImg, tab), false, tab.id);
+	IS_Event.observe(selectMenuImg, 'mousedown', function(e){Event.stop(e);}, false, tab.id);
 	
-	tabTr.appendChild($.TD({},
-		$.SPAN({id:tab.id + "_title", className:"tabTitle"}, name)
-	));
-	
-	if(disabledDynamicPanel){
-		var refreshImg = $.IMG({id:tab.id+"_selectMenu", src:imageURL+"refresh.gif", className:"selectMenu"});
-		tabTr.appendChild($.TD({}, refreshImg));
-		IS_Event.observe(refreshImg, 'click', function(e){
-			var tabObj = IS_Portal.tabs[this.id];
-			tabObj.refresh();
-		}.bindAsEventListener(tab), false, tab.id);
-	} else {
-		var selectMenuImg = $.IMG({id:tab.id+"_selectMenu", src:imageURL+"bullet_arrow_down.gif", className:"selectMenu"});
-		tabTr.appendChild($.TD({}, selectMenuImg));
-		IS_Event.observe(selectMenuImg, 'click', IS_Portal.showTabMenu.bind(selectMenuImg, tab), false, tab.id);
-		IS_Event.observe(selectMenuImg, 'mousedown', function(e){Event.stop(e);}, false, tab.id);
-	}
 	
 	var tabOnMousedown = function(e){
-		IS_Portal.tabDrag(e, tab);
+//		if(!IS_Portal.isDisplayTabTitleEditor){
+			//setTimeout(tabOnClick, 300);
+			IS_Portal.tabDrag(e, tab);
+//		}
 	}
-	IS_Event.observe(tab, 'mousedown', tabOnMousedown, false, tab.id);
 	
-	innerSpan.appendChild($.TABLE({cellPadding:0, cellSpacing:0}, $.TBODY({}, tabTr)));
+	IS_Event.observe(tab, 'mousedown', tabOnMousedown, false, tab.id);
 	
 	outerSpan.appendChild(innerSpan);
 	tab.appendChild(outerSpan);
@@ -316,22 +306,20 @@ IS_Portal.showTabMenu = function(tabElement, e){
 	}
 	var tabMenuOverlay = $(tabElement.id + "_overlay");
 	if (!isInit && tabMenu.style.display != "none") {
-		tabMenu.style.display = "none";
-		IS_Portal.behindIframe.hide();
+		tabMenu.style.display = tabMenuOverlay.style.display = "none";
 	} else {
-		tabMenu.style.display = "";
+		tabMenu.style.display = tabMenuOverlay.style.display = "";
 		
 		//Calculate far left side of menu
 		var offset= findPosX(tabElement.firstChild);
+		console.log(tabElement,offset);
 		var winX = getWindowSize(true) - 25;
 		if( (offset + tabMenu.offsetWidth ) > winX ){//If the width of whole menu is larger than the distance between the left edge of top menu and the right edge of window.
 			offset = (winX  - tabMenu.offsetWidth );
 		}
 		
 		tabMenu.style.left = offset;
-		tabMenu.style.top = (findPosY(tabElement) + tabElement.firstChild.offsetHeight);
-
-		IS_Portal.behindIframe.show(tabMenu);
+		tabMenu.style.top = tabMenuOverlay.style.top = (findPosY(tabElement) + tabElement.firstChild.offsetHeight);
 	}
 	Event.stop(e);
 	
@@ -431,39 +419,7 @@ IS_Portal.showTabMenu = function(tabElement, e){
 		});
 		resetColumnWidthDiv.id = tabObj.id +"_menu_resetColumnWidthDiv";
 		menuDiv.appendChild( resetColumnWidthDiv );
-
-		var initTab = function(tabId){
-			if( !confirm( IS_R.ms_clearConfigurationConfirm ))
-				return;
-			
-			IS_Request.asynchronous = false;
-			IS_Request.CommandQueue.fireRequest();
-			
-			var opt = {
-				method: 'get' ,
-				asynchronous:false,
-				onSuccess: function(req){
-					window.location.reload( true );
-				},
-				onFailure: function(t) {
-					var msg = IS_R.ms_clearConfigurationFailed;
-					alert( msg );
-					msg.error( msg );
-				}
-			};
-			AjaxRequest.invoke(hostPrefix + "/widsrv?reset=true&tabId=" + tabId, opt);
-		}.bind(this, tabObj.id);
-
-		if(tabObj.type == 'static' && !tabObj.disabledDynamicPanel){
-			var initTabDiv = createItem({
-			  anchor:true,
-			  className:"initialize",
-			  label: IS_R.lb_initTab,
-			  handler: initTab
-			});
-			initTabDiv.id = tabObj.id +"_menu_initTab";
-			menuDiv.appendChild( initTabDiv );
-		}
+		
 		function createItem( opt ) {
 			var className = opt.className || "";
 			
@@ -496,6 +452,16 @@ IS_Portal.showTabMenu = function(tabElement, e){
 		
 		document.body.appendChild(menuDiv);
 		
+		var iframe = document.createElement("iframe");
+		iframe.id = (tabElement.id + "_overlay");
+		iframe.className = "tabMenuOverlay";
+		iframe.border = "0";
+		iframe.frameBorder = "0";
+		iframe.style.width = menuDiv.offsetWidth;
+		iframe.style.height = menuDiv.offsetHeight;
+		iframe.src = "./blank.html";
+		document.body.appendChild(iframe);
+		
 		var handleHideTabMenu = hideTabMenu.bind( tabObj );
 		IS_Event.observe(document.body, 'click',handleHideTabMenu, true, tabObj.id);
 		IS_Event.observe(document.body, 'mousedown',handleHideTabMenu, true, tabObj.id);
@@ -507,17 +473,17 @@ IS_Portal.showTabMenu = function(tabElement, e){
 function hideTabMenu( event ) {
 	var tabMenu = $( this.id+"_menu");
 	var selectMenu = $( this.id+"_selectMenu");
+	var overlay = $(this.id + "_overlay");
 	var changeColumnSelect = $(this.id +"_menu_change_column_select");
 	
 	if( event ) {
 		var element = Event.element( event );
-		if( Element.childOf( element,tabMenu ) ||
-			element === selectMenu || //for FF
-			Element.childOf( element,selectMenu ) || //for IE
+		if( Element.childOf( element,tabMenu ) || Element.childOf( element,selectMenu ) ||
 			tabMenu.style.display == "none") return;
 	}
+	
 	if( tabMenu ) tabMenu.style.display = "none";
-	IS_Portal.behindIframe.hide();
+	if( overlay ) overlay.style.display = "none";
 	
 	// Focus is left in IE.
 	if( Browser.isIE )
@@ -533,14 +499,11 @@ IS_Portal.getWidget2TabDroppableOpt = function(tab){
 	// widget to tab
 	var widgetDropOpt = {};
 	widgetDropOpt.accept = function(element, widgetType, classNames){
-		return (
-			!IS_Portal.tabs[tab.id].disabledDynamicPanel &&
-			classNames.detect( 
+		return (classNames.detect( 
           function(v) { return ["widget", "subWidget"].include(v) } ) &&
  			(tab.id != IS_Portal.currentTabId) && widgetType != "mapWidget");
 	}
 	widgetDropOpt.onDrop = function(element, lastActiveElement, widget, event) {
-		if(!IS_Portal.canAddWidget(tab.id)) return;
 		var process = function(){
 			var widgetGhost = IS_Draggable.ghost;
 			
@@ -782,9 +745,7 @@ IS_Portal.setTabDroppable = function(tab){
 	//menuItem to tab
 	var menuDropOpt = {};
 	menuDropOpt.accept = function(element, widgetType, classNames){
-		return (
-			!IS_Portal.tabs[tab.id].disabledDynamicPanel &&
-			classNames.detect( 
+		return (classNames.detect( 
           function(v) { return ["menuItem"].include(v) } ) &&
  			(tab.id != IS_Portal.currentTabId)
 			&& !IS_Portal.menuOver
@@ -920,15 +881,12 @@ IS_Portal.setTabDroppable = function(tab){
 	multimenuopt = Object.extend(multimenuopt, widgetDropOpt);
 //	multimenuopt.accept = "menuGroup";
 	multimenuopt.accept = function(element, widgetType, classNames){
-		return (
-			!IS_Portal.tabs[tab.id].disabledDynamicPanel &&
-			classNames.detect( 
+		return (classNames.detect( 
           function(v) { return ["menuGroup", "multiDropHandle"].include(v) } ) &&
  			(tab.id != IS_Portal.currentTabId) );
 	}
 	
 	tab.droppableOption.onMultiMenuDrop = function(element, lastActiveElement, menuItem, event, originFunc, modalOption){
-		if(!IS_Portal.canAddWidget(tab.id)) return;
 		var process = function(){
 			var confs = IS_SiteAggregationMenu.createMultiDropConf.call(tab, element, lastActiveElement, menuItem, event, tab.droppableOption.onMultiMenuDrop, modalOption, tab);
 			
@@ -1189,18 +1147,6 @@ IS_Portal.changeActiveTab = function( changeTab, isInitialize ){
 	IS_Portal.startChangeTab();
 	
 	IS_Portal.currentTabId = changeTab.id;
-	
-	if(IS_Portal.tabs[changeTab.id].disabledDynamicPanel){
-		$("siteMenuOpenTd").hide();
-		$("siteMenu").hide();
-	} else {
-		$("siteMenuOpenTd").show();
-		var siteMenuElm = $("siteMenu");
-		siteMenuElm.style.width = 0;
-		siteMenuElm.show();
-		IS_SidePanel.adjustPosition();
-	}
-	
 	IS_Widget.RssReader.RssItemRender.adjustRssDesc();
 	
 	var changePanel = function(e){
@@ -1289,7 +1235,6 @@ IS_Portal.buildPanel = function(panelNumber, type){
 	// Create panel
 	var panel = document.createElement("div");
 	panel.id = "panel"+panelNumber;
-	panel.className = "panel";
 	panel.style.display = "none";
 	panel.style.clear = "both";
 	
@@ -1324,7 +1269,6 @@ IS_Portal.buildPanel = function(panelNumber, type){
 	
 	// dynamic
 	var dynamicPanel = document.createElement("div");
-	dynamicPanel.style.clear = "both";
 	td.appendChild(dynamicPanel);
 	dynamicPanel.id = "dynamic-panel"+panelNumber;
 	var dynamicDiv = document.createElement("div");
@@ -1600,13 +1544,4 @@ IS_Portal.refreshTabNumber = function(){
 			IS_Portal.tabs[ tabId ].tabNumber = i;
 		}
 	}
-}
-
-IS_Portal.canAddWidget = function(tabId, alertOff){
-	if(IS_Portal.tabs[tabId || IS_Portal.currentTabId].disabledDynamicPanel){
-		if(!alertOff)
-			alert(IS_R.ms_cannotAddGadgetToThisTab);
-		return false;
-	}
-	return true;
 }

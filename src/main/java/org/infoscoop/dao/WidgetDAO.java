@@ -1,23 +1,5 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -31,24 +13,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Expression;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
-import org.infoscoop.dao.model.Preference;
 import org.infoscoop.dao.model.SystemMessage;
+import org.infoscoop.dao.model.USERPREFPK;
 import org.infoscoop.dao.model.UserPref;
 import org.infoscoop.dao.model.Widget;
+import org.infoscoop.service.MessageService;
 import org.infoscoop.service.SiteAggregationMenuService.ForceUpdateUserPref;
 import org.infoscoop.util.SpringUtil;
 import org.json.JSONException;
-import org.springframework.orm.hibernate3.HibernateCallback;
+import org.json.JSONObject;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 /**
@@ -86,29 +66,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 		super.getHibernateTemplate().flush();
 		updateUserPrefs( widget );
     }
-    
-    public List<String> getWidgetTypes(String uid){
-    	String query = "select distinct w.Type from Widget w where Uid = ? and Deletedate = 0";
-		List result = super.getHibernateTemplate().find(query,
-				new Object[] { uid });
-		return result;
-    }
-    
-	public int getWidgetCountByType(final String type) {
-		return (Integer) super.getHibernateTemplate().execute(
-				new HibernateCallback() {
-					public Object doInHibernate(org.hibernate.Session session)
-							throws HibernateException, SQLException {
-						Criteria crit = session.createCriteria(Widget.class);
-						crit.add(Restrictions.eq(Widget.PROP_TYPE, type));
-						crit.add(Restrictions.eq(Widget.PROP_DELETEDATE, 0L));
-						crit.setProjection(Projections.rowCount());
-						return (Integer) crit.uniqueResult();
-					}
 
-				});
-	}
-    
 	public Widget getWidget(String uid, String tabId, String widgetId ){
 		String query = "from Widget where Uid = ? and Tabid = ? and Widgetid = ? and Deletedate = 0";
 		List result = super.getHibernateTemplate().find(query,
@@ -260,21 +218,6 @@ public class WidgetDAO extends HibernateDaoSupport{
 
 		super.getHibernateTemplate().bulkUpdate( queryString,
 				new Object[] { uid });
-	}
-
-
-	public void deleteWidget( String uid, Integer tabId ) {
-		long deleteDate = new Date().getTime();
-
-		String queryString = "update Widget set Deletedate = ? where Uid = ? and tabId = ? and deleteDate = 0 and Isstatic = 0";
-
-		super.getHibernateTemplate().bulkUpdate( queryString,
-				new Object[]{ deleteDate,uid,tabId.toString() });
-
-		queryString = "delete from Widget where Uid = ? and tabId = ? and Isstatic = 1";
-
-		super.getHibernateTemplate().bulkUpdate( queryString,
-				new Object[] { uid, tabId.toString() });
 	}
 
 	/*
@@ -485,5 +428,4 @@ public class WidgetDAO extends HibernateDaoSupport{
 		for( Object widget : widgets )
 			updateUserPrefs( ( Widget )widget );
 	}
-
 }

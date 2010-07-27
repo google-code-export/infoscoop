@@ -1,29 +1,7 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
 
 .infoScoop .widget {
 	clear:both;
 	width:100%;
-	margin-bottom: 10px;
-	background-color: #FFF;
-}
-
-.infoScoop #maximize-panel .widget {
-	margin-bottom: 0;
 }
 
 .infoScoop .subWidget {
@@ -31,7 +9,8 @@
 	width:100%;
 }
 
-.infoScoop .widget .widgetBox{
+.infoScoop .widget .widgetBox,
+.infoScoop #widgetGhost .widgetBox{
 	clear:both;
 	position: static;
 	/*
@@ -40,19 +19,19 @@
 	*/
 	width: auto;
 	overflow:hidden;
-
-	border: 1px solid #BCBCBC;
-	background-color:#FFF;
+	border-left: 1px solid #BCBCBC;
+	border-right: 1px solid #BCBCBC;
+	border-bottom: 1px solid #BCBCBC;
 }
 
 .infoScoop .widget .widgetShade {
-/*
-	padding:0 3px 3px 0;
-	background-color: green;
-*/
-
+	border-left: 1px solid #EEE;
+	border-right: 3px solid #EEE;
+	border-bottom: 4px solid #EEE;
+/*	margin-left : 10px;*/
+	margin-bottom: 5px;
 }
-/*
+
 .infoScoop .widgetBoxNoHeader {
 	clear:both;
 	position: static;
@@ -60,18 +39,15 @@
 	overflow:hidden;
 	border: 1px solid gray;
 }
-*/
-#widgetGhost {
-	background-color:#f3f3f3;
-}
 
-.infoScoop .subWidget .widgetBox{
+.infoScoop .subWidget .widgetBox,
+.infoScoop #widgetGhost .subWidget .widgetBox{
 	clear:both;
 	position: static;
 	margin : 1px 0 0;
 	width: auto;
 	overflow:hidden;
-	/*background-color: white;*/
+	background-color: white;
 	border: none;
 }
 
@@ -82,6 +58,7 @@
 .infoScoop .widgetContent {
 	width:100%;
 	overflow:hidden;
+	background-color: #FFF;
 }
 
 
@@ -102,20 +79,26 @@
 
 /* WidgetHeader */
 
-.infoScoop .widget .widgetHeader {
+.infoScoop .widget .widgetHeader,
+.infoScoop #widgetGhost .widgetHeader {
 	clear:both;
 	padding-top:0px;
 	padding-bottom:0px;
+	border-bottom: 1px solid #BCBCBC;
+	border-top: 1px solid #BCBCBC;
 	margin: 0px;
 	font-size:100%;
-	/*background-image:url(./imgs/widget_header.png);*/
+	background-image:url(./imgs/widget_header.png);
 	background-position:bottom;
+	background-color: lightgray;
 	height: 22px;
 	cursor:move;
 	overflow:hidden;
 }
 
-.infoScoop .subWidget .widgetHeader{
+.infoScoop .subWidget .widgetHeader,
+.infoScoop #widgetGhost .subWidget .widgetHeader{
+	border:0;
 	clear: both;
 	width: 100%;
 	height: 22px;
@@ -123,17 +106,15 @@
 	background-image:none;
 	cursor: move;
 	overflow:hidden;
-
-	border: none;
-
 }
 
 .infoScoop .widget .widgetHeader .rightHeader{
 	position: absolute;
 	top: 1px;
 	_top: 0px;
-	right: 2px;
+	right: 0;
 	height: 19px;
+	background-image:url(./imgs/widget_header.png);
 }
 .infoScoop .widget .widgetHeader.blink,
 .infoScoop .widget .widgetHeader.blink .rightHeader {
@@ -144,6 +125,17 @@
 .infoScoop .widget .subWidget .widgetHeader.blink .rightHeader {
 	background: url("./imgs/header_blink.gif") !important;
 	background-color: #EEEEFF !important;
+}
+
+
+.infoScoop .subWidget .widgetHeader .rightHeader{
+	position: absolute;
+	top: -1;
+	//top: 0;
+	right: 0;
+	height: 19px;
+	background-color:#EEEEFF;
+	background-image:none;
 }
 
 .infoScoop .widgetHeader .widgetIndicator {

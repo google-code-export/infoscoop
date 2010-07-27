@@ -25,9 +25,6 @@ function getContextPath() {
 	if ( path.charAt(0) == '/' ) {
 		path = path.substr(1);
 	}
-	if( path.indexOf('/') == -1 )
-	  return host;
-	
 	if((p = path.lastIndexOf('/')) != -1){
 		return host + "/" + path.substring(0,p);
 	}
@@ -145,8 +142,7 @@ var supportedFeatures = [
 	/*"core",*/"drag","dynamic-height",
 	"flash","minimessage","pubsub",
 	/*"rpc"*/,"setprefs",/*"settitle",*/
-	"skins","tabs","views"/*,"infoscoop"*/,"analytics",
-	"oauthpopup"
+	"skins","tabs","views"/*,"infoscoop"*/,"analytics"
 ];
 var featureConf = {};
 for( var i=0;i<supportedFeatures.length;i++ ) {

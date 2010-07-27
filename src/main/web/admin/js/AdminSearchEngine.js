@@ -1,13 +1,11 @@
 var ISA_SearchEngine = IS_Class.create();
 
-ISA_SearchEngine.newwindow = false;
 ISA_SearchEngine.searchEngine = false;
 ISA_SearchEngine.defaultSearchList = false;
 ISA_SearchEngine.rssSearchList = false;
 
 // Called by the value returned from server
-ISA_SearchEngine.setSearchEngine = function(_newwindow, _defaultSearchList, _rssSearchList) {
-	ISA_SearchEngine.newwindow = _newwindow;
+ISA_SearchEngine.setSearchEngine = function(_defaultSearchList, _rssSearchList) {
 	ISA_SearchEngine.defaultSearchList = _defaultSearchList;
 	ISA_SearchEngine.rssSearchList = _rssSearchList;
 }
@@ -69,7 +67,7 @@ ISA_SearchEngine.prototype.classDef = function() {
 		IS_Event.observe(refreshDiv, 'click', refreshAClick, false, "_adminSearch");
 
 		searchEngineDiv.appendChild(refreshAllDiv);
-
+		
 		var searchEngineFieldSet = document.createElement("fieldset");
 		searchEngineFieldSet.style.padding = "7px";
 		searchEngineFieldSet.style.marginBottom = "10px";
@@ -82,8 +80,8 @@ ISA_SearchEngine.prototype.classDef = function() {
 		//searchEngineFieldSet.appendChild(titleDiv1);
 		searchEngineFieldSet.appendChild(self.buildDefaultSearchEngine());
 		searchEngineFieldSet.appendChild(ISA_Admin.buildTableHeader(
-			[ISA_R.alb_title,ISA_R.alb_searchAdress,ISA_R.alb_encoding,ISA_R.alb_numberOfItems,ISA_R.alb_publicSettings,ISA_R.alb_selectSiteExecutingByDefault,ISA_R.alb_delete],
-			['220px', '320px', '100px', '40px', '80px', '40px', '40px'] //Sum = 840px
+			[ISA_R.alb_title,ISA_R.alb_searchAdress,ISA_R.alb_encoding,ISA_R.alb_numberOfItems,ISA_R.alb_delete],
+			['220px', '400px', '100px', '40px', '40px']
 			));
 		// DefaultSearch build
 		var defaultSearchDiv = document.createElement("div");
@@ -97,15 +95,14 @@ ISA_SearchEngine.prototype.classDef = function() {
 
 		var searchEngineFieldSet = document.createElement("fieldset");
 		searchEngineFieldSet.style.padding = "7px";
-		searchEngineFieldSet.style.marginBottom = "10px";
 		searchEngineFieldSet.style.width = "920px";
 		var label = document.createElement("legend");
 		label.innerHTML = ISA_R.alb_insiteSearchSettings;
 		searchEngineFieldSet.appendChild( label );
 		searchEngineFieldSet.appendChild(self.buildRssSearchEngine());
 		searchEngineFieldSet.appendChild(ISA_Admin.buildTableHeader(
-			[ISA_R.alb_rssPattern,ISA_R.alb_searchAdress,ISA_R.alb_encoding,ISA_R.alb_numberOfItems,ISA_R.alb_publicSettings,ISA_R.alb_delete],
-			['260px', '280px', '100px', '40px', '80px', '40px']
+			[ISA_R.alb_rssPattern,ISA_R.alb_searchAdress,ISA_R.alb_encoding,ISA_R.alb_numberOfItems,ISA_R.alb_delete],
+			['300px', '320px', '100px', '40px', '40px']
 			));
 		
 		var rssSearchDiv = document.createElement("div");
@@ -124,40 +121,9 @@ ISA_SearchEngine.prototype.classDef = function() {
 		// Drag&Drop
 		new ISA_DragDrop.SearchEngineDragDrop("defaultSearchEngineList");
 		new ISA_DragDrop.SearchEngineDragDrop("rssSearchEngineList");
-		
-		
-		searchEngineDiv.appendChild(
-			$.FIELDSET({style:"width:920px;padding:7px;"},
-					   $.LEGEND({},ISA_R.alb_searchOptionDefaultSettings),
-					   $.DIV({},
-							 $.INPUT({type:"checkbox", defaultChecked: ISA_SearchEngine.newwindow,
-							   onchange:{handler:function(e){
-								   var checkbox = Event.element(e);
-								   ISA_SearchEngine.updateSearchConfAttr('newwindow', '' + checkbox.checked);
-							   }
-							 }}),
-							 ISA_R.alb_searchResultsOnNewWindow
-						 )
-					)
-			);
 	}
 
 	function commitSearchEngine(currentModal) {
-		var defaultSelectedCheckboxList = document.getElementsByClassName('defaultSelectedCheckbox');
-		var emptyDefaultSelected = true;
-		for(var i = 0; i < defaultSelectedCheckboxList.length;i++){
-			if(defaultSelectedCheckboxList[i].checked){
-				emptyDefaultSelected = false;
-				break;
-			}
-		}
-		if(emptyDefaultSelected){
-			setTimeout(function(){
-				alert(ISA_R.ams_pleaseDefaultSelectedSearchSite);
-				currentModal.close();
-			},10);
-			return;
-		}
 		var url = findHostURL() + "/services/searchEngine/commitSearch";
 		var opt = {
 			method: 'get' ,
@@ -223,7 +189,6 @@ ISA_SearchEngine.prototype.classDef = function() {
 				title : ISA_R.alb_newTitle,
 				retrieveUrl : "http://",
 				encoding : "",
-				defaultSelected : true,
 				parentTagName : "defaultSearch"
 			};
 			insertSearchEngine(jsonObj);
@@ -316,7 +281,7 @@ ISA_SearchEngine.prototype.classDef = function() {
 
 		// Address for search
 		engineTd = document.createElement("td");
-		engineTd.style.width = "320px";
+		engineTd.style.width = "400px";
 		engineTr.appendChild(engineTd);
 		contentDiv = document.createElement("div");
 		contentDiv.style.width = "100%";
@@ -363,38 +328,8 @@ ISA_SearchEngine.prototype.classDef = function() {
 		editA.appendChild(editImg);
 		contentDiv.appendChild(editA);
 		engineTd.appendChild(contentDiv);
-		new ISA_SearchEngine.EditorForm(contentDiv, defaultSearchItem, {count: true});
+		new ISA_SearchEngine.EditorForm(contentDiv, defaultSearchItem);
 
-		// Access Control Setting
-		engineTd = document.createElement("td");
-		engineTd.style.width = "80px";
-		engineTd.style.textAlign = "center";
-		engineTr.appendChild(engineTd);
-		contentDiv = document.createElement("div");
-		contentDiv.className = "contentsSearchEngine";
-		contentDiv.id = "acl_" + defaultSearchItem.id;
-		var editA = document.createElement("a");
-		editA.style.cursor = "pointer";
-		editA.appendChild($.SPAN(
-			{id:"acl_label_"+defaultSearchItem.id},
-			defaultSearchItem.auths?ISA_R.alb_restricted:ISA_R.alb_public
-		));
-		var editImg = document.createElement("img");
-		editImg.src = imageURL + "edit.gif";
-		editA.appendChild(editImg);
-		contentDiv.appendChild(editA);
-		engineTd.appendChild(contentDiv);
-		new ISA_SearchEngine.EditorForm(contentDiv, defaultSearchItem, {acl: true});
-
-		// 
-		engineTr.appendChild(
-			$.TD({style:"width:40px;textAlign:center;"}, $.INPUT({className:'defaultSelectedCheckbox',type:'checkbox', defaultChecked:defaultSearchItem.defaultSelected,
-			  onchange:{handler:function(e){
-				  ISA_SearchEngine.updateSearchEngineItem(defaultSearchItem.id, 'defaultSelected', ''+Event.element(e).checked);
-			  }
-			  }}))
-			);
-		
 		// "Delete" icon
 		engineTd = document.createElement("td");
 		engineTd.style.width = "40px";
@@ -508,7 +443,7 @@ ISA_SearchEngine.prototype.classDef = function() {
 
 		// RSS Pattern
 		engineTd = document.createElement("td");
-		engineTd.style.width = "240px";
+		engineTd.style.width = "280px";
 		engineTr.appendChild(engineTd);
 		contentDiv = document.createElement("div");
 		contentDiv.style.width = "100%";
@@ -525,7 +460,7 @@ ISA_SearchEngine.prototype.classDef = function() {
 
 		// Address for search
 		engineTd = document.createElement("td");
-		engineTd.style.width = "280px";
+		engineTd.style.width = "320px";
 		engineTr.appendChild(engineTd);
 		contentDiv = document.createElement("div");
 		contentDiv.style.width = "100%";
@@ -573,28 +508,7 @@ ISA_SearchEngine.prototype.classDef = function() {
 		editA.appendChild(editImg);
 		contentDiv.appendChild(editA);
 		engineTd.appendChild(contentDiv);
-		new ISA_SearchEngine.EditorForm(contentDiv, rssSearchItem, {count: true});
-
-		// Access Control Setting
-		engineTd = document.createElement("td");
-		engineTd.style.width = "80px";
-		engineTd.style.textAlign = "center";
-		engineTr.appendChild(engineTd);
-		contentDiv = document.createElement("div");
-		contentDiv.className = "contentsSearchEngine";
-		contentDiv.id = "acl_" + rssSearchItem.id;
-		var editA = document.createElement("a");
-		editA.style.cursor = "pointer";
-		editA.appendChild($.SPAN(
-			{id:"acl_label_"+rssSearchItem.id},
-			rssSearchItem.auths?ISA_R.alb_restricted:ISA_R.alb_public
-		));
-		var editImg = document.createElement("img");
-		editImg.src = imageURL + "edit.gif";
-		editA.appendChild(editImg);
-		contentDiv.appendChild(editA);
-		engineTd.appendChild(contentDiv);
-		new ISA_SearchEngine.EditorForm(contentDiv, rssSearchItem, {acl: true});
+		new ISA_SearchEngine.EditorForm(contentDiv, rssSearchItem);
 
 		// "Delete" icon
 		engineTd = document.createElement("td");
@@ -684,114 +598,46 @@ ISA_SearchEngine.prototype.classDef = function() {
 
 };
 
-ISA_SearchEngine.updateSearchEngineItem = function(id, name, value){
-	var updateData = {};
-	updateData[name] = value;
-	var url = findHostURL() + "/services/searchEngine/updateSearchEngineItem";
-	var opt = {
-	  method: 'post' ,
-	  contentType: "application/json",
-	  postBody: Object.toJSON([id,updateData]),
-	  asynchronous:true,
-	  onSuccess: function(response){
-		  ISA_Admin.isUpdated = true;
-	  },
-	  onFailure: function(t) {
-		  alert(ISA_R.ams_failedSaveSearchEngine);
-		  msg.error(ISA_R.ams_failedSaveSearchEngine + t.status + " - " + t.statusText);
-	  },
-	  onException: function(r, t){
-		  alert(ISA_R.ams_failedSaveSearchEngine);
-		  msg.error(ISA_R.ams_failedSaveSearchEngine + getErrorMessage(t));
-	  }
-	};
-	AjaxRequest.invoke(url, opt);
-}
-
-ISA_SearchEngine.updateSearchConfAttr = function(name, value){
-	var url = findHostURL() + "/services/searchEngine/updateSearchEngineAttr";
-	var opt = {
-	  method: 'post' ,
-	  contentType: "application/json",
-	  postBody: Object.toJSON([name,value]),
-	  asynchronous:true,
-	  onSuccess: function(response){
-		  ISA_Admin.isUpdated = true;
-	  },
-	  onFailure: function(t) {
-		  alert(ISA_R.ams_failedSaveSearchEngine);
-		  msg.error(ISA_R.ams_failedSaveSearchEngine + t.status + " - " + t.statusText);
-	  },
-	  onException: function(r, t){
-		  alert(ISA_R.ams_failedSaveSearchEngine);
-		  msg.error(ISA_R.ams_failedSaveSearchEngine + getErrorMessage(t));
-	  }
-	};
-	AjaxRequest.invoke(url, opt);
-}
-
 ISA_SearchEngine.EditorForm = IS_Class.create();
 ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 	var self = this;
 	var editorElement;
 	var searchEngine;
-	var option;
 	var disabled;
 	
-	this.initialize = function(_editorElement, _searchEngine, _option) {
+	this.initialize = function(_editorElement, _searchEngine) {
 		editorElement = _editorElement;
 		searchEngine = _searchEngine;
-		option = _option;
+		
 		this.buildTitleEditorForm();
-		authorizations = [];
 	};
 	
 	this.submitEditorForm = function() {
-		var updateData;
-		if(option.count) {
-			var fMethod = $("formMethod").value;
-			var fValue = $("formValue").value;
-			var useCache = ""+ $("useCache").checked;
+		var fMethod = $("formMethod").value;
+		var fValue = $("formValue").value;
 
-			if(fMethod == "regexp"){
-				var error = IS_Validator.validate(fValue, {format:'regexp'}); 
-				if(error){
-					alert(error);
-					return;
-				}
+		if(fMethod == "regexp"){
+			var error = IS_Validator.validate(fValue, {format:'regexp'}); 
+			if(error){
+				alert(error);
+				return;
 			}
-			
-			// Disable execute button
-			$("formExec").disabled = true;
-			$("formCancel").disabled = true;
-			
-			updateData = Object.toJSON([
-				ISA_Admin.replaceUndefinedValue(searchEngine.id),{
-					method: fMethod,
-					value: fValue,
-					useCache: useCache
-				},"countRule"
-			]);
 		}
-		if(option.acl) {
-			if($("formIsPublic").checked == true){
-				searchEngine.auths = undefined;
-			}else{
-				searchEngine.auths = authorizations;
-			}
-			$("acl_label_"+searchEngine.id).innerHTML = searchEngine.auths?ISA_R.alb_restricted:ISA_R.alb_public;
-			updateData = Object.toJSON([
-				ISA_Admin.replaceUndefinedValue(searchEngine.id),
-				{auths:searchEngine.auths},
-				"auths"
-			]);
-		}
+		
+		// Disable execute button
+		$("formExec").disabled = true;
+		$("formCancel").disabled = true;
 
 		var url = findHostURL() + "/services/searchEngine/updateSearchEngineItem";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
-			postBody: updateData,
+			postBody: Object.toJSON([
+				ISA_Admin.replaceUndefinedValue(searchEngine.id),{
+					method: fMethod,
+					value: fValue
+				},"countRule"
+				]),
 			asynchronous:true,
 			onSuccess: function(response){
 				ISA_Admin.isUpdated = true;
@@ -802,15 +648,12 @@ ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 					jsonStr += "method:" + "\"" + fMethod + "\"";
 					jsonStr += ",";
 					jsonStr += "value:" + "\"" + fValue + "\"";
-					jsonStr += ",";
-					jsonStr += "useCache:" +  useCache;
 					jsonStr += "}";
 					eval("jsonObj="+jsonStr);
 					searchEngine["countRule"] = jsonObj;
 				}else{
 					searchEngine.countRule.method = fMethod;
 					searchEngine.countRule.value = fValue;
-					searchEngine.countRule.useCache = eval(useCache);
 				}
 				self.currentModal.close();
 			},
@@ -832,28 +675,113 @@ ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 		var showEditorsForm = document.createElement("div");
 //		showEditorsForm.id = "showEditorsForm";
 
-		if(option.count) {
-			var countForm = ISA_SearchEngine.EditorForm.makeCountEditForm(searchEngine);
-			showEditorsForm.appendChild(
-				countForm
-			);
-		}
-		if(option.acl) {
-			showEditorsForm.appendChild(
-				ISA_CommonModals.EditorForm.makeMenuItemACLEditFieldSet(false, searchEngine)
-			);
-		}
+		/* Create outer box*/
+		var contentTable = document.createElement("table");
+		contentTable.style.width = "100%";
+		contentTable.setAttribute("cellpadding","0");
+		contentTable.setAttribute("cellspacing","0");
+		contentTable.style.borderTop = "1px outset gray";
+		contentTable.style.borderLeft = "1px outset gray";
+		contentTable.style.borderRight = "1px outset gray";
+		contentTable.style.borderBottom = "1px outset gray";
+
+		var contentTbody = document.createElement("tbody");
+		var contentTr = document.createElement("tr");
+		var contentTd = document.createElement("td");
+		var contentDiv = document.createElement("div");
+//		contentDiv.id = "";
+		contentTable.appendChild(contentTbody);
+		contentTbody.appendChild(contentTr);
+		contentTr.appendChild(contentTd);
+		contentTd.appendChild(contentDiv);
+
+		/* Create main */
+		var editorFormTable = document.createElement("table");
+		editorFormTable.style.width = "100%";
+		contentDiv.appendChild(editorFormTable);
+		var editorFormTbody = document.createElement("tbody");
+		editorFormTable.appendChild(editorFormTbody);
+
+		// Input item:method
+		editorFormTbody.appendChild(makeMethodSelect());
+
+		// Input item:value
+		editorFormTbody.appendChild(makeValueText());
 
 		/* Execute button */
-		showEditorsForm.appendChild(makeExecButton());
+		editorFormTbody.appendChild(makeExecButton());
+
+		showEditorsForm.appendChild(contentTable);
 
 		editorsFormDiv.appendChild(showEditorsForm);
-		
 		editorFormFieldDiv.appendChild(editorsFormDiv);
 
+		function makeMethodSelect(){
+			var subTr = document.createElement("tr");
+			var subTd = document.createElement("td");
+			subTd.style.width = "40%";
+			subTd.style.textAlign = "right";
+			subTd.appendChild(document.createTextNode(ISA_R.alb_method));
+			subTr.appendChild(subTd);
+
+			subTd = document.createElement("td");
+			subTd.style.width = "60%";
+			var subInput = document.createElement("select");
+			subInput.id = "formMethod";
+			subInput.name = "FORM_METHOD";
+			subInput.disabled = disabled;
+
+			var methodList = new Array(["regexp",ISA_R.alb_regularExpression], ["id","ID"]);
+
+			for(var i = 0; i < methodList.length; i++){
+				var opt = document.createElement("option");
+				opt.id = searchEngine.id + '_optName' + i;
+				opt.value = methodList[i][0];
+//				opt.innerHTML = methodList[i][1];
+				opt.appendChild(document.createTextNode(methodList[i][1]));
+				if(searchEngine.countRule){
+					if(methodList[i][0] == searchEngine.countRule.method){
+						opt.selected = true;
+					}
+				}
+				subInput.appendChild( opt );
+			}
+			subTd.appendChild(subInput);
+			subTr.appendChild(subTd);
+			return subTr;
+		}
+
+		function makeValueText(){
+			var elementTr = document.createElement("tr");
+			var elementTd = document.createElement("td");
+			elementTd.style.width = "40%";
+			elementTd.style.textAlign = "right";
+			elementTd.appendChild(document.createTextNode(ISA_R.alb_valueColon));
+			elementTr.appendChild(elementTd);
+
+			elementTd = document.createElement("td");
+			elementTd.style.width = "60%";
+			var elementInput = document.createElement("input");
+//			elementInput.setAttribute('autocomplete','off'); 
+			elementInput.type = "text";
+			elementInput.id = "formValue";
+			elementInput.name = "FORM_VALUE";
+			elementInput.size = "50";
+			elementInput.maxLength = "256";
+			if(searchEngine.countRule){
+				elementInput.value = ISA_Admin.replaceUndefinedValue(searchEngine.countRule.value);
+			}
+			elementInput.disabled = disabled;
+			elementTd.appendChild(elementInput);
+			elementTr.appendChild(elementTd);
+			return elementTr;
+		}
+
 		function makeExecButton(){
-			var buttonDiv = document.createElement("div");
-			buttonDiv.style.textAlign = "center";
+			var elementTr = document.createElement("tr");
+			var elementTd = document.createElement("td");
+			elementTd.colSpan = "2";
+			elementTd.style.textAlign = "center";
 			
 			var elementInput = document.createElement("input");
 			elementInput.className = "modal_button";
@@ -862,7 +790,7 @@ ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 			elementInput.name = "FORM_EXEC";
 			elementInput.value = ISA_R.alb_ok;
 			IS_Event.observe(elementInput, 'click', self.submitEditorForm.bind(self), false, "_adminSearch");
-			buttonDiv.appendChild(elementInput);
+			elementTd.appendChild(elementInput);
 			
 			var closeButton = document.createElement("input");
 			closeButton.className = "modal_button";
@@ -870,9 +798,12 @@ ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 			closeButton.id = "formCancel";
 			closeButton.value = ISA_R.alb_cancel;
 			IS_Event.observe(closeButton, 'click', self.hideTitleEditorForm.bind(self), false, "_adminSearch");
-			buttonDiv.appendChild(closeButton);
-			return buttonDiv;
+			elementTd.appendChild(closeButton);
+			
+			elementTr.appendChild(elementTd);
+			return elementTr;
 		}
+
 	};
 
 	this.hideTitleEditorForm = function(){
@@ -908,113 +839,3 @@ ISA_SearchEngine.EditorForm.prototype.classDef = function() {
 	};
 
 };
-
-ISA_SearchEngine.EditorForm.makeCountEditForm = function(searchEngine){
-	var disabled;
-
-	function makeMethodSelect(){
-		var subTr = document.createElement("tr");
-		var subTd = document.createElement("td");
-		subTd.style.width = "30%";
-		subTd.style.textAlign = "right";
-		subTd.appendChild(document.createTextNode(ISA_R.alb_method));
-		subTr.appendChild(subTd);
-
-		subTd = document.createElement("td");
-		subTd.style.width = "70%";
-		var subInput = document.createElement("select");
-		subInput.id = "formMethod";
-		subInput.name = "FORM_METHOD";
-		subInput.disabled = disabled;
-
-		var methodList = new Array(["regexp",ISA_R.alb_regularExpression], ["id","ID"]);
-
-		for(var i = 0; i < methodList.length; i++){
-			var opt = document.createElement("option");
-			opt.id = searchEngine.id + '_optName' + i;
-			opt.value = methodList[i][0];
-//				opt.innerHTML = methodList[i][1];
-			opt.appendChild(document.createTextNode(methodList[i][1]));
-			if(searchEngine.countRule){
-				if(methodList[i][0] == searchEngine.countRule.method){
-					opt.selected = true;
-				}
-			}
-			subInput.appendChild( opt );
-		}
-		subTd.appendChild(subInput);
-		subTr.appendChild(subTd);
-		return subTr;
-	}
-
-	function makeValueText(){
-		var elementTr = document.createElement("tr");
-		var elementTd = document.createElement("td");
-		elementTd.style.width = "30%";
-		elementTd.style.textAlign = "right";
-		elementTd.appendChild(document.createTextNode(ISA_R.alb_valueColon));
-		elementTr.appendChild(elementTd);
-
-		elementTd = document.createElement("td");
-		elementTd.style.width = "70%";
-		var elementInput = document.createElement("input");
-//			elementInput.setAttribute('autocomplete','off'); 
-		elementInput.type = "text";
-		elementInput.id = "formValue";
-		elementInput.name = "FORM_VALUE";
-		elementInput.size = "50";
-		elementInput.maxLength = "256";
-		if(searchEngine.countRule){
-			elementInput.value = ISA_Admin.replaceUndefinedValue(searchEngine.countRule.value);
-		}
-		elementInput.disabled = disabled;
-		elementTd.appendChild(elementInput);
-		elementTr.appendChild(elementTd);
-		return elementTr;
-	}
-	
-	/* Create outer box*/
-	var contentTable = document.createElement("table");
-	contentTable.style.width = "100%";
-	contentTable.setAttribute("cellpadding","0");
-	contentTable.setAttribute("cellspacing","0");
-
-	var contentTbody = document.createElement("tbody");
-	var contentTr = document.createElement("tr");
-	var contentTd = document.createElement("td");
-	var contentDiv = document.createElement("div");
-//		contentDiv.id = "";
-	contentTable.appendChild(contentTbody);
-	contentTbody.appendChild(contentTr);
-	contentTr.appendChild(contentTd);
-	contentTd.appendChild(contentDiv);
-
-	/* Create main */
-	var editorFormTable = document.createElement("table");
-	editorFormTable.style.width = "100%";
-	var editorFormTbody = document.createElement("tbody");
-
-	// Input item:method
-	editorFormTbody.appendChild(makeMethodSelect());
-
-	// Input item:value
-	editorFormTbody.appendChild(makeValueText());
-	
-	// Input item:direct
-	var useCacheDefaultChecked = searchEngine.countRule ? searchEngine.countRule.useCache : false;
-	editorFormTbody.appendChild(
-		$.TR({},
-			 $.TD({style:"textAlign:right;verticalAlign:top;"},ISA_R.alb_useCacheForSearchResults),
-			 $.TD({},$.INPUT({id:'useCache',type:'checkbox',defaultChecked: useCacheDefaultChecked}),$.DIV({style:"fontSize:80%;"},ISA_R.alb_descOfUseCacheForSearchResults))
-			   )
-		);
-		
-	editorFormTable.appendChild(editorFormTbody);
-	contentDiv.appendChild(editorFormTable);
-	
-	
-	return $.FIELDSET({},
-		$.LEGEND({}, ISA_R.alb_numberOfItems),
-		contentTable
-	);
-}

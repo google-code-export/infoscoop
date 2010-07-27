@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 
 IS_SidePanel.SiteMap = IS_Class.create();
 
@@ -592,11 +575,10 @@ IS_SidePanel.SiteMap.prototype.classDef = function () {
 		divMenuTitle.id = "t_" + menuItem.id;
 		divMenuTitle.className = "treeMenuTitle";
 		
-		var title = menuItem.directoryTitle || menuItem.title;
 		if (menuItem.href && !menuItem.linkDisabled) {
 			var aTag = document.createElement('a');
 			aTag.href = menuItem.href;
-			aTag.appendChild(document.createTextNode(title));
+			aTag.appendChild(document.createTextNode(menuItem.title));
 			if(menuItem.display == "self") {
 				aTag.target = "_self";
 			} else if(menuItem.display == "newwindow"){
@@ -613,9 +595,9 @@ IS_SidePanel.SiteMap.prototype.classDef = function () {
 			IS_Event.observe(aTag, "mousedown", function(e){Event.stop(e);}, false, "_sidemenu");
 			divMenuTitle.appendChild(aTag);
 		}else{
-			divMenuTitle.appendChild(document.createTextNode(title));
+			divMenuTitle.appendChild(document.createTextNode(menuItem.title));
 		}
-		divMenuTitle.title = title;
+		divMenuTitle.title = menuItem.title;
 		
 		if ( Browser.isIE ) {
 			divMenuItem.appendChild(divMenuTitle);
@@ -627,7 +609,7 @@ IS_SidePanel.SiteMap.prototype.classDef = function () {
 			var menuItemTable = document.createElement("table");
 			menuItemTable.cellSpacing = "0";
 			menuItemTable.cellPadding = "0";
-//			menuItemTable.style.width = "100%";
+			menuItemTable.style.width = "100%";
 //			menuItemTable.style.whiteSpace = "nowrap";
 			var tr = document.createElement("tr");
 			var td = document.createElement("td");
@@ -641,16 +623,16 @@ IS_SidePanel.SiteMap.prototype.classDef = function () {
 		
 		if(hasChilds){
 			var childList = menuItem.children;
-			var hasWidget = false;
+			var hasRsReader = false;
 			for(var i = 0; i < childList.length ;i++){
 				var childItem = childList[i];
-				if(childItem.type){
-					hasWidget = true;
+				if(childItem.type && /RssReader$/.test(childItem.type)){
+					hasRsReader = true;
 					break;
 				}
 			}
 			
-			if(hasWidget){
+			if(hasRsReader){
 				var folderFeedContainer = document.createElement("div");
 				
 //				if(Browser.isIE) // The item is set in wrong position in IE if it is not in between BRs

@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 widgetOrderReverse = typeof widgetOrderReverse != "undefined" ? widgetOrderReverse : false;
 IS_Portal.numStatic = 0;
 IS_Portal.isSliderReset = true;
@@ -348,7 +331,21 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			var tabOrder = -1;
 			var buildTargetTabIds = [];
 			for(var tabId = 0; tabId < widgetConfList.length; tabId++){
-				if(widgetConfList[tabId].buildVersion){
+				if(widgetConfList[tabId].preference){
+					var preference = widgetConfList[tabId].preference;
+					if(preference.property){
+						IS_Portal.logoffDateTime = new Date( preference.property.logoffDateTime ? preference.property.logoffDateTime : "").getTime();
+						IS_Portal.fontSize = preference.property.fontSize ? preference.property.fontSize : IS_Portal.defaultFontSize;
+						IS_Portal.setFontSize(null, true);
+						if(preference.property.thema) IS_Portal.setThema(preference.property.thema);
+						if(preference.property.freshDays) IS_Portal.freshDays = preference.property.freshDays;
+						IS_Portal.lastSaveFailed = preference.property.failed ? getBooleanValue(preference.property.failed) : false;
+						IS_Portal.mergeconfirm = preference.property.mergeconfirm ? getBooleanValue(preference.property.mergeconfirm) : true;
+						IS_Portal.msgLastViewTime = preference.property.msgLastViewTime || -1;
+						
+						IS_Portal.preference = preference;
+					}
+				}else if(widgetConfList[tabId].buildVersion){
 					IS_Portal.buildVersion = widgetConfList[tabId].buildVersion;
 				}else if( useTab || tabId == 0 ){
 					var id = widgetConfList[tabId].tabId;
@@ -380,26 +377,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 						IS_Portal.numStatic++;
 					}
 					
-					var disabledDynamicPanel = widgetConfList[tabId].disabledDynamicPanel;
-					if(widgetConfList[tabId].isTrashDynamicPanelWidgets){
-						var msgListDiv = $('message-list');
-						msgListDiv.appendChild(
-							$.DIV(
-								{id:'message-newmsg'},
-								$.IMG(
-									{
-										style:'position:relative;top:2px;paddingRight:2px',
-										src:imageURL+"information.gif"
-									}
-								),
-								IS_R.getResource(IS_R.ms_changeToFixedTab, [tabName])
-							)
-						);
-						$('message-bar').style.display = "";
-						IS_EventDispatcher.newEvent("adjustedMessageBar");
-					}
-					
-					IS_Portal.addTab( id, tabName, tabType, numCol, columnsWidth, disabledDynamicPanel, true);
+					IS_Portal.addTab( id, tabName, tabType, numCol, columnsWidth, true);
 					buildTargetTabIds.push(id);
 					
 					if(!useTab){
@@ -422,7 +400,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 					}
 				});
 			}
-
+			
 			//Holiday information
 			IS_Holiday = new IS_Widget.Calendar.iCalendar(localhostPrefix + "/holidaysrv");
 			IS_Holiday.load(false);
@@ -456,7 +434,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 					var widgets = widgetConfList[num].staticPanel;
 					buildStaticPanel(id, widgets, isBuild);
 				}
-				if(!widgetConfList[num].disabledDynamicPanel && widgetConfList[num].dynamicPanel){
+				if(widgetConfList[num].dynamicPanel){
 					var widgets = widgetConfList[num].dynamicPanel;
 					buildDynamicPanel(id, widgets, isBuild);
 				}
@@ -542,8 +520,6 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			//This line should be here as IS_Portal.msgLastViewTime is needed
 			IS_Widget.Message.checkNewMsgRepeat();
 			
-			if(fixedPortalHeader) 
-				IS_Portal.adjustPanelHeight(null);
 		}finally{
 			//refs#3864 stop indicator anyway when widgets are end of load.
 			IS_Portal.endIndicator();
@@ -644,10 +620,9 @@ IS_Portal.getLoadWidgets = function(tabId, isAllReload){
 	return loadWidgets;
 }
 IS_Portal.buildContents = function( tabId , isAllReload){
-	var tabObj = IS_Portal.tabs[tabId];
-	if( !tabObj.isColumnBuilt && !tabObj.disabledDynamicPanel) return;
-	if( tabObj.isBuilding ) return;
-	tabObj.isBuilding = true;
+	if( !IS_Portal.tabs[tabId].isColumnBuilt ) return;
+	if( IS_Portal.tabs[tabId].isBuilding ) return;
+	IS_Portal.tabs[tabId].isBuilding = true;
 	
 	var loadWidgets = IS_Portal.getLoadWidgets(tabId, isAllReload);
 	
@@ -673,9 +648,9 @@ IS_Portal.buildContents = function( tabId , isAllReload){
 		IS_Portal.adjustIS_PortalStyle();
 	} else {
 		IS_EventDispatcher.newEvent("tabLoadCompleted",tabId );
-		tabObj.isBuilding = false;
+		IS_Portal.tabs[tabId].isBuilding = false;
 	}
-	tabObj.isBuilt = true;
+	IS_Portal.tabs[tabId].isBuilt = true;
 }
 IS_Portal.buildAllTabsContents = function(){
 	if(IS_Portal.isBuildingAllTabs) return;
@@ -818,7 +793,6 @@ IS_WidgetsContainer.adjustColumnWidth = function( tabId, columnsWidth, isInitial
 		columns[0].style.width = "100%";
 		isClear = true;
 	}else{
-		var sumWidth = 0;
 		var loopCount = 0;
 		for (var i=0; i < columns.length; i++ ) {
 			if(!columns[i] || columns[i].nodeType != 1 || columns[i].className != "column") continue;
@@ -831,12 +805,8 @@ IS_WidgetsContainer.adjustColumnWidth = function( tabId, columnsWidth, isInitial
 				columns[i].style.width = width;
 				IS_Portal.tabs[adjustTabId].columnsWidth.push(width);
 			}else{
-				if(i == columns.length-1){
-					columns[i].style.width = (100 - sumWidth) + "%";
-				}else if(columnsWidth[loopCount]){
+				if(columnsWidth[loopCount])
 					columns[i].style.width = columnsWidth[loopCount];
-					sumWidth += parseFloat(columnsWidth[loopCount])+1;
-				}
 			}
 			loopCount++;
 		}
@@ -912,28 +882,22 @@ IS_WidgetsContainer.adjustColumns = {
 //		IS_WidgetsContainer.adjustColumns.hideAdjustDivs(targetEl1.parentNode, e);
 		var numCol = IS_Portal.tabs[IS_Portal.currentTabId].numCol;
 		
-		var p = ( targetEl1.offsetWidth / parentWidth ) * 100;
+		var _coefficient = (Browser.isSafari1) ? 0.996 : (Browser.isSafari) ? 0.998 : 1;
+		var p = ( targetEl1.offsetWidth / (parentWidth * _coefficient) ) * 100;
 		targetEl1.style.width = p + "%";
 		
-		var columnsWidth = [];
-		var columns = targetEl1.parentNode.childNodes;
-		var sumWidth = 0;
-		var targetEl2colnum = targetEl2.getAttribute("colnum");
-		for(var i=0;i<columns.length;i++){
-			if(columns[i].className != "column") continue;
-			if(columns[i].getAttribute("colnum") == targetEl2colnum){
-				columnsWidth.push(0);
-				continue;
-			}
-			columnsWidth.push(columns[i].style.width);
-			sumWidth += parseFloat(columns[i].style.width) + 1;
-		}
-		targetEl2.style.width = (100 - sumWidth) + "%";
-		columnsWidth[parseInt(targetEl2colnum)-1] = targetEl2.style.width;
-		IS_Portal.tabs[IS_Portal.currentTabId].columnsWidth = columnsWidth;
+		p = (targetEl2.offsetWidth / (parentWidth *  _coefficient) ) * 100;
+		targetEl2.style.width = p + "%";
 		
 		IS_Widget.adjustDescWidth();
 		IS_Portal.adjustGadgetHeight();
+		
+		IS_Portal.tabs[IS_Portal.currentTabId].columnsWidth = new Array();
+		var columns = targetEl1.parentNode.childNodes;
+		for(var i=0;i<columns.length;i++){
+			if(columns[i].className != "column") continue;
+			IS_Portal.tabs[IS_Portal.currentTabId].columnsWidth.push(columns[i].style.width);
+		}
 		
 		IS_WidgetsContainer.adjustColumns.hideAdjustDivs(targetEl1.parentNode);
 		IS_Portal.widgetDisplayUpdated();
@@ -962,7 +926,7 @@ IS_WidgetsContainer.adjustColumns = {
 		
 		var setWidth2 = (totalWidth - targetEl1.offsetWidth);
 		if(totalWidth - setWidth2 > 0){
-			targetEl2.style.width = setWidth2 - 1;
+			targetEl2.style.width = setWidth2;
 		}
 		
 		IS_WidgetsContainer.adjustColumns.isChanging = false;
@@ -1026,8 +990,7 @@ if( Browser.isSafari1 ) {
 
 IS_Portal.rebuilding = new Object();
 IS_WidgetsContainer.rebuildColumns = function( tabId, numCol, columnsWidth, isReset, isInitialize ) {
-	if(IS_Portal.tabs[tabId].disabledDynamicPanel
-	   || (!isReset && (IS_Portal.tabs[tabId].numCol == numCol || IS_Portal.rebuilding[tabId] == true))){
+	if(!isReset && (IS_Portal.tabs[tabId].numCol == numCol || IS_Portal.rebuilding[tabId] == true)){
 		IS_Portal.rebuilding[tabId] = false;
 		return;
 	}
@@ -1118,7 +1081,6 @@ IS_WidgetsContainer.rebuildColumns = function( tabId, numCol, columnsWidth, isRe
 }
 
 IS_WidgetsContainer.addWidget = function (tabId, widgetConf, isBuild, appendFunc, subWidgetConfList) {
-	if(!IS_Portal.canAddWidget(tabId)) return;
 	if(!widgetConf.column) widgetConf.column = 1; 
 	if( IS_Portal.tabs[tabId].numCol < widgetConf.column ){
 		widgetConf.column = IS_Portal.tabs[tabId].numCol;
