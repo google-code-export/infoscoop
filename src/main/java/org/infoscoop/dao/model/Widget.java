@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao.model;
 
 import java.util.HashMap;
@@ -96,7 +79,6 @@ public class Widget extends BaseWidget {
 		json.put("createDate", this.getCreatedate());
 		json.put("deleteDate", this.getDeletedate());
 		json.put("ignoreHeader", this.isIgnoreHeader());
-		json.put("noBorder", this.isNoBorder());
 		
 		return json;
 	}
@@ -111,18 +93,6 @@ public class Widget extends BaseWidget {
 	
 	public void setIgnoreHeader(boolean b) {
 		super.setIgnoreheader(new Integer((b ? 1 : 0 )));		
-	}
-
-	public boolean isNoBorder(){
-		if(super.getNoborder() == null){
-			return false;
-		}else{
-			return super.getNoborder().intValue() == 1;
-		}
-	}
-	
-	public void setNoBorder(boolean b) {
-		super.setNoborder(new Integer((b ? 1 : 0 )));		
 	}
 	
 	public Map<String,UserPref> getUserPrefs() {
@@ -178,12 +148,5 @@ public class Widget extends BaseWidget {
 
 	public String getMenuid() {
 		return StringUtil.getNullSafe( super.getMenuid() );
-	}
-	
-	@Override
-	public void setTitle(String title) {
-		if (title.length() > 80)
-			title = title.substring(0, 80);
-		super.setTitle(title);
 	}
 }

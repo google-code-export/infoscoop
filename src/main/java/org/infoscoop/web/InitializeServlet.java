@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.web;
 
 
@@ -37,8 +20,6 @@ import org.apache.velocity.app.Velocity;
 import org.infoscoop.account.SearchUserService;
 import org.infoscoop.util.SpringUtil;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -55,13 +36,16 @@ public class InitializeServlet extends HttpServlet {
 	 * It is a precondition to operate a servlet that a file of DAO setting (/WEB-INF/conf/dao-config.xml) is set definitely.
 	 */
 	public void init(ServletConfig config) throws ServletException {
-		
+		String beanDefinitionsParam = config.getInitParameter("bean-definitions");
+		String[] beanDefinitions = beanDefinitionsParam.split(",");
+		for(int i = 0; i < beanDefinitions.length; i++){
+			beanDefinitions[i] = beanDefinitions[i].trim();
+		}
 		initLog4jProperties(config);
 		//loadDAOConfig(config);
 		initVelocity(config);
 
-		ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(config.getServletContext());
-		SpringUtil.setContext(ctx);
+		SpringUtil.initContext(beanDefinitions);
 		initSearchUserService();
 		Security.setProperty("networkaddress.cache.ttl", "60");
 	}

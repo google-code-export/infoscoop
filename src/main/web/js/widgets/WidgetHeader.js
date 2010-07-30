@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.WidgetHeader = IS_Class.create();
 IS_Widget.WidgetHeader.prototype.classDef = function() {
 	var self = this;
@@ -124,7 +107,7 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 			  );
 		
 		this.hiddenIcons = hiddenIcons;
-		this.hiddenMenu = new IS_Widget.WidgetHeader.MenuPullDown(this.elm_showTool, widget.id, widget.closeId);
+		this.hiddenMenu = new MenuPullDown(this.elm_showTool, widget.id, widget.closeId);
 		for ( var j=0; j<hiddenIcons.length; j++ ) {
 			var iconType = hiddenIcons[j].type;
 			if(this.isHiddenIcon(iconType)) continue;
@@ -591,6 +574,7 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 		
 	    if (widget.draggable) {
 			this.draggble = new IS_Draggable(widget.elm_widget, {
+				scroll: window,
 				handle: headerDiv,
 				revert: false,
 				ghosting: true,
@@ -697,8 +681,6 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 			this.widgetEdit = new IS_Widget.WidgetEdit(widget);
 		this.widgetEdit.displayContents();
 		widget.elm_widgetEditHeader.style.display="block";
-		if(isStatic)
-			IS_Portal.behindIframe.show(widget.elm_widgetEditHeader);
 		
 		IS_Widget.adjustEditPanelsTextWidth();
 	};
@@ -821,9 +803,6 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 	}
 	this.turnbackMaximize = function() {
 		widget.turnbackMaximize();
-		//Fixed Issue 149: Fragment Minibrowser shows a little off from the position whrere it should be when it maximized.
-		if(fixedPortalHeader)
-			IS_Portal.adjustPanelHeight();
 	}
 	
 	this.showLatestNews = function(e) {
@@ -924,192 +903,4 @@ IS_Widget.WidgetHeader.getTitle = function(widget){
 	}
 	
 	return displayTitle;
-}
-
-IS_Widget.WidgetHeader.MenuPullDown = function(element, widgetId, eventKey){
-	this.targetElement = element;
-	this.eventKey = eventKey;
-	this.menuOptList = [];
-	
-	var isInit = false;
-	
-	this.addMenu = function(opt){
-		this.menuOptList.push(opt);
-	}
-	
-	this.build = function(){
-		var menuDiv = document.createElement("div");
-		menuDiv.id = (this.eventKey + "_menu");
-		menuDiv.className = "widgetMenu";
-		menuDiv.style.display = "none";
-		for(var i=0;i<this.menuOptList.length;i++){
-			var itemDiv = createItem(this.eventKey, this.menuOptList[i]);
-			itemDiv.id = "hm_" + widgetId + "_" + this.menuOptList[i].type;
-			menuDiv.appendChild( itemDiv );
-		}
-		menuDiv.style.top = 0;
-		document.body.appendChild(menuDiv);
-		
-		this.elm_menu = menuDiv;
-		isInit = true;
-		
-		function createItem( eventKey, opt ) {
-			var className = opt.className || "";
-			
-			var borderDiv = document.createElement("div");
-			borderDiv.style.borderBottom = '1px solid #EEE';
-			
-			var itemDiv = document.createElement( opt.anchor ? "a":"span");
-			itemDiv.className = className + " item";
-			itemDiv.style.borderBottom = 'none';
-			//itemDiv.style.position = "relative";
-			
-			if( opt.anchor )
-				itemDiv.href = "javascript:void(0)";
-			
-			if (opt.icon) {
-				itemDiv.appendChild( opt.icon );
-				/*
-				$(opt.icon).setStyle({
-					position: "absolute",
-					top: 0,
-					left: 0
-				});
-				*/
-			}
-			
-			var content = document.createElement("span");
-			content.style.whiteSpace = 'nowrap';
-			content.style.paddingLeft = '2px';
-			content.style.position = "relative";
-			content.style.top = -2;
-			
-			if (opt.label) {
-				var labelSpan = document.createElement("s");
-				content.appendChild(document.createTextNode(opt.label));
-			}
-			
-			if( opt.buildMenuFunc )
-			  content.appendChild(opt.buildMenuFunc());
-			 
-			if( opt.content )
-				content.appendChild( opt.content );
-			
-			itemDiv.appendChild( content );
-			
-			if( opt.handler )
-				IS_Event.observe( itemDiv, "click", opt.handler, false, this.eventKey );
-			
-			borderDiv.appendChild( itemDiv );
-			
-			return borderDiv;
-		}
-		
-		var closer = document.createElement("div");
-		closer.id = (this.eventKey + "_closer");
-		closer.className = "widgetMenuCloser";
-		closer.style.display = "none";
-		document.body.appendChild( closer );
-		
-		var handleHideMenu = this.hide.bind( this );
-		IS_Event.observe(closer, 'click',handleHideMenu, true, this.eventKey);
-	}
-	
-	this.show = function(element){
-		if(!isInit) {
-			this.build();
-			
-			// Because IE freezes and FF cannot get the proper position
-			return setTimeout( this.show.bind( this,element ),10 );
-		}
-		
-		var winX = Math.max(document.body.scrollWidth, document.body.clientWidth);
-		var winY = Math.max(document.body.scrollHeight, document.body.clientHeight);
-		
-		var closer = $(this.eventKey + "_closer");
-		
-		closer.style.width = winX;
-		closer.style.height = winY;
-		closer.style.display = "";
-		
-		if (!isInit && this.elm_menu.style.display != "none") {
-			this.elm_menu.style.display = "none";
-			IS_Portal.behindIframe.hide();
-		} else {
-			this.elm_menu.style.visibility = "hidden";
-			this.elm_menu.style.display = "block";
-			//calculate far left on menu
-			Position.prepare();
-			var showToolsDiv = element;
-			var xy = Position.cumulativeOffset(showToolsDiv);
-			if(fixedPortalHeader)
-				xy[1] -= IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;
-			
-			var offsetX= xy[0];
-			if( (offsetX + this.elm_menu.offsetWidth ) > winX ){//if the width of the whole menu is bigger than the distance between the left end of top menu and the right end of window
-				//offsetX = (winX  - this.elm_menu.offsetWidth) - 10;
-				this.elm_menu.style.left = "auto";
-				this.elm_menu.style.right = fixedPortalHeader ? 16:10;
-			}else{
-				this.elm_menu.style.right = "auto";
-				this.elm_menu.style.left = offsetX;
-			}
-			var offsetY = xy[1] + showToolsDiv.offsetHeight;
-			if((offsetY + this.elm_menu.offsetHeight) > winY){
-				//offsetY = xy[1] - this.elm_menu.offsetHeight;
-				offsetY = winY - this.elm_menu.offsetHeight;
-			}
-			
-			this.elm_menu.style.top = offsetY;
-			this.elm_menu.style.visibility = "visible";
-			
-			IS_Portal.behindIframe.show(this.elm_menu);
-						
-			Position.prepare();
-			var tail = Position.cumulativeOffset( showToolsDiv )[1] + this.elm_menu.offsetHeight;
-			var limit = getWindowHeight() +document.body.scrollTop;
-			
-			
-			if( !( tail < limit ))
-				document.body.scrollTop += tail -limit +16;
-		}
-		IS_Event.observe(window, 'resize', this.handleHideMenu, false, this.eventKey);
-	}
-	
-	this.hide = function(e) {
-		var menu = this.elm_menu;
-		var selectMenu = this.targetElement;
-		var changeColumnSelect = $(this.id +"_menu_change_column_select");
-		var closer = $(this.eventKey + "_closer");
-		
-		IS_Event.stopObserving( window,'resize',this.handleHideMenu );
-		/*
-		if( e ) {
-			var element = Event.element( e );
-			if( element && (Element.childOf( element, menu ) || selectMenu && Element.childOf( element,selectMenu ) ||
-				menu.style.display == "none")) return;
-		}
-		*/
-		if( menu ) menu.style.display = "none";
-		if( closer ) closer.style.display = "none";
-		
-		IS_Portal.behindIframe.hide();
-
-		// Forcus remains when using IE
-		if( Browser.isIE && e && Event.element(e).type != 'input')
-			document.body.focus();
-	}
-	
-	this.handleHideMenu = this.hide.bind( this );
-	
-	this.destroy = function(){
-		var menu = this.elm_menu;
-		var closer = $(this.eventKey + "_closer");
-		if(menu) Element.remove(menu);
-		if(closer) Element.remove(closer);
-		IS_Portal.behindIframe.hide();
-		
-		if( Browser.isIE )
-			document.body.focus();
-	}
 }

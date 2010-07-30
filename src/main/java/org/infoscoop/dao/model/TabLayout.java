@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao.model;
 
 import java.io.InputStream;
@@ -111,7 +94,6 @@ public class TabLayout extends BaseTablayout {
 	private String tabName;
 	private String columnsWidth;
 	private String numCol;
-	private boolean disabledDynamicPanel;
 	
 	public String getLayout() {
 		return StringUtil.getNullSafe( super.getLayout() );
@@ -138,8 +120,6 @@ public class TabLayout extends BaseTablayout {
 			if(panels.getLength() > 1){
 				Element daynamicPanel =(Element)panels.item(1);
 				if("DynamicPanel".equals(daynamicPanel.getAttribute("type"))){
-					this.disabledDynamicPanel = new Boolean(daynamicPanel
-							.getAttribute("disabled"));
 					NodeList list = daynamicPanel.getElementsByTagName("widget");
 					this.dynamicPanel = getNodeListString(list);
 					this.dynamicPanelJson = getPanelJson(list);
@@ -191,10 +171,6 @@ public class TabLayout extends BaseTablayout {
 			if (ignoreHeader != null)
 				widgetJson.put("ignoreHeader", new Boolean(ignoreHeader)
 						.booleanValue());
-			String noBorder = widget.getAttribute("noBorder");
-			if (noBorder != null)
-				widgetJson
-						.put("noBorder", new Boolean(noBorder).booleanValue());
 
 			String disabled = widget.getAttribute("disabled");
 			if (disabled != null)
@@ -290,14 +266,7 @@ public class TabLayout extends BaseTablayout {
 	public String getNumCol() {
 		return numCol;
 	}
-
-	public boolean isDisabledDynamicPanel() {
-		return disabledDynamicPanel;
-	}
-
-	public void setDisabledDynamicPanel(boolean disabledDynamicPanel) {
-		this.disabledDynamicPanel = disabledDynamicPanel;
-	}
+	
 
 	public Tab toTab(String uid){
 		String tabId = super.getId().getTabid();
@@ -308,15 +277,14 @@ public class TabLayout extends BaseTablayout {
 		tab.setName( this.getTabName());
 		tab.setType("static");
 		tab.setProperty("numCol", this.getNumCol());
-		tab.setDisabledDynamicPanelBool(this.isDisabledDynamicPanel());
 		
 		return tab;
 	}
 	
-	public Collection<Widget> getDynamicPanelXmlWidgets( String uid ) throws Exception {
+	public Collection getDynamicPanelXmlWidgets( String uid ) throws Exception {
 		return getPanelXmlWidgets( uid,super.getId().getTabid(),getDynamicPanel(),false );
 	}
-	public Collection<Widget> getStaticPanelXmlWidgets( String uid ) throws Exception {
+	public Collection getStaticPanelXmlWidgets( String uid ) throws Exception {
 		return getPanelXmlWidgets( uid,super.getId().getTabid(),getStaticPanel(),true );
 	}
 	private Collection getPanelXmlWidgets(String uid, String tabId,
@@ -372,8 +340,6 @@ public class TabLayout extends BaseTablayout {
 			widget.setHref(widgetEl.getAttribute("href"));
 			widget.setIgnoreHeader(new Boolean(widgetEl
 					.getAttribute("ignoreHeader")).booleanValue());
-			widget.setNoBorder(new Boolean(widgetEl.getAttribute("noBorder"))
-					.booleanValue());
 			Element data = (Element)widgetEl.getElementsByTagName("data").item(0);
 			NodeList propertyNodes = data.getElementsByTagName("property");
 			for(int k = 0; k < propertyNodes.getLength(); k++){

@@ -1,19 +1,10 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
+// script.aculo.us dragdrop.js v1.7.0, Fri Jan 19 19:16:36 CET 2007
+
+// Copyright (c) 2005, 2006 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
+//           (c) 2005, 2006 Sammi Williams (http://www.oriontransfer.co.nz, sammi@oriontransfer.co.nz)
+// 
+// script.aculo.us is freely distributable under the terms of an MIT-style license.
+// For details, see the script.aculo.us web site: http://script.aculo.us/
 
 if(typeof Effect == 'undefined')
   throw("dragdrop.js requires including script.aculo.us' effects.js library");
@@ -238,7 +229,6 @@ IS_Droppables.replaceLocation = function(element,widget, x, y){
 		var subNearGhost = null;
 		var subCol = widget.elm_widgetContent.firstChild;
 		var widgetGhost = IS_Draggable.ghost;
-		var scrollOffset = IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;//replaceLocation is called in MultiRssReader. MultiRssReader must be in the panel.
 		if( widgetGhost.parentNode != subCol ||
 			( Browser.isSafari1 && !Element.visible( widgetGhost )) ){
 			//Use existing logic if it goes inside MultiRssReader first time
@@ -247,9 +237,8 @@ IS_Droppables.replaceLocation = function(element,widget, x, y){
 				if (div == widgetGhost) {
 					continue;
 				}
-				var position = Position.cumulativeOffset(div);
-				var left = position[0];
-				var top = position[1] - scrollOffset;
+				var left = findPosX(div);
+				var top = findPosY(div);
 				var tmp = Math.sqrt(Math.pow(x-left,2)+ Math.pow(y-top,2));
 				
 				if (isNaN(tmp)) {
@@ -277,7 +266,7 @@ IS_Droppables.replaceLocation = function(element,widget, x, y){
 		}else{
 			//Mouse cursor must fit into the height of MultiRssReader that does not display ghost in the case of moving inside MultiRssReader
 			//Mouse is passed Multi and onHover to panel if it does not fit into.
-			var ghostY = findPosY(widgetGhost) - scrollOffset;
+			var ghostY = findPosY(widgetGhost);
 			//Use the height of next widget of ghost as the base if the ghost is moved to down.
 			//Mouse does not psas trough Multi if the ghost is moved to down within the height of next widget 
 			var offsetY = widgetGhost.nextSibling ? widgetGhost.nextSibling.offsetHeight : widgetGhost.offsetHeight/2;
@@ -310,10 +299,8 @@ IS_Droppables.replaceLocation = function(element,widget, x, y){
 IS_Droppables.findDroppablesPos = function(element){
 	var droppablesPositions = [];
 	var maxY = maxX = 0;
-	var scrollOffset = IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;
 	for(var i =0; i<IS_Droppables.groups.length; i++){
 		var group = IS_Droppables.groups[i];
-		var inPanel = IS_DropGroup.common != group;//if not common, this group is IS_Widget.RssReader.dropGroup. This group is in the panel.
 		var droppables = group.getDroppables(element);
 		if(!droppables) continue;
 		droppables.each(function(drop){
@@ -327,9 +314,6 @@ IS_Droppables.findDroppablesPos = function(element){
 					var offset = Position.cumulativeOffset(dropElement);
 					if(!pos.x) pos.x = offset[0];
 					if(!pos.y) pos.y = offset[1];
-				}
-				if(inPanel){
-					pos.y -= scrollOffset;
 				}
 				
 				if(dropElement != element) {
@@ -356,7 +340,7 @@ IS_Droppables.getNearDropTarget = function(element, point){
 	var y = point[1];
 	
 	var ghost = IS_Draggable.ghost;
-	//var ghostY = (ghost.parentNode)? findPosY(ghost) : 0;
+	var ghostY = (ghost.parentNode)? findPosY(ghost) : 0;
 	Position.prepare();
 	var ghostY = ((ghost.parentNode)? Position.cumulativeOffset(ghost)[1] : 0) -Position.realOffset( element )[1];
 	//Adjust Y axis of mouse pointer if ghost is displayed.
@@ -427,10 +411,9 @@ var IS_DroppableOptions = {
 		var y = point[1];//Leave y axis as getNearDropTarget
 
 		var min = 10000000;
-		var nearGhost = null;// widget near widget ghost
+		var nearGhost = null;
 		var widgetGhost = IS_Draggable.ghost;
 		widgetGhost.style.display = "block";//for Safari
-		var scrollOffset = IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;//IS_Portal.columnsObjs must be in the panel.
 		for ( var i=1; i <= IS_Portal.tabs[IS_Portal.currentTabId].numCol; i++ ) {
 			var col = IS_Portal.columnsObjs[IS_Portal.currentTabId]["col_dp_" + i];
 			for (var j=0; j<col.childNodes.length; j++ ) {
@@ -441,7 +424,7 @@ var IS_DroppableOptions = {
 				}
 				
 				var left = div.posLeft;//Coordinate exclude ghost
-				var top = div.posTop - scrollOffset;
+				var top = div.posTop;
 				
 				var tmp = Math.sqrt(Math.pow(x-left,2)+ Math.pow(y-top,2));
 				if (isNaN(tmp)) {
@@ -759,8 +742,7 @@ IS_Draggable.prototype = {
 
       zindex: 1000,
       revert: false,
-      scroll: fixedPortalHeader ? false : window,
-      scrollPanel: fixedPortalHeader,//if true, set scroll property to the current panel.
+      scroll: false,
       scrollSensitivity: 20,
       scrollSpeed: 15,
       snap: false,  // false, or xy or [x,y] or function(x,y){ return [x,y] }
@@ -842,11 +824,14 @@ IS_Draggable.prototype = {
       var pointer = [Event.pointerX(event), Event.pointerY(event)];
 	  
 	  //added boxLeftDiff,boxTopDiff
-      var pos     = Position.cumulativeOffset(this.element);
+	  var realOffset = Position.realOffset( this.element );
+	  var left = findPosX(this.element) -realOffset[0] +document.body.scrollLeft;
+	  var top = findPosY(this.element) -realOffset[1] +document.body.scrollTop;
+	  this.element.boxLeftDiff = pointer[0] -left;
+	  this.element.boxTopDiff = pointer[1] -top;
 	  
+      var pos     = Position.cumulativeOffset(this.element);
       this.offset = [0,1].map( function(i) { return (pointer[i] - pos[i]) });
-      this.element.boxLeftDiff = this.offset[0];
-      this.element.boxTopDiff = this.offset[1];
       
       IS_Draggables.activate(this);
 	  
@@ -858,15 +843,10 @@ IS_Draggable.prototype = {
   },
   
   startDrag: function(event, pointer) {
-	  document.body.style.overflow = 'hidden';
     this.dragging = true;
 	IS_Portal.isItemDragging = true;
 	
     IS_Portal.showDragOverlay(this.options.handle ? Element.getStyle(this.options.handle, "cursor") : null);
-    
-    if(this.options.scrollPanel){
-      this.options.scroll = IS_Portal.tabs[IS_Portal.currentTabId].panel;
-    }
 	
     if(this.options.zindex) {
       this.originalZ = parseInt(Element.getStyle(this.element,'z-index') || 0);
@@ -911,10 +891,8 @@ IS_Draggable.prototype = {
 	  	
 //	  this.draw(pointer, this.element, IS_Draggable.dummyElement);
 	  var pos = Position.cumulativeOffset(this.element);
-	  var offset = Position.realOffset(this.element);
-      dummyStyle.left = pos[0] - offset[0];
-	  dummyStyle.top = pos[1] - offset[1];
-	  this.scrollOffset = offset;
+      dummyStyle.left = pos[0];
+	  dummyStyle.top = pos[1];
 
 	if(this.options.ghosting) {
 /*    this._clone = this.element.cloneNode(true);*/
@@ -1086,20 +1064,17 @@ IS_Draggable.prototype = {
 	if( !Browser.isFirefox3 )
     	IS_Draggables.deactivate(this);
     IS_Droppables.reset();
-	
   },
   
   endDrag: function(event) {
     if(!this.dragging) return;
     this.stopScrolling();
     this.finishDrag(event, true);
-	document.body.style.overflow = 'auto';
     Event.stop(event);
   },
   
   //Draw dragging
   draw: function(point, element, dummyElement) {
-  	point = [point[0]-this.scrollOffset[0], point[1]-this.scrollOffset[1]];
   	if(!element || !dummyElement)
 		element = dummyElement = IS_Draggable.dummyElement;
 
@@ -1107,7 +1082,9 @@ IS_Draggable.prototype = {
     var pos = Position.cumulativeOffset(element);
 	
     if(this.options.ghosting) {
-        pos[0] -= Position.deltaX; pos[1] -= Position.deltaY;
+//      var r   = Position.realOffset(this.element);
+      var r   = Position.realOffset(element);
+      pos[0] += r[0] - Position.deltaX; pos[1] += r[1] - Position.deltaY;
     }
     
     var d = this.currentDelta(dummyElement);
@@ -1151,7 +1128,7 @@ IS_Draggable.prototype = {
     if(!(speed[0] || speed[1])) return;
     this.scrollSpeed = [speed[0]*this.options.scrollSpeed,speed[1]*this.options.scrollSpeed];
     this.lastScrolled = new Date();
-    this.scrollInterval = setInterval(this.scroll.bind(this), 50);
+    this.scrollInterval = setInterval(this.scroll.bind(this), 10);
   },
   
   scroll: function() {
@@ -1187,10 +1164,6 @@ IS_Draggable.prototype = {
         IS_Draggables._lastScrollPointer[1] = 0;
       this.draw(IS_Draggables._lastScrollPointer);
     }
-    
-    //if fixedPortalHeader, recompute the position of droppable elements. Because scrollTop of the panel changes when scrolling.
-    if(this.options.scrollPanel)
-      IS_Droppables.findDroppablesPos(this.element);
     
     if(this.options.change) this.options.change(this);
   },

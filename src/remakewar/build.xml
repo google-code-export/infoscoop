@@ -44,7 +44,7 @@
 		</copy>
 	</target>
 	
-	<target name="replaceWebXml" depends="replace-loginAuthenthication,replace-uidHeader,replace-usernameHeader,replace-customizeSSOFilter,replace-customizeSetRoleHeaderFilter,replace-logoutUrlParam,replace-uidIgnoreCase,replace-msd.dataSource"
+	<target name="replaceWebXml" depends="replace-loginAuthenthication,replace-uidHeader,replace-usernameHeader,replace-customizeSSOFilter,replace-customizeSetRoleHeaderFilter,replace-uidIgnoreCase,replace-msd.dataSource"
 		description="Replace web.xml configurations">
 		<loadfile property="principalHeaderList" srcFile="principalHeaderList.json" encoding="UTF-8">
 			<filterchain>
@@ -93,18 +93,11 @@
 	<filter>
 		<filter-name>CustomizeSSOFilter</filter-name>
 		<filter-class>%{customizeSSOFilterClass}</filter-class>
-		<init-param>
-			<param-name>excludePath</param-name>
-			<param-value>/xmlrpc,/login.jsp,/gadgetsrv,/jsonproxy,/proxy,/js*,/rpc_relay.html</param-value>
-		</init-param>
-		%{opIdentifierInitParam}
 	</filter>
 			]]></replacevalue>
 		</replace>
 		<replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true"
 			token="%{customizeSSOFilterClass}" value="${customizeSSOFilterClass}"/>
-		<antcall target="replace-opIdentifierParam"/>
-		<antcall target="remove-opIdentifierParam"/>
 		
 		<replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true">
 			<replacetoken><![CDATA[<!--CustomizeSSOFilterMapping-->]]></replacetoken>
@@ -116,30 +109,6 @@
 			]]></replacevalue>
 		</replace>
 	</target>
-        
-	<target name="replace-opIdentifierParam" if="customizeSSOFilterClass.opIdentifier">
-        <replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true"
-            token="%{opIdentifierInitParam}">
-			<replacevalue><![CDATA[
-		<init-param>
-			<param-name>opIdentifier</param-name>
-			<param-value>%{opIdentifierValue}</param-value>
-		</init-param>
-			]]></replacevalue>
-		</replace>
-        <replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true"
-            token="%{opIdentifierValue}" value="${customizeSSOFilterClass.opIdentifier}"/>
-    </target>
-	<target name="remove-opIdentifierParam" unless="customizeSSOFilterClass.opIdentifier">
-        <replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true"
-            token="%{opIdentifierInitParam}" value=""/>
-    </target>
-        
-	<target name="replace-logoutUrlParam" if="logoutUrl">
-        <replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true"
-            token="&lt;!--logoutUrl--&gt;" value="${logoutUrl}"/>
-    </target>
-    
 	<target name="replace-customizeSetRoleHeaderFilter" if="customizeSetRoleHeaderFilterClass">
 		<replace file="${collect.home}/WEB-INF/web.xml" encoding="utf-8" summary="true">
 			<replacetoken><![CDATA[<!--CustomizeSetRoleHeaderFilter-->]]></replacetoken>

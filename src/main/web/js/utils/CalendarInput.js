@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 
 var CalendarInput = Class.create();
 CalendarInput.prototype = {
@@ -187,14 +170,8 @@ CalendarInput.prototype = {
 				component.setScrollDate( component.getSelectedDate() );
 				Element.show( contents );
 				
-				var xy = Position.cumulativeOffset(input.parentNode);
-				
-				if(fixedPortalHeader){
-					xy[1] -= Position.realOffset(input.parentNode)[1];
-				}
-				
-				contents.style.top = xy[1] +input.parentNode.offsetHeight;
-				contents.style.left = xy[0] +input.parentNode.offsetWidth-contents.offsetWidth;
+				contents.style.top = findPosY( input.parentNode ) +input.parentNode.offsetHeight;
+				contents.style.left = findPosX( input.parentNode ) +input.parentNode.offsetWidth-contents.offsetWidth;
 				
 				if( IS_Portal.behindIframe )
 					IS_Portal.behindIframe.show(contents);

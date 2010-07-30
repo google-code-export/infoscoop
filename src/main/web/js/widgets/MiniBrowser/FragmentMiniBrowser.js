@@ -1,31 +1,16 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.FragmentMiniBrowser = IS_Class.extend(IS_Widget.MiniBrowser);
 IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 	var widget;
 	var self = this;
 	var adjustBar;
 	
-	var fragmentServerURL = hostPrefix + '/proxy';
+//	var fragmentServerURL = hostPrefix + '/frgsrv';
+	var fragmentServerURL = hostPrefix + '/proxy?filter=HTMLFragment';
 	
 	var isStatic;
 	
 	this.initialize = function(widgetObj){
+//		this._super.initialize(widgetObj);
 		widget = widgetObj;
 		IS_EventDispatcher.addListener("adjustedColumnWidth", null, this.setHeight.bind(this), widget, false);
 		IS_EventDispatcher.addListener("adjustedSiteMap", null, this.setHeight.bind(this), widget, false);
@@ -33,7 +18,7 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 		IS_EventDispatcher.addListener("moveWidget", widget.id, this.setHeight.bind(this), widget, false);
 		IS_Event.observe( window,"resize", this.setHeight.bind(this), false, widget.closeId);
 		
-		isStatic = widget.panelType == "StaticPanel" && widget.isStaticHeight;
+		isStatic = widget.panelType == "StaticPanel";
 	}
 	
 	this.refresh = function() {
@@ -47,7 +32,6 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 		asynchronous : true,
 		request : true,
 		unloadCache : false,
-		method: 'post',
 		preLoad: function(){
 			var url = widget.getUserPref("url");
 			if( !url || url == "") {
@@ -63,8 +47,8 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 			}
 						
 			var url = fragmentServerURL
+			  + "&url=" + encodeURIComponent(widget.getUserPref("url"));
 			this.loadContentsOption.url = url;
-			this.loadContentsOption.parameters = "filter=HTMLFragment&url=" + encodeURIComponent(widget.getUserPref("url")) + "&additional_css=" + encodeURIComponent(widget.getUserPref("additional_css"));
 			this.loadContentsOption.requestHeaders = ["fragment-xpath", widget.getUserPref("xPath")];
 			if(widget.getUserPref("charset")){
 				this.loadContentsOption.requestHeaders.push("fragment-charset");
@@ -98,7 +82,6 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 			} else {
 				widget.iframe.src = fragmentCacheURL;
 			}
-			
 			//widget.iframe.style.height = "auto";
 		},
 		onComplete : function(req){
@@ -111,7 +94,8 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 			widget.initIframe();
 			var iframe = widget.iframe;
 			
-			Event.observe(iframe, "load", this._setPrefs.bind(this), false);
+//			Event.observe(iframe, "load", this.sendFragmentRequest.bind(this), false);
+			Event.observe(iframe, "load", this.setPrefs.bind(this), false);
 		}
 		
 		if( !isStatic )
@@ -119,8 +103,37 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 		
 		widget.iframe.style.width = "100%";
 	};
-
-	this._setPrefs = function(){
+	
+	this.sendFragmentRequest = function() {
+		// onload is still called after submitting; event cannot be removed because onload must be called again for reload and move
+		
+		var iframeDoc = Browser.isIE ? widget.iframe.contentWindow.document : widget.iframe.contentDocument;
+		var urlNode = iframeDoc.getElementById("fragmentURL");
+		var xPathNode = iframeDoc.getElementById("fragmentXPath");
+		var saveCacheIDNode = iframeDoc.getElementById("fragmentSaveCacheID");
+		var charsetNode = iframeDoc.getElementById("fragmentCharset");
+		var cacheLifeTimeNode = iframeDoc.getElementById("fragmentCacheLifeTime");
+		var formNode = iframeDoc.getElementById("requestForm");
+		
+		if(urlNode && xPathNode && saveCacheIDNode && formNode){
+			formNode.action = fragmentServerURL;
+			//formNode.method = 'POST';
+			var url = widget.getUserPref("url");
+			var xPath = widget.getUserPref("xPath");
+			var cacheID = widget.getUserPref("cacheID");
+			var charset = widget.getUserPref("charset");
+			var cacheLifeTime = widget.getUserPref("cacheLifeTime");
+			
+			urlNode.value = url;
+			xPathNode.value = (xPath)? xPath : '//body';
+			saveCacheIDNode.value = (cacheID)? cacheID : "";
+			charsetNode.value = (charset)?charset : "";
+			cacheLifeTimeNode.value = (cacheLifeTime)?cacheLifeTime : "";
+			formNode.submit();
+		}
+	}
+	
+	this.setPrefs = function(){
 		var iframeDoc = Browser.isIE ? widget.iframe.contentWindow.document : widget.iframe.contentDocument;
 		
 		// Not run process when loading; judge forcibly
@@ -194,7 +207,7 @@ IS_Widget.FragmentMiniBrowser.prototype.classDef = function() {
 		} else {
 			if(iframeDoc && iframeDoc.body){
 //				widget.iframe.style.height = (isAuto)? parseInt(iframeDoc.height) + offset : height;
-				widget.iframe.style.height = 0;
+				if(Browser.isFirefox) widget.iframe.style.height = 0;
 				widget.iframe.style.height =
 					(isAuto)? IS_Widget.FragmentMiniBrowser.getMiniBrowserHeight(iframeDoc) + offset: height;
 			}

@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.RssReaderDescriptionList = [];
 IS_Widget.RssReaderDescriptionWithScrollList = [];
 IS_Widget.RssReader.RssItemRender = function() {
@@ -547,7 +530,6 @@ IS_Widget.RssReader.RssItemRender.prototype.buildRssDesc = function( widget,opt 
 		this.rssFloat.id = this.descId;
 		this.rssFloat.appendChild( this.rssDesc );
 		
-		this.rssFloat.style.top = 0;
 		document.body.appendChild( this.rssFloat );
 		
 		// Mark the location of detail pop up
@@ -575,7 +557,7 @@ IS_Widget.RssReader.RssItemRender.prototype.postRender = function( ctx,rssItem,i
 }
 IS_Widget.RssReader.RssItemRender.prototype.buildDesc = function( widget,rssDesc,rssItem ) {
 	var html = IS_Widget.RssReader.RssItemRender.getCategoryHtml(rssItem.category);
-	html += IS_Widget.RssReader.RssItemRender.normalizeDesc(rssItem.description, widget.content.rss.isIntranet);
+	html += IS_Widget.RssReader.RssItemRender.normalizeDesc(rssItem.description);
 	rssDesc.innerHTML = html;
 	var descLinks = rssDesc.getElementsByTagName("a");
 	if(descLinks) {
@@ -1079,11 +1061,8 @@ IS_Widget.RssReader.RssItemRender.adjustRssDesc = function(){
 	var windowInnerRight = (Browser.isIE)? (windowInnerWidth + scrollX) : (windowInnerWidth + scrollX - 25);
 	var windowInnerBottom = (Browser.isIE)? (windowInnerHeight + scrollY) : (windowInnerHeight + scrollY - 15);
 	
-	var panelScrollOffset = fixedPortalHeader ? IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop : 0;
-	
-	var xy = Position.cumulativeOffset(itemNode);
-	var itemsTop = xy[1] - panelScrollOffset;
-	var itemsLeft = xy[0];
+	var itemsTop = findPosY( itemNode );
+	var itemsLeft = findPosX( itemNode );
 	if(itemsTop == 0 && itemsLeft == 0){
 		// For a case that item is unshown (order by time and category)
 		IS_Widget.RssReader.RssItemRender.hideRssDesc();
@@ -1106,7 +1085,7 @@ IS_Widget.RssReader.RssItemRender.adjustRssDesc = function(){
 	var contentScrollTop = rssContentView.elm_viewport.scrollTop;
 	var descTop = itemsTop - contentScrollTop;
 	var markTop = itemsTop - contentScrollTop + (moreTd.offsetHeight > 0 ? (moreTd.offsetHeight * 0.625 - 8) : 0);	// Place cursor on the middle of first line of title
-	var contentTop = findPosY(rssContentView.elm_content ) - panelScrollOffset;
+	var contentTop = findPosY(rssContentView.elm_content );
 	var contentHeight = rssContentView.elm_viewport.offsetHeight;
 	
 	if( (descTop+itemNode.offsetHeight) <= contentTop || (contentTop+contentHeight) <= descTop ){
@@ -1350,7 +1329,7 @@ IS_Widget.RssReader.RssItemRender.getCategoryHtml = function(category) {
 	html += '</div>';
 	return html;
 }
-IS_Widget.RssReader.RssItemRender.normalizeDesc = function( desc, isIntranet ) {
+IS_Widget.RssReader.RssItemRender.normalizeDesc = function( desc ) {
 	if( /<body>/i.test( desc )) {
 		desc = desc.replace(/^[\s\S]*<body>/mi,"");
 	} else if( /<\/head>/i.test( desc )) {
@@ -1364,8 +1343,6 @@ IS_Widget.RssReader.RssItemRender.normalizeDesc = function( desc, isIntranet ) {
 	} else if( /<\/html>/i.test( desc )) {
 		desc = desc.replace(/<\/html>[\s\S]*/mi,"");
 	}
-	if(isIntranet)
-		return desc;
-	else
-		return html_sanitize(desc, function(url){return url;},function(id){return id;});
+	
+	return desc;
 }

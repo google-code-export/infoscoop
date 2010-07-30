@@ -18,7 +18,7 @@ ISA_Properties.prototype.classDef = function() {
 		rss: ISA_R.alb_widgetWithRSS,
 		customize: ISA_R.alb_userCustomization,
 		log: ISA_R.alb_userOperationLog,
-		layout: ISA_R.alb_layout,
+		iframe: ISA_R.alb_portalframe,
 		session: ISA_R.alb_loginSessionSetting,
 		system: ISA_R.alb_systemSetup
 	});

@@ -37,8 +37,7 @@ public class ImportTool {
 		FORBIDDENURLS( new ForbiddenUrlsFactory()),
 		GADGET( new GadgetFactory()),
 		ACCOUNT( new AccountFactory()),
-		GADGETICON( new GadgetIconFactory()),
-		OAUTH_CERTIFICATE( new OAuthCertificateFactory())
+		GADGETICON( new GadgetIconFactory())
 		;
 
 		public static final Map<TABLES,String> DIRECTORY_MAP;
@@ -202,6 +201,7 @@ class ImportTable {
 		CSVReader csv = new CSVReader( r );
 		String[] fields;
 		while(( fields = csv.readNext() ) != null ) {
+
 			if(fields.length == 1 && "".equals(fields[0])){
 				continue;
 			}
@@ -228,7 +228,6 @@ class ImportTable {
 					csvFields[i] = new CSVField( fields[i] );
 				}
 			}
-
 			result.add( csvFields );
 		}
 
@@ -546,16 +545,5 @@ class GadgetIconFactory implements CSVBeanFactory<GadgetIcon> {
 		gadgetIcon.setUrl( values[1].toString() );
 
 		return gadgetIcon;
-	}
-}
-
-class OAuthCertificateFactory implements CSVBeanFactory<OAuthCertificate> {
-	public OAuthCertificate newBean( CSVField[] values ) {
-		OAuthCertificate certificate = new OAuthCertificate();
-		certificate.setConsumerKey(values[0].toString());
-		certificate.setPrivateKey(values[1].toString());
-		certificate.setCertificate(values[2].toString());
-
-		return certificate;
 	}
 }

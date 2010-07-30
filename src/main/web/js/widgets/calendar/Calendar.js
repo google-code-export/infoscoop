@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.Calendar = IS_Class.create();
 IS_Widget.Calendar.prototype.classDef = function() {
 	var self = this;
@@ -387,10 +370,7 @@ IS_Widget.Calendar.DayHandler.prototype.classDef = function() {
 		divX = x;
 		divY = y - 5;
 //		detailDiv.style.top = y - 3;//Adjust cursor to be on div
-		var cellTop = findPosY(cell);
-		if(fixedPortalHeader)
-			cellTop -= IS_Portal.tabs[IS_Portal.currentTabId].panel.scrollTop;
-		detailDiv.style.top = cellTop + cell.offsetHeight;
+		detailDiv.style.top = findPosY(cell) + cell.offsetHeight;
 		
 		detailDiv.style.left = x;
 	}
@@ -502,7 +482,7 @@ IS_Widget.Calendar.DayHandler.prototype.classDef = function() {
 		detailDiv.style.display = "none";
 		detailDiv.style.position = "absolute";
 		detailDiv.innerHTML = '<div class="caleventdate">' + formatDate(date, calendar.Locale.EVENT_DATE_FORMAT) + '</div>';
-		detailDiv.style.top = 0;
+
 		
 		for(var i=0; i<sortedEvents.length; i++) {
 			this.buildEventDiv(sortedEvents[i]);

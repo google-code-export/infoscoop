@@ -1,7 +1,7 @@
-gadgets.rpc.register("resize_iframe",function( height, heightAutoCalculated ) {
+gadgets.rpc.register("resize_iframe",function( height ) {
 	var widget = IS_Portal.getWidget( this.mid,this.tid );
 	if( widget.authToken != this.t ) return;
-	if(widget.isStaticHeight) return;
+	if( widget.panelType == "StaticPanel") return;
 	
 	if( IS_Widget.MaximizeWidget == widget )
 		return;
@@ -12,8 +12,6 @@ gadgets.rpc.register("resize_iframe",function( height, heightAutoCalculated ) {
 	
 	if( height <= 0 )
 		height = 1;
-	
-	widget.adjustHeightAuto = heightAutoCalculated;
 	
 	iframe.style.height = height;
 });
@@ -45,8 +43,6 @@ gadgets.rpc.register("set_title",function( title ) {
 	if( widget.authToken != this.t ) return;
 	
 	title = title.replace(/^\s*(.+)\s*$/,"$1");
-	if(title.length > 80)
-		title = title.substring(0, 80);
 	
 	if( title != widget.title ){
 		widget.title = title;
@@ -151,14 +147,6 @@ gadgets.rpc.register("is_add_widget_to_panel",function(type, url, title, href) {
 		dropWidget(title, href);
 	}
 	return widgetId;
-});
-
-gadgets.rpc.register("is_open_portal_iframe",function(url) {
-	IS_Portal.openIframe(url);
-});
-
-gadgets.rpc.register("is_change_background",function(opt) {
-	IS_Portal.theme.changeBackground(opt);
 });
 
 gadgets.rpc.register("is_refresh",function() {

@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.request.filter;
 
 import java.io.ByteArrayInputStream;
@@ -144,7 +127,6 @@ public class MakeMenuFilter extends ProxyFilter {
 		boolean firstItem = true;
 		boolean firstSiteTop = true;
 		boolean close = false;
-		boolean emptySiteTop = false;
 		Stack idStack = new Stack(); 
 		
 		long start = System.currentTimeMillis();
@@ -180,14 +162,8 @@ public class MakeMenuFilter extends ProxyFilter {
 			if(qName.equals("site")||qName.equals("site-top")){
 				//String menuId = (qName.equals("site") || this.siteTopId == null) ? attributes.getValue("id") : this.siteTopId;
 				String menuId = attributes.getValue("id");
-				String title = attributes.getValue("title");
 				
 				if(qName.equals("site-top")){
-					if (menuId == null || title == null){
-						emptySiteTop = true;
-						return;
-					}
-					emptySiteTop = false;
 					if(!firstSiteTop){
 						siteTopArray.append(",");
 					}
@@ -214,7 +190,7 @@ public class MakeMenuFilter extends ProxyFilter {
 				menuItemArray.append(menuId).append(":");
 				menuItemArray.append("{");
 				menuItemArray.append("id:").append( JSONObject.quote(menuId) );
-				title = I18NUtil.replace(title, resMap);
+				String title = I18NUtil.replace( attributes.getValue("title"),resMap );
 				if( title.length() > 80 )
 					title = title.substring(0,80);
 				
@@ -300,8 +276,7 @@ public class MakeMenuFilter extends ProxyFilter {
 		
 		boolean endSiteElement = false;
 		public void endElement(String uri, String localName, String qName) throws SAXException {
-			if (qName.equals("site")
-					|| (qName.equals("site-top") && !emptySiteTop)) {
+			if(qName.equals("site")||qName.equals("site-top")){
 //				if(endSiteElement && !close){
 				if(!close){
 					menuItemArray.append("}");

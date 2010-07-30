@@ -1,20 +1,3 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 IS_Widget.MiniBrowser = IS_Class.create();
 IS_Widget.MiniBrowser.prototype.classDef = function() {
 	var widget;
@@ -77,6 +60,7 @@ IS_Widget.MiniBrowser.prototype.classDef = function() {
 			widget.setUserPref("url", widget.widgetConf.href);
 		}
 		var url = widget.replaceUserPref(widget.getUserPref("url"));
+		
 		var iframeSrc = widget.iframe.src;
 		var pattern = new RegExp("(("+hostPrefix+"(/admin)?)|\\.)/blank\\.html");
 		if(!pattern.test(iframeSrc)){
@@ -181,10 +165,11 @@ IS_Widget.MiniBrowser.prototype.classDef = function() {
 		}else{
 			this.initIframe();
 			
+			if(widget.panelType == "DynamicPanel")
+				this.buildAdjustHeightBar();
+			console.log("before loadUrl");
 			this.loadUrl();
 			this.displayContents();
-			if(widget.panelType == "DynamicPanel")
-				setTimeout(this.buildAdjustHeightBar,10);
 		}
 		//changeTurnbkIcon();
 		IS_EventDispatcher.newEvent('loadComplete', widget.id, null);
