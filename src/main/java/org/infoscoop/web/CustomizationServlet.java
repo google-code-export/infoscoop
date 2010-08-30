@@ -38,7 +38,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.dao.model.Portallayout;
-import org.infoscoop.dao.model.TabLayout;
 import org.infoscoop.service.PortalLayoutService;
 import org.infoscoop.service.TabLayoutService;
 import org.infoscoop.util.I18NUtil;
@@ -113,23 +112,19 @@ public class CustomizationServlet extends HttpServlet {
 
 	private String getCustomizationFtl( Map<String,Object> root ) throws ParserConfigurationException, Exception{
 		JSONObject layoutJson = new JSONObject();
-		Map<String, TabLayout> CustomizationMap = TabLayoutService.getHandle().getMyTabLayoutHTML();
+		Map<String, String> CustomizationMap = TabLayoutService.getHandle().getMyTabLayoutHTML();
+
 
 		//int staticPanelCount = 0;
-		for(Iterator<Map.Entry<String, TabLayout>> ite = CustomizationMap.entrySet().iterator();ite.hasNext();){
-			Map.Entry<String, TabLayout> entry = ite.next();
+		for(Iterator<Map.Entry<String, String>> ite = CustomizationMap.entrySet().iterator();ite.hasNext();){
+			Map.Entry entry = ite.next();
 			String key = (String)entry.getKey();
-			TabLayout tabLayout = (TabLayout)entry.getValue();
-			JSONObject value = new JSONObject();
-			
-			String layout = tabLayout.getLayout();
-			if( layout == null )
-				layout = "";
-			value.put("layout", layout);
-			value.put("adjustToWindowHeight", tabLayout.isAdjustToWindowHeight());
+			String value = (String)entry.getValue();
+			if( value == null )
+				value = "";
 
 			if("commandbar".equals(key.toLowerCase())){
-				layoutJson.put("commandbar", applyFreemakerTemplate(root, layout));
+				layoutJson.put("commandbar", applyFreemakerTemplate(root, value));
 			}else {
 				layoutJson.put("staticPanel" + key, value);
 			}

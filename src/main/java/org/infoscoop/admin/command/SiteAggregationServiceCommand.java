@@ -43,7 +43,6 @@ public class SiteAggregationServiceCommand extends ServiceCommand {
 			if("commitMenu".equals(commandName)) {
 				String menuType = req.getParameter("menuType");
 				String forceUpdateMapStr = req.getParameter("forceUpdateMap");
-				String forceDeleteListStr = req.getParameter("forceDeleteList");
 				String editSitetopIdListStr = req.getParameter("editSitetopIdList");
 				
 				JSONObject forceUpdateMapJson = new JSONObject(forceUpdateMapStr);
@@ -63,18 +62,12 @@ public class SiteAggregationServiceCommand extends ServiceCommand {
 					forceUpdateMap.put(menuId, upList);
 				}
 				
-				JSONArray forceDeleteArray = new JSONArray(forceDeleteListStr);
-				List<String> forceDeleteList = new ArrayList<String>();
-				for( int i=0;i<forceDeleteArray.length();i++ )
-					forceDeleteList.add(forceDeleteArray.getString(i));
-					
-				
 				JSONArray jsonArray = new JSONArray(editSitetopIdListStr);
 				List<String> editSitetopIdList = new ArrayList<String>();
 				for( int i=0;i<jsonArray.length();i++ )
 					editSitetopIdList.add(jsonArray.getString(i));
 				
-				(( SiteAggregationMenuService )service ).commitMenu(menuType, forceUpdateMap, forceDeleteList, editSitetopIdList);
+				(( SiteAggregationMenuService )service ).commitMenu(menuType, forceUpdateMap, editSitetopIdList);
 				return new CommandResponse(true, "");
 			}
 			
