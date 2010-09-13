@@ -112,8 +112,6 @@ public class TabLayout extends BaseTablayout {
 	private String columnsWidth;
 	private String numCol;
 	private boolean disabledDynamicPanel;
-
-	private Boolean adjustToWindowHeight;
 	
 	public String getLayout() {
 		return StringUtil.getNullSafe( super.getLayout() );
@@ -132,8 +130,6 @@ public class TabLayout extends BaseTablayout {
 			this.numCol = widgetsEl.getAttribute("numCol");
 			NodeList panels = widgetsEl.getElementsByTagName("panel");
 			Element staticPanel =(Element)panels.item(0);
-
-			this.adjustToWindowHeight = new Boolean(staticPanel.getAttribute("adjustToWindowHeight"));
 			if("StaticPanel".equals(staticPanel.getAttribute("type"))){
 				NodeList list = staticPanel.getElementsByTagName("widget");
 				this.staticPanel = getNodeListString(list);
@@ -295,10 +291,6 @@ public class TabLayout extends BaseTablayout {
 		return numCol;
 	}
 
-	public boolean isAdjustToWindowHeight() {
-		return adjustToWindowHeight;
-	}
-	
 	public boolean isDisabledDynamicPanel() {
 		return disabledDynamicPanel;
 	}
@@ -411,5 +403,4 @@ public class TabLayout extends BaseTablayout {
 		}
 		return text.toString();
 	}
-
 }

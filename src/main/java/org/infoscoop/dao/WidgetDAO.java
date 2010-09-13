@@ -263,15 +263,6 @@ public class WidgetDAO extends HibernateDaoSupport{
 	}
 
 
-	public void deleteWidgetByMenuId( String menuId ) {
-
-		String queryString = "delete from Widget where widgetId in (?, ?) or menuid = ?";
-
-		super.getHibernateTemplate().bulkUpdate( queryString,
-				new Object[] { "w_" + menuId, "p_" + menuId, menuId });
-	}
-
-
 	public void deleteWidget( String uid, Integer tabId ) {
 		long deleteDate = new Date().getTime();
 
