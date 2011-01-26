@@ -19,12 +19,15 @@
 	float:left;
 	cursor:pointer;
 	font-size:0.82em;
-	color:#7777cc;
 	margin:2px;	
 }
 
+.menuTreeItemIcon{
+	position:absolute;
+	z-Index:900;
+}
+
 div.treeMenuTitle{
-	float:left;
 	margin-left: 2px;
 	font-size:0.9em;
 }

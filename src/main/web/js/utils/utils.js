@@ -113,10 +113,10 @@ function findPosY(obj) {
 function getWindowSize(flag) {
   var offset = 0;
   if( typeof( window.innerWidth ) == 'number' ) {
-    offset = window["inner" + ((flag)? "Width" : "Height")];
+	  offset = window["inner" + ((flag)? "Width" : "Height")];
   } else if( document.documentElement &&
-      ( document.body.offsetWidth || document.body.offsetHeight ) ) {
-    offset = document.body["offset" + ((flag)? "Width" : "Height")];
+      ( document.documentElement.offsetWidth || document.documentElement.offsetHeight ) ) {
+    offset = document.documentElement["offset" + ((flag)? "Width" : "Height")];
   }
 
   return offset;
@@ -201,7 +201,29 @@ getColonTag = function(node, tag, name) {
 	return (Browser.isIE) ? node.getElementsByTagName(tag+":"+name)[0] : node.getElementsByTagName(name)[0];
 }
 
-var Browser = new Object();
+var Browser = new (function(){
+	var rwebkit = /(webkit)[ \/]([\w.]+)/,
+		ropera = /(opera)(?:.*version)?[ \/]([\w.]+)/,
+		rmsie = /(msie) ([\w.]+)/,
+		rfirefox = /(firefox)[ \/]([\w.]+)/,
+		rmozilla = /(mozilla)(?:.*? rv:([\w.]+))?/,
+		ua = navigator.userAgent.toLowerCase();
+	var match = rwebkit.exec( ua ) ||
+		ropera.exec( ua ) ||
+		rmsie.exec( ua ) ||
+		ua.indexOf("compatible") < 0 && rfirefox.exec( ua ) ||
+		ua.indexOf("compatible") < 0 && rmozilla.exec( ua ) ||
+		[];
+	this.browser = match[1] || "";
+	this.version = match[2] || "";
+	
+	this.support = this.browser == "msie" && parseInt(this.version) >= 8 ||
+		this.browser == "webkit" && parseInt(this.version) >= 533 ||
+		this.browser == "firefox" && parseFloat(this.version) >= 3.5;
+	if(!this.support){
+		alert(IS_R.ms_notSupportBrowser);
+	}
+})();
 
 Browser.isMozilla = (typeof document.implementation != 'undefined') && (typeof document.implementation.createDocument != 'undefined') && (typeof HTMLDocument!='undefined');
 Browser.isIE = window.ActiveXObject ? true : false;
@@ -609,16 +631,6 @@ function PullDown(opt){
 		this.elm_icon = icon;
 	}
 	
-	if( Browser.isSafari1 ) {
-		this.buildPulldown = ( function( method ) {
-			return function( pulldown ) {
-				method.apply( this,[pulldown] );
-				
-				this.elm_field.style.height = "1.4em"
-			}
-		})( this.buildPulldown );
-	}
-	
 	this.rebuildPulldownList = function() {
 		while( this.elm_list.firstChild )
 			this.elm_list.removeChild( this.elm_list.firstChild );
@@ -648,9 +660,6 @@ function PullDown(opt){
 			evtObserv( listItem, "click",
 				this_.setSelectedKey.bind( this_,entry.key ),false, opt.eventId);
 			
-			if( Browser.isSafari1 ) {
-				evtObserv( listItem,"click",function() { listItem.className = ""; },false,opt.eventId );
-			}
 		});
 	}
 	this.setSelectedKey = function( key ) {
@@ -846,44 +855,6 @@ function is_processUrlContents(inputURL, func, _finallyFunc, _headers, _method){
 	AjaxRequest.invoke(url, opt);
 }
 
-function is_getURLByIFrame(inputUrl, _callback, _eventId, parameters){
-	var proxyKeywordUrl = is_getProxyUrl(inputUrl, "NoOperation");
-	
-	for(var i = 0;parameters && i < parameters.length;i += 2){
-		proxyKeywordUrl += "&" + parameters[i] + "=" + parameters[i + 1];
-	}
-
-	if(IS_Widget.MiniBrowser.isForbiddenURL(inputUrl)){
-		proxyKeywordUrl = "about:blank";
-	}
-		
-	var getTitleIFrame = $('getTitleInnerFrame');
-	if(!getTitleIFrame){
-		getTitleIFrame = document.createElement('iframe');
-		getTitleIFrame.name = 'getTitleInnerFrame';
-		getTitleIFrame.id = 'getTitleInnerFrame';
-		getTitleIFrame.src = "./blank.html";
-		if( Browser.isSafari1 ) {
-			getTitleIFrame.style.width = getTitleIFrame.style.height = 0;
-			getTitleIFrame.style.visibility = "hidden";
-		} else {
-			getTitleIFrame.style.display = 'none';
-		}
-		
-		document.body.appendChild(getTitleIFrame);
-		if(!_eventId)
-		  IS_Event.observe(getTitleIFrame, "load", _callback, false, _eventId);
-	}
-	if(_eventId)
-	  IS_Event.observe(getTitleIFrame, "load", _callback, false, _eventId);
-	var oldUrl = getTitleIFrame.src;
-	if( ( oldUrl && oldUrl != "")&& proxyKeywordUrl == oldUrl ) {
-		getTitleIFrame.contentWindow.location.reload();
-	} else {
-		getTitleIFrame.src = proxyKeywordUrl;
-	}
-}
-
 /**
  * Get lengh of string
  * Count lengh of double byte character set as two
@@ -927,10 +898,6 @@ var is_addCssRule = ( Browser.isIE )
         })(document.createElement('style')))
     ;
 
-if (Browser.isSafari1) {
-	is_addCssRule = function(){}
-}
-
 /**
  * Replace UserPref[@datatype='list'] with Array
  * @param {String} arrayStr
@@ -942,82 +909,9 @@ function is_toUserPrefArray(arrayStr){
 	return arrayData;
 }
 
-if( Browser.isSafari1 ) {
-	( function() {
-		var _setFullYear = Date.prototype.setFullYear;
-		
-		Date.prototype.setFullYear = function ( year,month,date) {
-			if( month < 0 ) {
-				year--;
-				month += 12;
-			}
-			
-			return _setFullYear.apply( this,[year,month,
-				( arguments.length >= 2 ) ? date : this.getDate()
-			]);
-		};
-	})();
-	
-	
-	var _Date = Date;
-	Date = ( function() {
-		//Obfuscation prevents eval
-		//var _Date = Date;
-		
-		return function() {
-			var args = $A( arguments );
-			if( args.length == 0 ) {
-				return new _Date();
-			} else if( args.length != 1 ) {
-				if( args.length >= 2 ) {
-					if( args[1] < 0 ) {
-						args[0] = args[0] -1;
-						args[1] = args[1] +12;
-					}
-				}
-				
-				return eval("new _Date("+args.join(",")+")");
-			}
-			
-			if( args[0].getTime ) {
-				return new _Date( args[0].getTime() );
-			} else if( typeof args[0] == "string" && /\d+\/\d+\/\d+(?:\s\d+:\d+:\d+)?/.test( args[0] )) {
-				var matches;
-				
-				var dateTimeString = args[0].split(" ");
-				if( dateTimeString.length >= 1 )
-					matches = dateTimeString[0].split("/");
-				
-				if( dateTimeString.length == 2 ) {
-					matches = matches.concat( dateTimeString[1].split(":"));
-					
-					return new _Date( matches[0],matches[1] -1,matches[2],
-						matches[3],matches[4],matches[5] );
-				} else {
-					return new _Date( matches[0],matches[1] -1,matches[2]);
-				}
-			}
-			
-			var date = new _Date();
-			if( !( /\d+/.test( args[0]+"" )))
-				args[0] = _Date.parse( args[0] );
-			
-			date.setTime( parseInt( args[0] ));
-			
-			return date;
-		}
-	})();
-	
-	//for( var i in _Date )
-	//	Date[i] = _Date[i];
-}
-
 function isHidePanel(){
-	if(
-		$("maximize-panel").style.display == "none" &&
-		$("portal-iframe").style.display == "none" &&
-		$("search-iframe").style.display == "none"
-		)return false;
+	if( !(Element.visible('maximize-panel') || Element.visible('portal-iframe')) )
+	  return false;
 	else
 	  return true;
 }

@@ -19,35 +19,26 @@ package org.infoscoop.dao;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
-import org.infoscoop.dao.model.Preference;
-import org.infoscoop.dao.model.SystemMessage;
+import org.infoscoop.account.DomainManager;
 import org.infoscoop.dao.model.UserPref;
 import org.infoscoop.dao.model.Widget;
-import org.infoscoop.service.SiteAggregationMenuService.ForceUpdateUserPref;
 import org.infoscoop.util.SpringUtil;
-import org.json.JSONException;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
@@ -72,19 +63,24 @@ public class WidgetDAO extends HibernateDaoSupport{
 
 	public void addWidget( String uid,  String defaultUid,  String tabId, Widget widget,int isStatic ){
 		widget.setUid( uid );
-		widget.setDefaultuid( defaultUid );
+		widget.setFkDomainId(DomainManager.getContextDomainId());
 		widget.setTabid( tabId );
-		widget.setIsstatic( new Integer( isStatic ));
+		widget.setIsstatic( Integer.valueOf( isStatic ));
 
 		addWidget( widget );
 	}
     public void addWidget(Widget widget){
+    	addWidget(widget, true);
+    }
+    
+    public void addWidget(Widget widget, boolean saveUserPrefs){
 //    	System.out.println("ID:"+widget.getId() );
 //    	System.out.println( widget.getUid()+","+widget.getTabid()+","+widget.getWidgetid()+","+widget.getDeletedate() );
 		widget.setCreatedate(new Date().getTime());
 		super.getHibernateTemplate().save(widget);
 		super.getHibernateTemplate().flush();
-		updateUserPrefs( widget );
+		if(saveUserPrefs)
+			saveUserPrefs( widget );
     }
     
     public List<String> getWidgetTypes(String uid){
@@ -124,99 +120,23 @@ public class WidgetDAO extends HibernateDaoSupport{
 
 		return super.getHibernateTemplate().findByCriteria( DetachedCriteria.forClass( Widget.class )
 				.add( Expression.eq("Uid",uid ))
-				.add( Expression.eq("Deletedate",new Long( 0 )))
+				.add( Expression.eq("Deletedate",Long.valueOf( 0 )))
 				.add( Expression.in("Widgetid",widgetIds )));
+	}
+
+	public boolean exist(String uid, String widgetId) {
+		List result = super.getHibernateTemplate().findByCriteria(
+				DetachedCriteria.forClass(Widget.class).add(
+						Expression.eq("Uid", uid)).add(
+						Expression.eq("Deletedate", Long.valueOf(0))).add(
+						Expression.eq("Widgetid", widgetId)));
+		return result.size() > 0;
 	}
 
     public void updateWidget( Widget widget ) {
     	super.getHibernateTemplate().update( widget );
 		super.getHibernateTemplate().flush();
     	updateUserPrefs( widget );
-    }
-
-    /**
-     * Update the property of the widget appointed by widgetID collectively.
-     * Please appoint only the property that you want to change,
-     * except for it, it's maintained the value before changed for the properety.
-     * @param widgetId
-     * @param setProperties, Set<String> removePropNames
-     * @throws Exception
-     */
-    public void updateWidgetProperties(final String widgetId, String title, String href, final Map<String, ForceUpdateUserPref> setProperties, Set<ForceUpdateUserPref> removePropNames) throws Exception{
-    	if (log.isInfoEnabled())
-			log.info("updateWidgetProperties : widgetId=" + widgetId
-					+ ", set properties=" + setProperties + ", remove properties:" +  removePropNames);
-    	long start = System.currentTimeMillis();
-
-		List<Widget> widgetList = super.getHibernateTemplate()
-			.findByCriteria(DetachedCriteria.forClass(Widget.class)
-					.add(Expression.eq("Menuid", widgetId)));
-		SystemMessageDAO sysMessageDao = SystemMessageDAO.newInstance();
-		int i = 0;
-		for( Widget widget : widgetList ) {
-    		String oldTitle = widget.getTitle();
-			if(title != null){
-				widget.setTitle(title);
-				if(widget.getDeletedate() == 0)
-					sysMessageDao.insert(new SystemMessage(
-							widget.getUid(),
-							"ms_title_update_by_admin",
-							oldTitle + "," + title));
-			}
-			if(href != null)
-				widget.setHref(href);
-
-			for(Map.Entry<String, ForceUpdateUserPref> pref : setProperties.entrySet()){
-				String oldValue = null;
-				UserPref up = widget.getUserPrefs().get(pref.getKey());
-				if(up != null)oldValue = up.getValue();
-
-				ForceUpdateUserPref updatePref = pref.getValue();
-
-				if(widget.getType().startsWith("g_") &&  "url".equals(pref.getKey())){
-					widget.setType("g_" + updatePref.getValue());
-				}else{
-
-					widget.setUserPref(pref.getKey(), updatePref.getValue());
-					if(!updatePref.isImplied() && widget.getDeletedate() == 0){
-						if(oldValue != null){
-							sysMessageDao.insert(new SystemMessage(
-									widget.getUid(),
-									"ms_up_update_by_admin",
-									widget.getTitle() + "," + pref.getKey() + "," + oldValue + "," + updatePref.getValue()));
-						}else{
-							sysMessageDao.insert(new SystemMessage(
-									widget.getUid(),
-									"ms_up_update_from_default_by_admin",
-									widget.getTitle() + "," + pref.getKey() + "," + updatePref.getValue()));
-						}
-					}
-				}
-			}
-			for(ForceUpdateUserPref removeProp : removePropNames){
-				// The special processing for gadgets is not necessary, Beacouse gadget's URL is require property.
-				widget.removeUserPref(removeProp.getName());
-				if(!removeProp.isImplied() && widget.getDeletedate() == 0){
-					sysMessageDao.insert(new SystemMessage(
-							widget.getUid(),
-							"ms_up_revert_by_admin",
-							widget.getTitle() + "," + removeProp.getName()));
-				}
-
-			}
-			
-    		updateWidget( widget );
-    		if(i % 20 ==0){
-    			this.getHibernateTemplate().flush();
-    			this.getHibernateTemplate().clear();
-    		}
-    		i++;
-
-		}
-
-    	long end = System.currentTimeMillis();
-		if (log.isInfoEnabled())
-			log.info("end updateWidgetProperties : " + (end - start) + " ms");
     }
 
 	/**
@@ -245,7 +165,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 		String updateQuery = "update Widget set Deletedate = ?,Tabid = '' where Uid = ? and Tabid = ? and (Widgetid = ? or Parentid = ?) and Deletedate = 0";
 		return super.getHibernateTemplate().bulkUpdate(
 				updateQuery,
-				new Object[]{ new Long(deleteDate), uid, tabId, widgetId, widgetId });
+				new Object[]{ Long.valueOf(deleteDate), uid, tabId, widgetId, widgetId });
 	}
 
 	public void deleteWidget( String uid ) {
@@ -263,16 +183,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 	}
 
 
-	public void deleteWidgetByMenuId( String menuId ) {
-
-		String queryString = "delete from Widget where widgetId in (?, ?) or menuid = ?";
-
-		super.getHibernateTemplate().bulkUpdate( queryString,
-				new Object[] { "w_" + menuId, "p_" + menuId, menuId });
-	}
-
-
-	public void deleteWidget( String uid, Integer tabId ) {
+	public void deleteWidget( String uid, String tabId ) {
 		long deleteDate = new Date().getTime();
 
 		String queryString = "update Widget set Deletedate = ? where Uid = ? and tabId = ? and deleteDate = 0 and Isstatic = 0";
@@ -286,13 +197,20 @@ public class WidgetDAO extends HibernateDaoSupport{
 				new Object[] { uid, tabId.toString() });
 	}
 
-	/*
-	public void deleteWidget(Widget widget, long deleteDate) {
-		widget.getId().setDeletedate(new Long(deleteDate));
-		super.getHibernateTemplate().update(widget);
-	}
-	*/
 
+	public void deleteStaticWidgetByTabId(String tabId) {
+		String queryString = "delete from Widget where tabId = ? and Isstatic = 1";
+
+		super.getHibernateTemplate().bulkUpdate( queryString,
+				new Object[] {  tabId});
+	}
+
+	public void deleteStaticWidgetByTabIdAndWidgetId(String tabId,
+			String widgetId) {
+		String queryString = "delete from Widget where tabId = ? and widgetId = ? and Isstatic = 1";
+		super.getHibernateTemplate().bulkUpdate( queryString,
+				new Object[] { tabId, widgetId });
+	}
 	public int emptyWidget(String uid, String widgetId, long deleteDate) {
 		/*
 		return getJdbcTemplate().update(this.getQuery("emptyWidget"),
@@ -301,7 +219,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 		String updateQuery = "delete from Widget where Uid = ? and (Widgetid = ? or Parentid = ?) and Deletedate = ?";
 		return super.getHibernateTemplate().bulkUpdate(
 				updateQuery,
-				new Object[]{uid, widgetId,widgetId, new Long(deleteDate)});
+				new Object[]{uid, widgetId,widgetId, Long.valueOf(deleteDate)});
 
 	}
 
@@ -316,7 +234,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 		String updateQuery = "delete from Widget where Uid = ? and (Widgetid = ? or Parentid = ?) and Tabid = ? and Deletedate = ?";
 		return super.getHibernateTemplate().bulkUpdate(
 				updateQuery,
-				new Object[]{uid, widgetId,widgetId, tabId, new Long(deleteDate)});
+				new Object[]{uid, widgetId,widgetId, tabId, Long.valueOf(deleteDate)});
 
 	}
 	/*
@@ -336,123 +254,7 @@ public class WidgetDAO extends HibernateDaoSupport{
 		String queryString = "delete from Widget where Uid=? and TabId=? and Isstatic=?";
 
 		super.getHibernateTemplate().bulkUpdate( queryString,
-				new Object[]{ uid,tabId,new Integer( isStatic )});
-	}
-
-	public List getWidgetRanking(int maxCount, int freshDay) {
-		Session session = null;
-		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.DATE, -1 * freshDay);
-		long lastTime = cal.getTimeInMillis();
-
-		int looseMaxCount = maxCount + 10;
-		try{
-			session = super.getSession();
-
-			Query msql = (Query) session.getNamedQuery(
-					"menuWidgetRanking");
-			List<Object[]> mr = msql.setMaxResults(looseMaxCount).list();
-
-			Query msqll = (Query) session.getNamedQuery(
-					"menuWidgetRankingLast");
-			List<Object[]> mrl = msqll.setLong("CREATEDATE", lastTime)
-					.setMaxResults(looseMaxCount).list();
-
-			mr = joinRanking(mr, mrl);
-
-			Query wsql = (Query) session.getNamedQuery(
-					"widgetRanking");
-			List<Object[]> wr = wsql.setMaxResults(looseMaxCount).list();
-
-			Query wsall = (Query) session.getNamedQuery(
-					"widgetRankingLast");
-			List<Object[]> wrl = wsall.setLong("CREATEDATE", lastTime)
-					.setMaxResults(looseMaxCount).list();
-
-			wr = joinRanking(wr, wrl);
-
-			Query usql = (Query) session.getNamedQuery(
-					"urlRanking");
-			List<Object[]> ur = usql.setMaxResults(looseMaxCount).list();
-			Query usqll = (Query) session.getNamedQuery(
-					"urlRankingLast");
-			List<Object[]> url = usqll.setLong("CREATEDATE", lastTime)
-					.setMaxResults(looseMaxCount).list();
-
-			ur = joinRanking(ur, url);
-
-			TreeSet<Object[]> ranks = new TreeSet(new Comparator<Object[]>() {
-				public int compare(Object[] o1, Object[] o2) {
-					long cntl_1 = (Long) o1[4];
-					long cntl_2 = (Long) o2[4];
-					if (cntl_1 != cntl_2)
-						return (int) (cntl_2 - cntl_1);
-					long cnt_1 = (Long) o1[3];
-					long cnt_2 = (Long) o2[3];
-					if (cnt_1 != cnt_2)
-						return (int) (cnt_2 - cnt_1);
-					return 1;
-				}
-			});
-			for (Object[] rank : mr) {
-				ranks.add(rank);
-			}
-			for (Object[] rank : wr) {
-				ranks.add(rank);
-			}
-			for (Object[] rank : ur) {
-				ranks.add(rank);
-			}
-
-			List<Object[]> ranksSub = new ArrayList();
-			int i = 0;
-			for (Object[] rank : ranks) {
-				ranksSub.add(rank);
-				if (++i > maxCount)
-					break;
-			}
-			return ranksSub;
-
-		}finally{
-			if(session != null)
-				session.close();
-		}
-	}
-
-	private List joinRanking(List l, List l10) {
-		loop10: for (Iterator<Object[]> it10 = l10.iterator(); it10.hasNext();) {
-			Object[] cols10 = it10.next();
-			for (Iterator<Object[]> it = l.iterator(); it.hasNext();) {
-				Object[] cols = it.next();
-				if (eq(cols[0],cols10[0]) &&
-					eq(cols[1],cols10[1]) &&
-					eq(cols[2],cols10[2])) {
-					cols[4] = cols10[4];
-					continue loop10;
-				}
-			}
-			//add the object that is only in a new popular list.
-			l.add(cols10);
-		}
-		return l;
-	}
-	private boolean eq( Object o1,Object o2 ) {
-		if( o1 == null )
-			return ( o1 == o2 );
-		
-		return o1.equals( o2 );
-	}
-
-	public static void main(String args[]) throws JSONException{
-		WidgetDAO widgetDAO = WidgetDAO.newInstance();
-		List<Object[]> list = widgetDAO.getWidgetRanking(20, 10);
-		for (Object[] obj : list) {
-			for (int i = 0; i < obj.length; i++) {
-				System.out.print(obj[i] + "\t");
-			}
-			System.out.println();
-		}
-
+				new Object[]{ uid,tabId, Integer.valueOf( isStatic )});
 	}
 
 	public Map<String,UserPref> getUserPrefs( String id ) {
@@ -465,6 +267,15 @@ public class WidgetDAO extends HibernateDaoSupport{
 
 		return userPrefs;
 	}
+	public void saveUserPrefs( Widget widget ) {
+		
+		Map<String,UserPref> userPrefs = widget.getUserPrefs();
+		for( UserPref userPref  : userPrefs.values()) {
+			userPref.getId().setWidgetId( widget.getId());
+			super.getHibernateTemplate().saveOrUpdate( userPref );
+		}
+	}
+	
 	public void updateUserPrefs( Widget widget ) {
 		List<UserPref> c1 = super.getHibernateTemplate().findByCriteria(
 				DetachedCriteria.forClass( UserPref.class )
@@ -478,21 +289,32 @@ public class WidgetDAO extends HibernateDaoSupport{
 		keySet.addAll( current.keySet() );
 
 		for( String key : keySet ) {
-			if( !userPrefs.containsKey( key )) {
+			UserPref newPref = userPrefs.get( key );
+			if(newPref == null) {
 				super.getHibernateTemplate().delete( current.get( key ));
 			} else {
-				UserPref userPref = userPrefs.get( key );
-				if( userPref.getId().getWidgetId() == null )
-					userPref.getId().setWidgetId( widget.getId());
-
+				UserPref userPref = current.get(key);
+				if (userPref == null) {// new user pref
+					userPref = userPrefs.get(key);
+				} else {// already existing user pref (for Hibernate)
+					userPref.setValue(newPref.getValue());
+					if (userPref.getId().getWidgetId() == null)
+						userPref.getId().setWidgetId(widget.getId());
+				}
 				super.getHibernateTemplate().saveOrUpdate( userPref );
 			}
 		}
 		super.getHibernateTemplate().flush();
 	}
+	
 	public void updateUserPrefs( Collection<?> widgets ) {
 		for( Object widget : widgets )
 			updateUserPrefs( ( Widget )widget );
 	}
+
+	public void markMenuItemUpdated(Integer id) {
+		super.getHibernateTemplate().bulkUpdate("update Widget w set w.MenuUpdated = 1 where w.FkMenuId = ?", id);
+	}
+
 
 }

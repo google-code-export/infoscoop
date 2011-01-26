@@ -1,0 +1,383 @@
+/* infoScoop OpenSource
+ * Copyright (C) 2010 Beacon IT Inc.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License version 3
+ * as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.	If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
+ */
+
+body {
+	margin:0;
+	padding:0;
+	font-size:12px;
+	font-family:Arial,Helvetica,sans-serif;
+	background: url(imgs/manager/img01.jpg) repeat-x scroll left top #F0F0F0;
+}
+
+#body{
+	background-color:#FFF;
+	margin:5px;
+	padding:5px;
+}
+
+/*- Header--------------------------- */
+#header {
+	height:88px;
+}
+#logo h1{
+	margin:0;
+	padding:30px 0 0 30px;
+	color:#FFF;
+}
+#help{
+	position:absolute;
+	right:6px;
+	top:63px;
+}
+#help a{color:#FFF;}
+/*- Menu Tabs--------------------------- */
+#tabs {
+	height: 32px;
+	margin: 0 auto;
+	padding: 0 0 0 20px;
+}
+
+#tabs ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	line-height: normal;
+}
+
+#tabs li {
+	float: left;
+	border-left: 1px solid #4E9CE9;
+}
+
+#tabs a {
+	display: block;
+	width: 155px;
+	height: 24px;
+	padding-top: 8px;
+	text-decoration: none;
+	text-align: center;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	font-weight: bold;
+	color: #FFFFFF;
+	border: none;
+}
+
+#tabs a:hover{
+	background: #4E9CE9;
+}
+
+#tabs .current a {
+	background: #F0F0F0;
+	padding-left: 0;
+	color: #30476A;
+}
+
+/*- Footer --------------------------- */
+#footer{
+	font-size: 0.9em;
+	text-align: center;
+	padding-bottom:3px;
+}
+
+/*- Home --------------------------- */
+#home{
+	color:#333333;
+}
+#middle{
+	width:100%;
+}
+#middle #left{
+	float:left;
+	width:49%;
+}
+#middle #right{
+	float:right;
+	width:50%;
+}
+#bottom{
+	clear:both;
+	padding-top:1px;
+}
+#bottom .title{
+	font-weight:bolder;
+}
+/*- Menu --------------------------- */
+.footprint{
+	margin-bottom:3px;
+}
+#menu_list td.icon_cell, #menu_list td.radio_cell{
+	text-align:center;
+}
+#menu_left{
+	width:35%;
+	float:left;
+}
+#menu_left a{
+	cursor:pointer;
+}
+#menu_tree{
+	overflow:auto;
+}
+#menu_tree .menu_open{
+	cursor:pointer;
+	font-size:8px;
+	line-height:15px;
+	width:16px;
+	display:inline-block;
+	text-align:center;
+}
+#menu_tree .info{
+	padding-left:40px;
+	font-size:9px;
+	line-height:9px;
+}
+#menu_tree .info .publish{
+	color:#4E763E;
+}
+#menu_tree .info .un{
+	color:#D00;
+}
+#menu_command{
+	padding-bottom:5px;
+}
+#menu_right{
+	width:63%;
+	overflow:auto;
+	float:left;
+	padding-left:10px;
+}
+#menu_item_command{
+	position:absolute;
+	z-index:2000;
+	background:#f0f0f0;
+	border:1px solid #979797;
+	-moz-box-shadow: 1px 1px 2px #999;
+	-webkit-box-shadow: 1px 1px 2px #999;
+	box-shadow: 1px 1px 2px #999;
+	padding: 0;
+	margin: 0;
+	min-width:180px;
+}
+#menu_item_command ul{
+	display:block;
+	list-style-type:none;
+	margin:0;
+	padding:0;
+}
+#menu_item_command a{
+	cursor:pointer;
+	color:black;
+	padding: 1px 6px;
+	margin: 1px 1px 0;
+	line-height: 17px;
+	display:block;
+	text-decoration:none;
+}
+#menu_item_command.top .child_only{
+	display:none;
+}
+#menu_item_command a:hover{
+	padding:0 5px;
+	background:#e8eff7;
+	border:1px solid #aecff7;
+	color:black;
+	-moz-border-radius:2px;
+	-webkit-border-radius:2px;
+	border-radius:2px;
+}
+#menu_item_command a.disabled{
+	color:gray;
+}
+#menuItem #gadget_settings .list .value{
+	float:left;
+	background-color:#FAFAFA;
+	border:none;
+}
+#menuItem #gadget_settings .list .value.selected{
+	background-color:#fff;
+	border:1px solid #bbb;
+}
+#menuItem #gadget_settings .list  .remove{
+	float:left;
+	padding-left:5px;
+	cursor:pointer;
+}
+#menuItem #gadget_settings .list input.ui-button{
+	margin-left:3px;
+	height:20px;
+	padding:0 0.9em;
+}
+#menu #gadget_url{
+	width:200px;
+	margin:10px;
+	height:27px;
+}
+
+/*- Form --------------------------- */
+.cssform{
+	background-color:#FAFAFA;
+	margin-left: 5px;
+	padding: 15px 15px 25px;
+	border: 1px solid #E4E4E4;
+}
+.cssform fieldset{
+	border: none;
+	border-top: 1px solid #AAA;
+	padding: 0;
+	margin: 0 0 0 10px;
+}
+.cssform legend{
+	font-weight: bold;
+	font-size:1.1em;
+	_margin: 0 -7px; /* IE Win */
+}
+.cssform legend, .cssform label{
+	padding-left: 0;
+	color: #333;
+}
+.cssform ul{
+	padding:0;
+	list-style-type:none;	
+}
+.cssform li{
+	clear: left;
+	display:block;
+	margin: 0;
+	padding: 5px 0;
+	padding-left: 155px; /*width of left column containing the label elements*/
+	/*height: 1%;*/
+}
+
+.cssform label{
+	float: left;
+	margin-left: -155px; /*width of left column*/
+	width: 150px; /*width of labels. Should be smaller than left column (155px) to create some right margin*/
+	text-align:right;
+	padding-top: 2px;
+}
+
+.cssform input[type="text"]{ /*width of text boxes. IE6 does not understand this attribute*/
+	width: 180px;
+}
+.cssform input[type=text],
+.cssform input[type=password],
+.cssform input.text,
+.cssform input.title,
+.cssform textarea,
+.cssform select {
+	background-color:#fff;
+	border:1px solid #bbb;
+}
+.cssform input[type=text]:focus,
+.cssform input[type=password]:focus,
+.cssform input.text:focus,
+.cssform input.title:focus,
+.cssform textarea:focus,
+.cssform select:focus {
+	border-color:#666;
+}
+
+.cssform textarea{
+	width: 250px;
+	height: 150px;
+}
+.cssform .radio label{
+	float: none;
+	width: auto;
+	margin-left: 0;
+	text-align:left;
+}
+
+
+/*- Security group list  --------------------------- */
+#role_list_table ul, #role_edit_table ul, #selectRoleTable ul{
+	padding:0;
+	margin:0;
+	list-style-type:none;
+}
+
+#role_list_table li, #role_edit_table li, #selectRoleTable li{
+	padding:2;
+}
+
+/* Success, notice and error boxes
+-------------------------------------------------------------- */
+
+.error,
+.notice,
+.success    { padding: .8em; margin-bottom: 1em; border: 2px solid #ddd; }
+
+.error      { background: #FBE3E4; color: #8a1f11; border-color: #FBC2C4; }
+.notice     { background: #FFF6BF; color: #514721; border-color: #FFD324; }
+.success    { background: #E6EFC2; color: #264409; border-color: #C6D880; }
+.error a    { color: #8a1f11; }
+.notice a   { color: #514721; }
+.success a  { color: #264409; }
+
+/*- Tab--------------------------- */
+.tab_table {
+	border:1px solid #CCCCCC;
+	border-collapse:collapse;
+	font-size:1.1em;
+	text-align:center;
+}
+.tab_table tr td {
+	border:1px solid #CCCCCC;
+	padding: 3px;
+}
+.tab_table tr th {
+	background-color: #d3DADE;
+	padding: 3px;
+}
+.tab_table tr.rowb {
+	background-color:#EAf2FD;
+}
+.tab_table tr.filterColumns td {
+	padding:2px;
+}
+.loading_bar{
+	background: url(imgs/ajax-loading-bar.gif) no-repeat center center;
+	width:100%;
+	height:100%;
+}
+.icon{
+	width:16px;
+	height:16px;
+	cursor:pointer;
+}
+.trash {
+	background: url(imgs/trash.gif ) no-repeat center left;
+}
+.edit {
+	background: url(imgs/edit.gif ) no-repeat center left;
+}
+.add {
+	background: url(imgs/add.gif ) no-repeat center left;
+}
+.save{
+	background: url(imgs/database_save.gif) no-repeat center left;
+}
+.sort_handle{
+	background: url(imgs/drag.gif ) no-repeat center left;
+	cursor:move;
+}
+.label_icon{
+	width:auto;
+	padding-left:18px;
+	font-size: 12px;
+}

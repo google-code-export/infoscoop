@@ -25,7 +25,7 @@ IS_Portal.loadWidgetQueue = {};
 IS_Portal.loadingWidgetCount = 0;
 var IS_WidgetsContainer = IS_Class.create();
 IS_WidgetsContainer.prototype.classDef = function() {
-	this.initialize = function() {
+	this.initialize = function(srvName) {
 		var opt = {
 		    method: 'get' ,
 		    asynchronous:true,
@@ -61,7 +61,10 @@ IS_WidgetsContainer.prototype.classDef = function() {
 		        IS_WidgetsContainer.loadFailed = true;
 		    }
 		};
-		var srvName = "widsrv" + ( (typeof displayTabOrder != "undefined") ? "?tabOrder=" + displayTabOrder : "" );
+		if(typeof srvName != "undefined")
+		  srvName = srvName+ "?tabId=" + IS_Portal.currentTabId.substr(3);
+		else
+		  var srvName = "widsrv" + ( (typeof displayTabOrder != "undefined") ? "?tabOrder=" + displayTabOrder : "" );
 		AjaxRequest.invoke(hostPrefix + "/" + srvName, opt);
 	}
 	
@@ -104,7 +107,6 @@ IS_WidgetsContainer.prototype.classDef = function() {
 		
 		try {
 			var deletes = [];
-			
 			$H( widgets ).values().findAll( function( widgetConf ) {
 				return !widgetConf.type;
 			}).each( function( widgetConf ) {
@@ -152,9 +154,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 					//var children = menuItem.children;
 					var empty = true;
 					var lastChild;
-					children.findAll( function( child ) {
-						return !IS_Portal.isChecked( child );
-					}).each( function( child ) {
+					children.each( function( child ) {
 						var subWidgetConf = IS_WidgetsContainer.WidgetConfiguration.getFeedConfigurationJSONObject(
 							"RssReader", "w_" + child.id, child.title, child.href, "false", child.properties);
 						subWidgetConf.parentId = widgetConf.id;
@@ -316,35 +316,6 @@ IS_WidgetsContainer.prototype.classDef = function() {
 	function displayWidgets(response) {
 		try{
 			var widgetConfList = eval("(" + response.responseText + ")");
-
-			var sortFunc = function( a, b ){
-				if( (a.tabType && (a.tabType=="static"))
-					&& !(b.tabType && (b.tabType=="static")) ) return -1;
-				if( !(a.tabType && (a.tabType=="static"))
-					&& (b.tabType && (b.tabType=="static")) ) return 1;
-	
-				// Show them in order of displayed number if tabType has the same value
-				if(a.tabNumber && !b.tabNumber) return -1;
-				if(!a.tabNumber && b.tabNumber) return 1;
-				/*
-				if(typeof a.tabNumber != "undefined" && typeof b.tabNumber == "undefined") return -1;
-				if(typeof a.tabNumber == "undefined" && typeof b.tabNumber != "undefined") return -1;
-				*/
-				
-				if(a.tabNumber && b.tabNumber){
-	//			if(typeof a.tabNumber != "undefined" && typeof b.tabNumber != "undefined"){
-					if(parseInt(a.tabNumber) < parseInt(b.tabNumber)) return -1;
-					if(parseInt(b.tabNumber) < parseInt(a.tabNumber)) return 1;
-				}
-	
-				// Show them in order of ID if there is no displayed number
-				if(!b.tabId) return -1;
-				if(!a.tabId) return 1;
-				if(parseInt(a.tabId) <= parseInt(b.tabId) ) return -1;
-				if(parseInt(b.tabId) < parseInt(a.tabId) ) return 1;
-			}
-			widgetConfList.sort( sortFunc );
-			
 			var tabOrder = -1;
 			var buildTargetTabIds = [];
 			for(var tabId = 0; tabId < widgetConfList.length; tabId++){
@@ -359,6 +330,14 @@ IS_WidgetsContainer.prototype.classDef = function() {
 							id = parseInt( IS_Portal.tabList[ tabId-1 ].id.substring(3) ) + 1;
 						}
 						widgetConfList[tabId].tabId = id;
+					}
+					
+					buildTargetTabIds.push(id);
+
+					if("commandbar" === id){
+						var command = document.getElementById("portal-command");
+						command.innerHTML = widgetConfList[tabId].staticPanelLayout;
+						continue;
 					}
 
 					var tabName = (widgetConfList[tabId].tabName)? widgetConfList[tabId].tabName : IS_R.lb_newTab;
@@ -382,35 +361,25 @@ IS_WidgetsContainer.prototype.classDef = function() {
 					
 					var disabledDynamicPanel = widgetConfList[tabId].disabledDynamicPanel;
 					if(widgetConfList[tabId].isTrashDynamicPanelWidgets){
-						var msgListDiv = $('message-list');
-						msgListDiv.appendChild(
-							$.DIV(
-								{id:'message-newmsg'},
-								$.IMG(
-									{
-										style:'position:relative;top:2px;paddingRight:2px',
-										src:imageURL+"information.gif"
-									}
-								),
-								IS_R.getResource(IS_R.ms_changeToFixedTab, [tabName])
-							)
-						);
-						$('message-bar').style.display = "";
-						IS_EventDispatcher.newEvent("adjustedMessageBar");
+						IS_Portal.addMsg(IS_R.getResource(IS_R.ms_changeToFixedTab, [tabName]));
+						IS_Portal.showMsgBar();
+					}
+					if(widgetConfList[tabId].isChanged){
+						IS_Portal.addMsg(IS_R.getResource(IS_R.ms_staticTabIsChanged, [tabName]));
+						IS_Portal.showMsgBar();
 					}
 					
-					IS_Portal.addTab( id, tabName, tabType, numCol, columnsWidth, disabledDynamicPanel, true);
-					buildTargetTabIds.push(id);
-					
+					IS_Portal.addTab( id, tabName, tabType, widgetConfList[tabId].staticPanelLayout, numCol, columnsWidth, disabledDynamicPanel, widgetConfList[tabId].adjustStaticHeight, true);
+					/*
 					if(!useTab){
 						if(widgetConfList[0].tabNumber){
 							IS_Portal.tabs["tab0"].tabNumber = widgetConfList[0].tabNumber;
 						}
-						var tabs = $('tabs');
-						IS_Portal.tabList[0].style.display = "none";
 					}
+					*/
 				}
 			}
+			IS_Portal.adjustMsgBar();
 			
 			if( useTab ) {
 				IS_Portal.controlTabs = new Control.Tabs("tabs",{
@@ -423,12 +392,6 @@ IS_WidgetsContainer.prototype.classDef = function() {
 				});
 			}
 
-			//Holiday information
-			IS_Holiday = new IS_Widget.Calendar.iCalendar(localhostPrefix + "/holidaysrv");
-			IS_Holiday.load(false);
-			freshDays = IS_Portal.getFreshDays(IS_Portal.freshDays);
-			//IS_Portal.freshDays = freshDays;
-	
 			var goHome = $("portal-go-home");
 			if(goHome){
 				goHome.style.display = "none";
@@ -449,11 +412,12 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			for(var num = 0; num < widgetConfList.length; num++){
 				if(!isTabView && !buildTargetTabIds.contains(widgetConfList[num].tabId))
 					continue;
-				var isBuild = (widgetConfList[num].tabId == IS_Portal.currentTabId.substring(3))? true:false;
-				var id = "tab"+widgetConfList[num].tabId;
-				if(widgetConfList[num].staticPanel){
 					
-					var adjustToWindowHeight = widgetConfList[num].adjustToWindowHeight;
+				var isBuild = (widgetConfList[num].tabId == IS_Portal.currentTabId.substring(3) ||
+							   widgetConfList[num].tabId == 'commandbar')? true:false;
+				var id = "tab"+widgetConfList[num].tabId;
+
+				if(widgetConfList[num].staticPanel){
 					var widgets = widgetConfList[num].staticPanel;
 					buildStaticPanel(id, widgets, isBuild);
 				}
@@ -469,7 +433,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 	
 			// loadContents();
 			
-			var loadWidgets = IS_Portal.getLoadWidgets("tab0");
+			var loadWidgets = IS_Portal.getLoadWidgets(IS_Portal.currentTabId);
 			if(loadWidgets.length > 0) {
 				var eventTargetList = loadWidgets.collect( function( loadWidget ) {
 					return {type:"loadComplete", id:loadWidget.id}
@@ -483,68 +447,12 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			setTimeout(loadContents, 1);
 			
 			if(IS_Portal.lastSaveFailed)
-
 				msg.warn(IS_R.ms_lastlogoutSavingfailure);
-			
-			if( Browser.isSafari1 ) {
-				( function() {
-					var commands = [
-						"change-fontsize","widgets-map","trash","preference"
-					].findAll( function( command ) {
-						var div = $("portal-"+command );
-						
-						return ( div && div.style.display != "none");
-					});
-					
-					function createDisableFilter( command ) {
-						var div = $("portal-"+command );
-						
-						var filter = document.createElement("div");
-						filter.id = "portal-"+command+"-disableFilter";
-						filter.style.position = "absolute";
-						filter.style.top = filter.style.left = 0;
-						filter.style.width = div.parentNode.offsetWidth;
-						filter.style.height = div.parentNode.offsetHeight;
-						
-						filter.style.opacity = "0.5";
-						filter.style.backgroundColor = "white"
-						
-						IS_Event.observe( filter,'mousedown',IS_Event.stop );
-						IS_Event.observe( filter,'mouseup',IS_Event.stop );
-						IS_Event.observe( filter,'click',IS_Event.stop )
-						
-						return filter;
-					}
-					
-					commands.each( function( command ) {
-						var div = $("portal-"+command );
-						div.style.position = "relative";
-						
-						var filter = createDisableFilter( command );
-						filter.style.display = "none"
-						
-						div.appendChild( filter );
-					});
-					
-					IS_Portal.disableCommandBar = function() {
-						commands.each( function( command ) {
-							$("portal-"+command+"-disableFilter").style.display = "block";
-						});
-					}
-					IS_Portal.enableCommandBar = function() {
-						commands.each( function( command ) {
-							$("portal-"+command+"-disableFilter").style.display = "none";
-						});
-					}
-				})();
-			}
-			
-			//Check new messages
-			//This line should be here as IS_Portal.msgLastViewTime is needed
-			IS_Widget.Message.checkNewMsgRepeat();
 			
 			if(fixedPortalHeader) 
 				IS_Portal.adjustPanelHeight(null);
+		}catch(e){
+			console.error(e);
 		}finally{
 			//refs#3864 stop indicator anyway when widgets are end of load.
 			IS_Portal.endIndicator();
@@ -559,24 +467,6 @@ IS_WidgetsContainer.prototype.classDef = function() {
 				widgetConf.id = tabId+"_"+widgetConf.id;
 			}
 		}
-	}
-	
-	function getConfiguration(response) {
-		var widgetConfs = eval("(" + response.responseText + ")");
-		for(var i in widgetConfs){
-			var typeConf = widgetConfs[i];
-			if(typeof typeConf == "function") continue;
-			if(typeConf) {
-				for(var i in typeConf.WidgetPref){
-					if(typeof typeConf.WidgetPref[i] == "function") continue;
-					var datatype = typeConf.WidgetPref[i].datatype;
-					if(datatype && datatype == "json"){
-						typeConf.WidgetPref[i].value = eval("(" + typeConf.WidgetPref[i].content + ")");
-					}
-				}
-			}
-		}
-		IS_WidgetConfiguration = widgetConfs;
 	}
 
 	function loadContents(){
@@ -678,121 +568,6 @@ IS_Portal.buildContents = function( tabId , isAllReload){
 	}
 	tabObj.isBuilt = true;
 }
-IS_Portal.buildAllTabsContents = function(){
-	if(IS_Portal.isBuildingAllTabs) return;
-	IS_Portal.isBuildingAllTabs = true;
-	for(var i in IS_Portal.tabs){
-		var tab = IS_Portal.tabs[i];
-		if(typeof tab == "function") continue;
-		var tabId = tab.id;
-		var loadWidgets = IS_Portal.getLoadWidgets(tabId, true);
-		
-		var eventTargetList = loadWidgets.collect( function( loadWidget ) {
-			return {type:"loadComplete", id:loadWidget.id}
-		});
-		IS_EventDispatcher.addComplexListener( eventTargetList,function() {
-				IS_EventDispatcher.newEvent("tabLoadCompleted",this );
-			}.bind(tabId),null,true);
-		
-		tab.isBuilt = true;
-		for(var i = 0; i < loadWidgets.length; i++) {
-			var widget = loadWidgets[i];
-			IS_Portal.loadWidgetQueue[widget.id] = widget;
-		}
-	}
-//	IS_Portal.loadWidgetQueue = $H(IS_Portal.loadWidgetQueue);
-	IS_Portal.loadWidgetCount = $H( IS_Portal.loadWidgetQueue ).size();
-	IS_Portal.loadingWidgetCount = 0;
-	IS_Portal.completeWidgetCount = 0;
-	IS_Portal.loadStartTabIds = {};
-	$("tabsRefresh").style.display = "none";
-	$("tabsRefreshStop").style.display = "";
-	
-	IS_Portal.displayMsgBar("tabReloadProgress", "<table style='width:100%'><tr><td width='17'>" 
-		+ "<div id='tabLoadStopIcon'></div>"
-		+ "</td><td>"
-		+ "<div id='tabLoadProgress'><div id='tabLoadProgressBar'>"
-		+ "<div id='tabLoadProgressCount'><span id='completeWidgetCount'>0</span>/" + IS_Portal.loadWidgetCount + "</div>"
-		+ "</div></div>"
-		+ "</td></tr></table>"
-	);
-	Event.observe($("tabLoadStopIcon"),"click",IS_Portal.stopLoadWidgets );
-	IS_Portal.processLoadWidget();
-	IS_Portal.adjustSiteMenuHeight(null);
-	IS_Portal.adjustIS_PortalStyle();
-}
-IS_Portal.stopLoadWidgets = function() {
-	IS_Portal.loadWidgetQueue = {};
-	
-	for (var i in IS_Portal.tabs) {
-		var tab = IS_Portal.tabs[i];
-		if (typeof tab == "function") continue;
-		
-		IS_EventDispatcher.newEvent("tabLoadCompleted",tab.id );
-	}
-	setTimeout( IS_Portal.endBuildAllTabsContents,500 );
-}
-IS_Portal.processLoadWidget = function() {
-	var widget = (function(){
-		for (var i in IS_Portal.loadWidgetQueue) {
-			if(typeof IS_Portal.loadWidgetQueue[i] != "function")
-				return IS_Portal.loadWidgetQueue[i];
-		}
-	}());
-	if( !widget ) return;
-	delete IS_Portal.loadWidgetQueue[widget.id];
-	
-	/*
-	var closeListener = function( widget ) {
-		IS_EventDispatcher.newEvent("loadComplete",widget.id );
-		
-		widget.removeLoadCompleteListener( loadCompleteListener );
-	}.bind( null,widget );
-	widget.addCloseListener( closeListener );
-	*/
-	
-	var loadCompleteListener = function( widget ){
-		//setTimeout(widget.removeCloseListener.bind(widget, closeListener ), 100);
-		
-		if(IS_Portal.loadWidgetQueue[widget.id])
-			delete IS_Portal.loadWidgetQueue[widget.id];
-		
-		IS_Portal.loadingWidgetCount--;
-		IS_Portal.completeWidgetCount++;
-		IS_Portal.processLoadWidget();
-		
-		if( !$("msgBar_tabReloadProgress" ) ) return;
-		
-		var progress = IS_Portal.completeWidgetCount/IS_Portal.loadWidgetCount;
-		$("tabLoadProgressBar").style.width = Math.round( progress *100) + "%";
-		$("completeWidgetCount").innerHTML = IS_Portal.completeWidgetCount;
-		
-		if( progress == 1 && $("msgBar_tabReloadProgress" )) 
-			setTimeout( IS_Portal.endBuildAllTabsContents,500 );
-		
-		if(/^g_/.test( widget.widgetType ))
-			widget.onTabChangeAdjustIFrameHeight = true;
-	}.bind( null,widget );
-	widget.addLoadCompleteListener( loadCompleteListener,true );
-	
-	IS_Portal.loadingWidgetCount++;
-	if (!IS_Portal.loadStartTabIds[widget.tabId]) {
-		IS_Portal.loadStartTabIds[widget.tabId] = true;
-		IS_EventDispatcher.newEvent("tabLoadStart", widget.tabId);
-	}
-	setTimeout( widget.loadContents.bind( widget),10 );
-	
-	var loadingLimit = 4;
-	if( IS_Portal.loadingWidgetCount < loadingLimit )
-		IS_Portal.processLoadWidget();
-}
-IS_Portal.endBuildAllTabsContents = function(){
-	IS_Portal.isBuildingAllTabs = false;
-	IS_Portal.unDisplayMsgBar("tabReloadProgress");
-	
-	$("tabsRefresh").style.display = "";
-	$("tabsRefreshStop").style.display = "none";
-}
 	
 IS_WidgetsContainer.adjustColumnWidth = function( tabId, columnsWidth, isInitialize ) {
 	/*
@@ -826,7 +601,7 @@ IS_WidgetsContainer.adjustColumnWidth = function( tabId, columnsWidth, isInitial
 //			columns[i].style.width = Math.floor(width/IS_Portal.tabs[adjustTabId].numCol) + "px";
 			
 			if(isClear){
-				var _coefficient = (Browser.isSafari) ? 100 : 99.5;
+				var _coefficient = Browser.isSafari ? 100 : 99.5;
 				// '(numCol-1)%' is used in 'adjustBar'
 				var width = ((_coefficient - (numCol-1))/numCol) + "%";
 				columns[i].style.width = width;
@@ -983,48 +758,6 @@ IS_WidgetsContainer.adjustColumns = {
 	}
 }
 
-if( Browser.isSafari1 ) {
-	IS_WidgetsContainer.adjustColumns.end = ( function(){
-		var end = IS_WidgetsContainer.adjustColumns.end;
-		
-		return function() {
-			end.apply( this,$A( arguments ));
-			
-			var total = 0;
-			var widths = {};
-			IS_Portal.tabs[IS_Portal.currentTabId].columnsWidth.each( function( columnWidth,i ){ 
-				var width = parseFloat( columnWidth.match(/(\d+(?:.\d+)?)%/)[1] );
-				if( !width || isNaN( width ))
-					return;
-				
-				widths[i] = width;
-				total += width;
-			});
-			
-			var currentTab = IS_Portal.tabs[IS_Portal.currentTabId];
-			var max = ( ( 100-( currentTab.numCol-1 ))/currentTab.numCol ) *currentTab.numCol;
-			if( total >= max -0.01 )
-				return;
-			
-			var scale = max/total;
-			
-			currentTab.columnsWidth = [];
-			var columns = $("columns"+currentTab.tabNumber ).childNodes;
-			var columnNumber = 0;
-			for(var i=0;i<columns.length;i++){
-				var column = columns[i];
-				if(column.className != "column") continue;
-				
-				var width = widths[columnNumber] *scale;
-				column.style.width = width+"%";
-				currentTab.columnsWidth.push( width );
-				
-				columnNumber++;
-			}
-		}
-	})();
-}
-
 IS_Portal.rebuilding = new Object();
 IS_WidgetsContainer.rebuildColumns = function( tabId, numCol, columnsWidth, isReset, isInitialize ) {
 	if(IS_Portal.tabs[tabId].disabledDynamicPanel
@@ -1157,7 +890,7 @@ IS_WidgetsContainer.addWidget = function (tabId, widgetConf, isBuild, appendFunc
 		IS_Widget.addWidgetCommand(widget);
 	}
 	
-	if(tabId == IS_Portal.currentTabId || ( isBuild && !Browser.isSafari1 ) ){
+	if(tabId == IS_Portal.currentTabId || isBuild ){
 		widget.build();
 		if(appendFunc){
 			appendFunc(widget);
@@ -1192,7 +925,7 @@ IS_WidgetsContainer.WidgetConfiguration = {
 				if(properties[i] && !(properties[i] instanceof Function)){
 					try{
 //						eval("widgetConf.property." + i  + " = escapeXMLEntity(properties[i])");
-						if( !( type.indexOf('g_') == 0 && i=='url') )
+						if( !( type.indexOf('g_http') == 0 && i=='url') )
 						  widgetConf.property[i] = properties[i];
 					}catch(e){}
 				}
@@ -1364,7 +1097,7 @@ IS_Portal.isMenuType = function( widget,menuItem ) {
  * @param {Object} tabId
  */
 IS_Portal.addWidget = function(widget, tabId){
-	if(!tabId) tabId = IS_Portal.currentTabId;
+	if(!tabId || 'tabcommandbar' ==  tabId) tabId = IS_Portal.currentTabId;
 	var widgetId = IS_Portal.getTrueId(widget.id);
 	
 	IS_Portal.widgetLists[tabId][widgetId] = widget;
@@ -1535,19 +1268,4 @@ IS_Portal.removeSubWidget = function(_widget, _subWidget, tabId){
  */
 IS_Portal.isSubWidget = function(widgetId){
 	return IS_Portal.subWidgetIds.include(widgetId);
-}
-
-
-IS_Portal.isTabLoading = function(){
-	if( !Browser.isSafari1 ) 
-		return false;
-	
-	var widgetList = IS_Portal.widgetLists[IS_Portal.currentTabId];
-	for(i in widgetList){
-		if( widgetList[i].isLoading) {
-			if( Browser.isSafari1 /*|| ( !widgetList[i].isComplete && widgetList[i].panelType == "StaticPanel")*/)
-				return true;
-		}
-	}
-	return false;
 }

@@ -28,7 +28,6 @@ import java.util.Stack;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.dao.PortalLayoutDAO;
@@ -122,12 +121,16 @@ public class PortalLayoutService {
 			Portallayout portalLayout = (Portallayout)layoutIt.next();
 			
 			sb.append("<portallayout>");
-			sb.append("<name>").append(portalLayout.getName()).append("</name>");
+			sb.append("<name>").append(portalLayout.getId().getName()).append("</name>");
 			
 			String layout = (portalLayout.getLayout()!=null) ? portalLayout.getLayout(): "" ;
 			String layoutData = XmlUtil.escapeXmlEntities(layout);
 			
 			sb.append("<layout>").append(layoutData).append("</layout>");
+
+			sb.append("<country>").append(portalLayout.getId().getCountry()).append("</country>");
+			sb.append("<lang>").append(portalLayout.getId().getLang()).append("</lang>");
+			
 			
 			sb.append("</portallayout>");
 		}
@@ -137,8 +140,8 @@ public class PortalLayoutService {
 		return sb.toString();
 	}
 	
-	public String getPortalLayout(String name){
-		Portallayout layout = this.portalLayoutDAO.selectByName(name);
+	public String getPortalLayout(String name, String country, String lang){
+		Portallayout layout = this.portalLayoutDAO.getById(name, country, lang);
 		if(layout == null){
 			log.error("Layout " + name + " is not found.");
 			return "";
@@ -146,7 +149,7 @@ public class PortalLayoutService {
 		return layout.getLayout();
 	}
 
-	public List getPortalLayoutList(){
+	public List<Portallayout> getPortalLayoutList(){
 		return this.portalLayoutDAO.select();
 	}
 	
@@ -206,7 +209,7 @@ public class PortalLayoutService {
 				appendDivision(stringbuffer);
 			} else if (qName.equals("name")) {
 				
-			} else if (qName.equals("layout")) {
+			} else if (qName.equals("layout") || qName.equals("country") || qName.equals("lang")) {
 				stringbuffer.append(",").append(qName).append(":");
 				appendDivision(stringbuffer);
 			}
@@ -235,7 +238,7 @@ public class PortalLayoutService {
 				appendDivision(JSONObject.quote(buf.toString()));
 				appendDivision(":{name:");
 				appendDivision(JSONObject.quote(buf.toString()));
-			} else if (qName.equals("layout")) {
+			} else if (qName.equals("layout") || qName.equals("country") || qName.equals("lang")) {
 				appendDivision(JSONObject.quote(buf.toString()));
 			}
 			buf.reset();

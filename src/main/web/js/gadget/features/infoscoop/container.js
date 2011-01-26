@@ -23,7 +23,9 @@ gadgets.rpc.register("set_pref",function( ifpctok ) {
 	var widget = IS_Portal.getWidget( this.mid,this.tid );
 	if( widget.authToken != this.t ) return;
 	
-	var args = $A( arguments );args.shift();
+	var length = arguments.length || 0, args = new Array(length);
+	while (length--) args[length] = arguments[length];
+	args.shift();
 	
 	widget.setUserPrefs.apply( widget,args );
 });
@@ -68,7 +70,7 @@ gadgets.rpc.register("requestNavigateTo",function( view, opt_params, opt_ownerId
 			IS_Portal.buildIFrame( aTag );
 			
 			if( aTag.target == "ifrm")
-				return $("ifrm").src = opt_params;
+				return document.getElementById("ifrm").src = opt_params;
 		}
 		
 		return window.open( opt_params );
@@ -104,13 +106,10 @@ gadgets.rpc.register("is_get_login_uid",function() {
 	return is_userId;
 });
 
-gadgets.rpc.register("is_add_widget_to_panel",function(type, url, title, href) {
+gadgets.rpc.register("is_add_widget_to_panel",function(type, title, href, properties) {
 	var widgetId = "w_" + new Date().getTime();
 	
 	function dropWidget(title, href){
-		var properties = {
-		  url: url
-		};
 		var widgetConf = IS_WidgetsContainer.WidgetConfiguration.getConfigurationJSONObject(type, widgetId, 1, title, href, properties);
 		var widget = IS_WidgetsContainer.addWidget( IS_Portal.currentTabId, widgetConf );
 		IS_Widget.setWidgetLocationCommand(widget);
@@ -144,7 +143,7 @@ gadgets.rpc.register("is_add_widget_to_panel",function(type, url, title, href) {
 					dropWidget(title, href);
 				}
 			}catch(e){msg.error(e)}
-			$("indicatorMini").style.visibility = "hidden";
+			document.getElementById("indicatorMini").style.visibility = "hidden";
 		};
 		is_processUrlContents(url, getTitleFunc );
 	}else{
@@ -173,24 +172,4 @@ gadgets.rpc.register("is_set_relay_url",function( relayUrl ) {
 	if( widget.authToken != this.t ) return;
 	
 	gadgets.rpc.setRelayUrl( widget.iframe.name,relayUrl );
-});
-
-gadgets.rpc.register("is_hide_gadget",function() {
-	var widget = IS_Portal.getWidget( this.mid,this.tid );
-	if( widget.authToken != this.t ) return;
-	
-	return Element.hide(widget.elm_widget);
-});
-
-gadgets.rpc.register("is_show_gadget",function() {
-	var widget = IS_Portal.getWidget( this.mid,this.tid );
-	if( widget.authToken != this.t ) return;
-	
-	return Element.show(widget.elm_widget);
-});
-
-gadgets.rpc.register("is_close_gadget",function( relayUrl ) {
-	var widget = IS_Portal.getWidget( this.mid,this.tid );
-	if( widget.authToken != this.t ) return;
-	widget.headerContent.close();
 });

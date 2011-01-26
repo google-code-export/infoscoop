@@ -94,18 +94,12 @@
 		
 		<copy todir="${build.main}" file="${src.main.web}/login.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/changePassword.jsp"/>
-		<copy todir="${build.main}" file="${src.main.web}/selectProfile.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/logoff.jsp"/>
-		<copy todir="${build.main}" file="${src.main.web}/accessStats.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/error.jsp"/>
 		
 		<copy todir="${build.main}" file="${src.main.web}/rpc_relay.html"/>
 		<copy todir="${build.main}" file="${src.main.web}/blank.html"/>
 
-
-		<copy todir="${build.main}/js/resources" file="${src.main.web}/js/resources/resourceBundle.jsp"/>
-		<copy todir="${build.main}/js/search" file="${src.main.web}/js/search/searchEngine.jsp"/>
-		
 		<copy todir="${build.main}" file="${src.main.web}/iframe.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/admin/role.jsp"/>
 		<copy todir="${build.main}" file="${src.main.web}/admin/blank.html"/>
@@ -120,6 +114,11 @@
 			<fileset dir="${src.main.web}/js/gadget">
 				<exclude name="features/"/>
 			</fileset>
+		</copy>
+		
+		<mkdir dir="${build.main}/js/resources" />
+		<copy todir="${build.main}/js/resources">
+			<fileset dir="${src.main.web}/js/resources/"/>
 		</copy>
 		
 		<copy todir="${build.main}/js/utils" file="${src.main.web}/js/utils/ajax304.js"/>
@@ -198,7 +197,6 @@
 			<filelist dir="${src.main.web}/js" files="ContentFooter.js"/>
 			<filelist dir="${src.main.web}/js" files="GlobalSetting.js"/>
 			<filelist dir="${src.main.web}/js" files="Theme.js"/>
-			<filelist dir="${src.main.web}/js/search" files="SearchEngine.js"/>
 			<filelist dir="${src.main.web}/js/widgets" files="Widget.js"/>
 			<filelist dir="${src.main.web}/js/widgets" files="WidgetHeader.js"/>
 			<filelist dir="${src.main.web}/js/widgets" files="WidgetEdit.js"/>
@@ -210,18 +208,11 @@
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssCategory.js"/>
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssItemRender.js"/>
 			<filelist dir="${src.main.web}/js/widgets/maximize" files="MaximizeRssItemSelection.js"/>
-			<filelist dir="${src.main.web}/js/widgets/information" files="Information.js"/>
-			<filelist dir="${src.main.web}/js/widgets/information" files="Information2.js"/>
 			<filelist dir="${src.main.web}/js/widgets/calendar" files="Calendar.js"/>
 			<filelist dir="${src.main.web}/js/widgets/calendar" files="iCalendar.js"/>
 			<filelist dir="${src.main.web}/js/widgets/ticker" files="Ticker.js"/>
-			<filelist dir="${src.main.web}/js/widgets/ranking" files="Ranking.js"/>
-			<filelist dir="${src.main.web}/js/widgets/ranking" files="RankingRender.js"/>
 			<filelist dir="${src.main.web}/js/widgets/MiniBrowser" files="MiniBrowser.js"/>
 			<filelist dir="${src.main.web}/js/widgets/MiniBrowser" files="FragmentMiniBrowser.js"/>
-			<filelist dir="${src.main.web}/js/widgets/WidgetRanking" files="WidgetRanking.js"/>
-			<filelist dir="${src.main.web}/js/widgets/Message" files="Message.js"/>
-			<filelist dir="${src.main.web}/js/widgets/Message" files="MaximizeMessage.js"/>
 		</concat>
 		<java jar="${yuicompressor}" fork="true">
 			<arg line="--type js --charset UTF-8 -o &quot;${build.main}/js/dist/Portal-${build.version}.js&quot; &quot;${build.main}/js/dist/Portal.js.tmp&quot;"/>
@@ -244,27 +235,6 @@
 			</classpath>
 		</java>
 		
-		<concat destfile="${build.main}/js/dist/Portal-SearchEngine.js.tmp" append="false" encoding="utf-8" fixlastline="true">
-			<filelist dir="${src.main.web}/js/lib" files="prototype-1.6.0.3.js"/>
-			<filelist dir="${src.main.web}/js/lib/syntacticx-livepipe-ui/" files="livepipe.js"/>
-			<filelist dir="${src.main.web}/js/lib/syntacticx-livepipe-ui/" files="tabs.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="utils.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="ajax304.js"/>
-			<filelist dir="${src.main.web}/js/utils/ajaxpool" files="ajax.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="Request.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="domhelper.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="msg.js"/>
-			<filelist dir="${src.main.web}/js/search" files="SearchEngine.js"/>
-			<filelist dir="${src.main.web}/js/utils" files="EventDispatcher.js"/>
-			<filelist dir="${src.main.web}/js/commands" files="UpdatePropertyCommand.js"/>
-		</concat>
-		<java jar="${yuicompressor}" fork="true">
-			<arg line="--type js --charset UTF-8 -o &quot;${build.main}/js/dist/Portal-SearchEngine-${build.version}.js&quot; &quot;${build.main}/js/dist/Portal-SearchEngine.js.tmp&quot;"/>
-			<classpath>
-				<pathelement location="${yuicompressor}"/>
-			</classpath>
-		</java>
-
 		<delete>
 			<fileset dir="${build.main}/js/dist" includes="*.tmp"/>
 		</delete>
@@ -305,14 +275,12 @@
 			<filelist dir="${src.main.web}/skin" files="treemenu.css"/>
 			<filelist dir="${src.main.web}/skin" files="widget.css"/>
 			<filelist dir="${src.main.web}/skin" files="groupsettingmodal.css"/>
-			<filelist dir="${src.main.web}/skin" files="message.css"/>
 			<filelist dir="${src.main.web}/skin" files="minibrowser.css"/>
-			<filelist dir="${src.main.web}/skin" files="ranking.css"/>
-			<filelist dir="${src.main.web}/skin" files="widgetranking.css"/>
 			<filelist dir="${src.main.web}/skin" files="rssreader.css"/>
 			<filelist dir="${src.main.web}/skin" files="maximizerssreader.css"/>
-			<filelist dir="${src.main.web}/skin" files="information.css"/>
 			<filelist dir="${src.main.web}/skin" files="ticker.css"/>
+			<filelist dir="${src.main.web}/skin" files="theme.css"/>
+			<filelist dir="${src.main.web}/skin" files="header.css"/>
 		</concat>
 		<java jar="${yuicompressor}" fork="true">
 			<arg line="--type css --charset UTF-8 -o &quot;${build.main}/skin/styles.css&quot; &quot;${build.main}/skin/styles.css.tmp&quot;"/>
@@ -384,14 +352,10 @@
 			<filelist dir="${src.main.web}/js/widgets/rssreader" files="RssReader.js"/>
 			<filelist dir="${src.main.web}/js/widgets/rssreader" files="RssItemRender.js"/>
 			<filelist dir="${src.main.web}/js/widgets/MultiRssReader" files="MultiRssReader.js"/>
-			<filelist dir="${src.main.web}/js/widgets/information" files="Information.js"/>
-			<filelist dir="${src.main.web}/js/widgets/information" files="Information2.js"/>
 			<filelist dir="${src.main.web}/js/widgets/calendar" files="Calendar.js"/>
 			<filelist dir="${src.main.web}/js/widgets/calendar" files="iCalendar.js"/>
 			<filelist dir="${src.main.web}/js/widgets/MiniBrowser" files="MiniBrowser.js"/>
 			<filelist dir="${src.main.web}/js/widgets/MiniBrowser" files="FragmentMiniBrowser.js"/>
-			<filelist dir="${src.main.web}/js/widgets/WidgetRanking" files="WidgetRanking.js"/>
-			<filelist dir="${src.main.web}/js/widgets/Message" files="Message.js"/>
 		</concat>
 		<java jar="${yuicompressor}" fork="true">
 			<arg line="--type js --charset UTF-8 -o &quot;${build.admin}/js/dist/PortalMain.js&quot; &quot;${build.admin}/js/dist/PortalMain.js.tmp&quot;"/>
@@ -447,9 +411,10 @@
 			</filterset>
 		</copy>
 		<!--copy todir="${build.admin}/js" file="${src.admin.web}/js/properties.js"/-->
-		<!-- Copy from main javascript -->
-		
-		<copy todir="${build.admin}/js/resources" file="${src.admin.web}/js/resources/resourceBundle.jsp"/>
+		<mkdir dir="${build.admin}/js/resources" />
+		<copy todir="${build.admin}/js/resources">
+			<fileset dir="${src.admin.web}/js/resources/"/>
+		</copy>
 		<!-- Copy from main javascript -->
 		<copy todir="${build.admin}/js/lib" file="${src.main.web}/js/lib/prototype-1.6.0.3.js"/>
 		
@@ -502,24 +467,6 @@
 	<target name="replaceTag-main" description="Replace main script tag">
 		<replaceregexp
 			file="${build.main}/WEB-INF/classes/gadget-html.vm"
-			match="&lt;!--start script--&gt;.*&lt;!--end script--&gt;"
-			replace="&lt;script src=&quot;&#x24;{staticContentURL}/js/dist/Portal-core-${build.version}.js&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;"
-			flags="s"
-			encoding="UTF-8"/>
-		<replaceregexp
-			file="${build.main}/WEB-INF/classes/gadget-html.vm"
-			match="&quot;([^&quot;]+)\.js&quot;"
-			replace="&quot;\1.js?${build.timestamp}&quot;"
-			flags="mg"
-			encoding="UTF-8"/>
-		<replaceregexp
-			file="${build.main}/accessStats.jsp"
-			match="&lt;!--start script--&gt;.*&lt;!--end script--&gt;"
-			replace="&lt;script src=&quot;&lt;%=staticContentURL%&gt;/js/dist/Portal-core-${build.version}.js&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;"
-			flags="s"
-			encoding="UTF-8"/>
-		<replaceregexp
-			file="${build.main}/accessStats.jsp"
 			match="&quot;([^&quot;]+)\.js&quot;"
 			replace="&quot;\1.js?${build.timestamp}&quot;"
 			flags="mg"
@@ -562,13 +509,6 @@
 			match="(href=&quot;[^&quot;]+)\.css&quot;"
 			replace="\1.css?${build.timestamp}&quot;"
 			flags="mg"
-			encoding="UTF-8"/>
-		<replaceregexp
-			file="${build.main}/js/search/searchEngine.jsp"
-			match="&lt;!--start script--&gt;.*&lt;!--end script--&gt;"
-			replace="
-&lt;script src=&quot;&lt;%=staticContentURL%&gt;/js/dist/Portal-SearchEngine-${build.version}.js&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;"
-			flags="s"
 			encoding="UTF-8"/>
 	</target>
 	
@@ -700,7 +640,6 @@
     	<copy todir="${release.home}" file="${basedir}/README.ja.txt"/>
 		
 		<antcall target="initdb"/>
-		<antcall target="migration"/>
     	
 		<copy todir="${release.home}/${app.main.name}" file="${build.home}/${app.main.name}.war"/>
 		<fixcrlf srcdir="${src.remakewar}/" eol="lf" eof="remove" includes="**/*.sh" />
@@ -746,24 +685,7 @@
 			</tarfileset>
     	</tar>
     </target>
-    <target name="migration">
-    	<ant antfile="${basedir}/build_migration.xml" inheritall="false"/>
     	
-    	<mkdir dir="${release.home}/tools/migration"/>
-    	<copy todir="${release.home}/tools/migration">
-    		<fileset dir="${build.migration}"/>
-    	</copy>
-    	<tar destfile="${release.home}/tools/migration.tar.gz" compression="gzip">
-    		<tarfileset dir="${release.home}/tools/" mode="755">
-				<include name="migration/*.sh"/>
-			</tarfileset>
-    		<tarfileset dir="${release.home}/tools/">
-				<include name="migration/**"/>
-				<exclude name="migration/*.sh"/>
-			</tarfileset>
-    	</tar>
-    </target>
-	
 	<!--build for google apps-->
 	<target name="googleapps-prepare">
 		<copy todir="${build.main}" file="${googleapps.web}/gapps_openid_login.jsp"/>
@@ -822,10 +744,6 @@
 		
 		<antcall target="optimize-js"><param name="dir" value="${build.main.features}"/>
 			<param name="file" value="core.io/io"/>
-		</antcall>
-		
-		<antcall target="optimize-js"><param name="dir" value="${build.main.features}"/>
-			<param name="file" value="drag/drag"/>
 		</antcall>
 		
 		<antcall target="optimize-js"><param name="dir" value="${build.main.features}"/>

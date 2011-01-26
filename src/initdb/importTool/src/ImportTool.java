@@ -29,10 +29,6 @@ public class ImportTool {
 		PORTALLAYOUT( new PortalLayoutFactory()),
 		PROPERTIES( new PropertiesFactory()),
 		PROXYCONF( new ProxyConfFactory()),
-		SEARCHENGINE( new SearchEngineFactory()),
-		SITEAGGREGATIONMENU( new SiteAggregationMenuFactory()),
-		TABLAYOUT( new TabLayoutFactory()),
-		WIDGETCONF( new WidgetConfFactory()),
 		HOLIDAYS( new HolidaysFactory()),
 		FORBIDDENURLS( new ForbiddenUrlsFactory()),
 		GADGET( new GadgetFactory()),
@@ -49,7 +45,6 @@ public class ImportTool {
 			for( TABLES table : TABLES.values() )
 				DIRECTORY_MAP.put( table,basedir+table.name().toLowerCase());
 			DIRECTORY_MAP.put( TABLES.PROXYCONF,basedir+"proxyconfig");
-			DIRECTORY_MAP.put( TABLES.WIDGETCONF,basedir+"widgetconfig");
 			DIRECTORY_MAP.put( TABLES.I18NLOCALE,basedir+"i18nLocale");
 			DIRECTORY_MAP.put( TABLES.ACCOUNT,basedir+"accounts");
 		}
@@ -370,7 +365,7 @@ class PortalAdminsFactory implements CSVBeanFactory<Portaladmins> {
 class PortalLayoutFactory implements CSVBeanFactory<Portallayout> {
 	public Portallayout newBean( CSVField[] values ) {
 		Portallayout portalLayout = new Portallayout();
-		portalLayout.setName( values[0].toString() );
+		//portalLayout.setName( values[0].toString() );
 		portalLayout.setLayout( values[1].toString() );
 
 		return portalLayout;
@@ -434,69 +429,6 @@ class ProxyConfFactory implements CSVBeanFactory<Proxyconf> {
 	}
 }
 
-// temp,data
-
-class SearchEngineFactory implements CSVBeanFactory<Searchengine> {
-	public Searchengine newBean( CSVField[] values ) {
-		Searchengine searchEngine = new Searchengine();
-		searchEngine.setTemp( values[0].toInt() );
-		searchEngine.setData( values[1].toString() );
-
-		return searchEngine;
-	}
-}
-
-// type,temp,data
-
-class SiteAggregationMenuFactory implements CSVBeanFactory<Siteaggregationmenu> {
-	public Siteaggregationmenu newBean( CSVField[] values ) {
-		Siteaggregationmenu siteAggregationMenu = new Siteaggregationmenu( values[0].toString() );
-		siteAggregationMenu.setData( values[1].toString() );
-
-		return siteAggregationMenu;
-	}
-}
-
-// tabId,roleOrder,role,rolename,principalType,defaultUid,widgets,layout,widgetsLastmodified,tabNumber,deleteFlag
-
-class TabLayoutFactory implements CSVBeanFactory<TabLayout> {
-	public TabLayout newBean( CSVField[] values ) {
-		TABLAYOUTPK pk = new TABLAYOUTPK();
-		pk.setTabid( values[0].toString() );
-		pk.setRoleorder( values[1].toInt() );
-		pk.setTemp( values[11].toInt() );
-
-		TabLayout tabLayout = new TabLayout( pk );
-		tabLayout.setRole( values[2].toString() );
-		tabLayout.setRolename( values[3].toString() );
-		tabLayout.setPrincipaltype( values[4].toString() );
-		tabLayout.setDefaultuid( values[5].toString() );
-		tabLayout.setWidgets( values[6].toString() );
-		tabLayout.setLayout( values[7].toString() );
-		if( "".equals( values[8].toString() ) )
-			values[8] = new CSVField("-");
-
-		tabLayout.setWidgetslastmodified( values[8].toString() );
-		tabLayout.setTabnumber( values[9].toInt() );
-		tabLayout.setDeleteflag( values[10].toInt() );
-//		tabLayout.setWorkinguid( values[12].toString() );
-
-		return tabLayout;
-	}
-}
-
-// type,data
-
-class WidgetConfFactory implements CSVBeanFactory<WidgetConf> {
-	public WidgetConf newBean( CSVField[] values ) {
-		WidgetConf widgetConf = new WidgetConf();
-		widgetConf.setType( values[0].toString() );
-		widgetConf.setData( values[1].toString() );
-
-		return widgetConf;
-	}
-}
-
 class HolidaysFactory implements CSVBeanFactory<Holidays> {
 	public Holidays newBean( CSVField[] values ) {
 		HOLIDAYSPK key = new HOLIDAYSPK( values[0].toString(),values[1].toString() );
@@ -531,7 +463,7 @@ class GadgetFactory implements CSVBeanFactory<Gadget> {
 class AccountFactory implements CSVBeanFactory<Account> {
 	public Account newBean( CSVField[] values ) {
 		Account account = new Account();
-		account.setUid( values[0].toString() );
+		account.setId(new ACCOUNTPK(1, values[0].toString()));
 		account.setName( values[1].toString() );
 		account.setPasswordPlainText( values[2].toString() );
 

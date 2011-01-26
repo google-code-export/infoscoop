@@ -21,8 +21,10 @@ package org.infoscoop.command;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.command.util.XMLCommandUtil;
+import org.infoscoop.dao.MenuItemDAO;
 import org.infoscoop.dao.TabDAO;
 import org.infoscoop.dao.WidgetDAO;
+import org.infoscoop.dao.model.MenuItem;
 import org.infoscoop.dao.model.Widget;
 import org.json.JSONObject;
 
@@ -88,65 +90,62 @@ public class AddWidget extends XMLCommandProcessor{
             this.result = XMLCommandUtil.createResultElement(uid, "processXML",
                     log, commandId, false, reason);
             throw e;
+    	}
+
+    	TabDAO tabDAO = TabDAO.newInstance();
+
+    	Widget newNextSibling;
+    	if( parent != null && !"".equals( parent )) {
+    		//newNextSibling = tabDAO.getSubWidgetBySibling( uid,tabId,sibling,parent,widgetId );
+    		newNextSibling = null;
+    	} else {
+    		log.info("Find sibling: "+sibling+" of "+targetColumn );
+    		newNextSibling = tabDAO.getColumnWidgetBySibling( uid,tabId,sibling,Integer.valueOf( targetColumn ),widgetId );
+    	}
+
+    	if(newNextSibling != null){
+    		newNextSibling.setSiblingid( widgetId );
+    		log.info("Replace siblingId of [" + newNextSibling.getWidgetid() + "] to " + widgetId );
+    		//       		WidgetDAO.newInstance().updateWidget(uid, tabId, newNextSibling);
+    	}
+
+    	Widget widget = new Widget();
+		widget.setTabid(tabId);
+		widget.setWidgetid(widgetId);
+		widget.setUid(uid);
+		
+    	if(targetColumn != null && !"".equals(targetColumn)){
+    		widget.setColumn(Integer.valueOf(targetColumn));
+    	}
+    	widget.setSiblingid(sibling);
+    	widget.setParentid(parent);
+
+		if (menuid != null && menuid.length() > 0) {
+			MenuItem menuItem = MenuItemDAO.newInstance().get(
+					Integer.valueOf(menuid));
+			widget.setMenuItem(menuItem);
 		}
-    	
-    	try{
-    		TabDAO tabDAO = TabDAO.newInstance();
-    		
-        	Widget newNextSibling;
-        	if( parent != null && !"".equals( parent )) {
-        		//newNextSibling = tabDAO.getSubWidgetBySibling( uid,tabId,sibling,parent,widgetId );
-        		newNextSibling = null;
-        	} else {
-        		log.info("Find sibling: "+sibling+" of "+targetColumn );
-        		newNextSibling = tabDAO.getColumnWidgetBySibling( uid,tabId,sibling,Integer.valueOf( targetColumn ),widgetId );
-        	}
-        	
-        	if(newNextSibling != null){
-        		newNextSibling.setSiblingid( widgetId );
-        		log.info("Replace siblingId of [" + newNextSibling.getWidgetid() + "] to " + widgetId );
- //       		WidgetDAO.newInstance().updateWidget(uid, tabId, newNextSibling);
-        	}
-        	
-    		Widget widget = new Widget( tabId, new Long(0), widgetId, uid);
-    		
-    		if(targetColumn != null && !"".equals(targetColumn)){
-    			widget.setColumn(new Integer(targetColumn));
-    		}
-    		widget.setSiblingid(sibling);
-    		widget.setParentid(parent);
-    		widget.setMenuid(menuid);
-    		if(confJson.has("title"))
-    			widget.setTitle(confJson.getString("title"));
-    		if(confJson.has("href"))
-    			widget.setHref(confJson.getString("href"));
-    		if(confJson.has("type"))
-    			widget.setType(confJson.getString("type"));
-    		if(confJson.has("property"))
-    			widget.setUserPrefsJSON(confJson.getJSONObject("property"));
-    		if (confJson.has("ignoreHeader"))
-    			widget.setIgnoreHeader(confJson.getBoolean("ignoreHeader"));
-    		if (confJson.has("noBorder"))
-    			widget.setIgnoreHeader(confJson.getBoolean("noBorder"));
+		
+    	if(confJson.has("title"))
+    		widget.setTitle(confJson.getString("title"));
+    	if(confJson.has("href"))
+    		widget.setHref(confJson.getString("href"));
+    	if(confJson.has("type"))
+    		widget.setType(confJson.getString("type"));
+    	if(confJson.has("property"))
+    		widget.setUserPrefsJSON(confJson.getJSONObject("property"));
+    	if (confJson.has("ignoreHeader"))
+    		widget.setIgnoreHeader(confJson.getBoolean("ignoreHeader"));
+    	if (confJson.has("noBorder"))
+    		widget.setIgnoreHeader(confJson.getBoolean("noBorder"));
 
-    		widget.setIsstatic(new Integer(0));
-    		
-    		WidgetDAO.newInstance().addWidget( widget );
-    		
-//    		dao.updateTab( tab );
-        	
-    	} catch (Exception e) {
-    		log.error("", e);
-            String reason = "Failed to save the widget.";
-            log.error("Failed to execute the command of AddWidget： " + reason);
-            this.result = XMLCommandUtil.createResultElement(uid, "processXML",
-                    log, commandId, false, reason);
-            throw e;
-		}
-    	 
+    	widget.setIsstatic(Integer.valueOf(0));
 
+    	WidgetDAO.newInstance().addWidget( widget );
 
-        this.result = XMLCommandUtil.createResultElement(uid, "processXML",
-                log, commandId, true, null);
+    	//    		dao.updateTab( tab );
+
+    	this.result = XMLCommandUtil.createResultElement(uid, "processXML",
+    			log, commandId, true, null);
 	}
 }

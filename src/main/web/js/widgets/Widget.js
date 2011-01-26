@@ -75,64 +75,26 @@ IS_Widget.prototype.classDef = function() {
 
 		typeConf = IS_Widget.getConfiguration(this.widgetType);
 		if(!typeConf || (typeConf && typeConf.type == "notAvailable")){
-			typeConf = IS_Widget.getConfiguration("notAvailable");
-			this.widgetType = "notAvailable";
-			this.title = typeConf.title;
-
+			this.widgetType = typeConf.type;
+			this.title = typeConf.ModulePrefs.title;
 			msg.error(IS_R.getResource(IS_R.ms_configNotFound, [this.id]));
 		}else{
 			var _contentsDef = typeConf.Content;
 			var _contentsType;
 			//if(this.widgetType.indexOf("g_") == 0){
-			if(this.isGadget()){
-				switch(_contentsDef.type){
-				  case 'html':
-					_contentsType = 'htmlIframe';
-					break;
-				  case 'html-inline':
-					_contentsType = 'html';
-					break;
-				  case 'url':
-					_contentsType = 'url';
-					break;
-				  case 'javascript':
-					_contentsType = 'javascript';
-					break;
-				}
-				if(this.widgetType.match(/^g_upload__(.*)\/gadget/)){
-					this.gadgetType = RegExp.$1;
-				}
-				else if(this.widgetType.match(/^g__Maximize__upload__(.*)\/gadget/)){
-					this.gadgetType = RegExp.$1;
-				}
-			}else{
-				_contentsType = (_contentsDef) ? _contentsDef.type : "javascript";
-			}
-			if(_contentsType == "javascript") {
-				if(this.widgetType.match(/^g_upload__(.*)\/gadget/)){
-					this.resourceUrl = typeConf.resource_url || ('.' + '/gadget/'+this.gadgetType+'/');
-					if(typeof IS_Widget[_contentsDef.className] == "undefined"){
-						var head = $$('head')[0];
-						head.appendChild(
-							$.SCRIPT({
-							  type:'text/javascript',
-							  src:this.resourceUrl + _contentsDef.className+'.js'
-							})
-							);
-						var cssUrl =  this.resourceUrl + _contentsDef.className+'.css';
-						head.appendChild(
-							$.LINK({
-								'rel':'stylesheet',
-								'type':'text/css',
-								'href':cssUrl
-							  }));
-					}
-				}else if(typeof IS_Widget[_contentsDef.className] == "undefined"){
-					typeConf = IS_Widget.getConfiguration("notAvailable");
-					this.widgetType = "notAvailable";
-
-					msg.error(IS_R.getResource(IS_R.ms_classNotFounf, [_contentsDef.className]));
-				}
+			switch(_contentsDef.type){
+			  case 'html':
+				_contentsType = 'htmlIframe';
+				break;
+			  case 'html-inline':
+				_contentsType = 'html';
+				break;
+			  case 'url':
+				_contentsType = 'url';
+				break;
+			  case 'javascript':
+				_contentsType = 'javascript';
+				break;
 			}
 			contentsDef = _contentsDef;
 			contentsType = _contentsType;
@@ -365,12 +327,12 @@ IS_Widget.prototype.classDef = function() {
 	}
 	
 	this.isGadget = function() {
-		return this.widgetType.indexOf("g_") == 0
-			&& !(contentsDef && contentsDef.type == "javascript");
+		//return this.widgetType.indexOf("g_") == 0
+		//	&& !(contentsDef && contentsDef.type == "javascript");
+		return !(contentsDef && contentsDef.type == "javascript");
 	}
 	this.isUploadGadget = function() {
-		return this.widgetType.indexOf("g_upload") == 0
-			&& !(contentsDef && contentsDef.type == "javascript");
+		return !this.widgetType.match(/^g_/);
 	}
 	
 	this._setStaticWidgetHeight = function(){
@@ -404,7 +366,7 @@ IS_Widget.prototype.classDef = function() {
 	
 	this.isAuthenticationFailed = function(){
 		var authType = this.getUserPref('authType');
-		if(!authType || /^(postPortalCredential|sendPortalCredentialHeader).*$/.test(authType))
+		if(!authType || /^(postPortalCredential|sendPortalCredentialHeader|oauth).*$/.test(authType))
 			return false;
 		var authCredentialId = this.getUserPref('authCredentialId');
 		return !authCredentialId;
@@ -479,8 +441,11 @@ IS_Widget.prototype.classDef = function() {
 	   	divWidgetContent.innerHTML = "Loading...";
 	   	
 	   	this.elm_widgetContent.className += " "+( function( widget ) {
-	   		if( !widget.isGadget())
+	   		if( !widget.isGadget()){
+	   			if(contentsDef.className)
+	   				return contentsDef.className;
 	   			return widget.widgetType;
+	   		}
 	   		
 	   		return "";
 	   	})( this.originalWidget ? this.originalWidget : this );
@@ -530,7 +495,7 @@ IS_Widget.prototype.classDef = function() {
 		var divWidgetHeader = this.elm_widgetHeader;
 		var divWidgetEditHeader = this.elm_widgetEditHeader;
 		
-		var icon = IS_Widget.getIcon(this.widgetType, {defaultNull:true});
+		var icon = this.widgetConf.iconUrl || IS_Widget.getIcon(this.widgetType, {defaultNull:true});
 		if(icon){
 			var favoriteIconDiv = document.createElement("div");
 			this.elm_favoriteIcon = favoriteIconDiv;
@@ -585,7 +550,6 @@ IS_Widget.prototype.classDef = function() {
 		msg.debug(this.id + " build time: " + (end - start));
 		
 		var widgetHeight = typeConf.height;
-		
 		if(isStatic && self.isStaticHeight && (!this.content || !this.content.disableSetSaticWidgetHeight)){
 			if(container){
 				self._setStaticWidgetHeight();
@@ -593,7 +557,6 @@ IS_Widget.prototype.classDef = function() {
 		}else if(widgetHeight && widgetHeight != "200"){
 			if( parseInt( widgetHeight ) < 1 )
 				widgetHeight = 1;
-			
 			divWidgetContent.style.height = widgetHeight;
 		}
 		
@@ -696,7 +659,7 @@ IS_Widget.prototype.classDef = function() {
 	}
 	this.getGadgetUrl = function() {
 		return ( !/^g__Maximize__/.test( this.widgetType )?
-				 this.widgetType.substring(2) : this.widgetType.substring( 13 ));
+				 (this.widgetType.indexOf('g_') == 0 ? this.widgetType.substring(2) : this.widgetType) : this.widgetType.substring( 13 ));
 	}
 	this.loadHtmlIfram = function( url, viewType ){
 		var form = $("postGadgetSrvForm");
@@ -713,7 +676,6 @@ IS_Widget.prototype.classDef = function() {
 		
 		var gadgetParams = $H( this.getGadgetParameters( url,viewType ));
 		form.action = this.gadgetProxyUrl +"?"+gadgetParams.toQueryString();
-		
 		var url = this.getGadgetUrl();
 		var params = {
 			filter: "GadgetView",
@@ -768,7 +730,6 @@ IS_Widget.prototype.classDef = function() {
 		}
 		
 		var parameters = self.getGadgetParameters( url,false );
-		
 		var libBase = hostPrefix+"/js/gadget/features/";
 		var features = ["core","core-io","rpc"];
 		if( typeConf.ModulePrefs && typeConf.ModulePrefs.Require ) {
@@ -786,7 +747,7 @@ IS_Widget.prototype.classDef = function() {
 		// omit the URL over the limits in IE by force
 		if(url.length > 2080)
 			url = url.substring(0, 2080);
-		
+
 		self.iframe.src = url;
 	}
 	
@@ -824,7 +785,7 @@ IS_Widget.prototype.classDef = function() {
 		self.iframe.id = "ifrm_" + self.id;
 		self.iframe.name = "ifrm_" + self.id;
 		self.iframe.frameBorder = 0;
-		self.iframe.src = "./blank.html";
+		self.iframe.src = hostPrefix + "/blank.html";
 		
 		var scrolling = self.scrolling;
 		if(/FragmentMiniBrowser/.test(self.widgetType ) )
@@ -842,7 +803,7 @@ IS_Widget.prototype.classDef = function() {
 			
 			this.setStaticIframeHeight();
 		} else if( typeConf.height ) {
-			var iframeHeight = parseInt(typeConf.height) + 10;
+			var iframeHeight = isNaN(parseInt(typeConf.height)) ? 210 : parseInt(typeConf.height)+10;
 			if( iframeHeight < 1 )
 				iframeHeight = 1;
 			self.iframe.style.height = iframeHeight;
@@ -876,7 +837,6 @@ IS_Widget.prototype.classDef = function() {
 			
 			return setTimeout( this.setStaticIframeHeight.bind( this ),100 );
 		}
-		
 		if(Browser.isIE )this.staticWidgetHeight -=2;//Modify calculation error of Box model
 		self.iframe.style.height = this.staticWidgetHeight;
 		self.elm_widgetContent.style.height = "auto";
@@ -903,8 +863,9 @@ IS_Widget.prototype.classDef = function() {
 				this.headerContent.turnBack();
 			
 			this.elm_widgetContent.style.display = "block";
-			if( this.isGadget() && !self.isStaticHeight)
+			if( this.isGadget() && !self.isStaticHeight){
 				this.elm_widgetContent.style.height = "auto";
+			}
 			
 			IS_EventDispatcher.newEvent('loadComplete', self.id, null);
 			
@@ -939,7 +900,6 @@ IS_Widget.prototype.classDef = function() {
 					
 					self.loadHtmlIfram();
 				}else{
-
 					self.elm_widgetContent.innerHTML = IS_R.ms_invalidWidget;
 					IS_EventDispatcher.newEvent('loadComplete', self.id, null);
 				}
@@ -1159,10 +1119,6 @@ IS_Widget.prototype.classDef = function() {
 			    timeout : contentOpt.timeout || ajaxRequestTimeout,
 			    retryCount : contentOpt.retryCount || ajaxRequestRetryCount,
 			    onSuccess: function(req, obj) {
-					if( Browser.isSafari1 ) {
-			    		if( self.isSuccess && !req.status && !req.responseText )
-			    			return this.on304( req,obj );
-			    	}
 					var _authType = req.getResponseHeader("MSDPortal-AuthType");
 					if(_authType){
 						self.iframe = false;
@@ -1338,6 +1294,12 @@ IS_Widget.prototype.classDef = function() {
 				if(!opt.requestHeaders)opt.requestHeaders = new Array();
 				opt.requestHeaders.push("authType");
 				opt.requestHeaders.push(authType);
+			}else if (authType && authType.indexOf("oauth") >= 0){
+				opt.requestHeaders.push("authType");
+				opt.requestHeaders.push(authType);
+				var serviceName = self.getUserPref("serviceName");
+				opt.requestHeaders.push("serviceName");
+				opt.requestHeaders.push(serviceName);
 			}
 
 			if(authParameNames){
@@ -1477,7 +1439,6 @@ IS_Widget.prototype.classDef = function() {
 			alert(IS_R.ms_needsAuthentication);
 			return;
 		}
-		if( Browser.isSafari1 && IS_Portal.isTabLoading() )return;
 		
 		if( this.content && this.content.getRssReaders ) {
 			var rssReaders = this.content.getRssReaders();
@@ -1727,36 +1688,11 @@ IS_Widget.mergePreference = function(typeConfigXml, widgetsXml) {
 
 IS_Widget.contentClicked = function (url, rssUrl, title, pubDate, aTag) {
 	IS_Portal.buildIFrame(aTag);
-	IS_Widget.updateLog("0",url,rssUrl);
-	IS_Widget.updateRssMeta("0",url,rssUrl,title,pubDate);
 };
 
 IS_Widget.mergeContentClicked = function (rssItem,aTag) {
 	IS_Portal.buildIFrame(aTag);
-	for(var i=0; i<rssItem.rssUrls.length ;i++){
-		IS_Widget.updateLog("0",rssItem.link,rssItem.rssUrls[i]);
-		
-		var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-		IS_Widget.updateRssMeta("0",rssItem.link,rssItem.rssUrls[i],rssItem.title,startDateTime);
-	}
-	
 };
-
-IS_Widget.updateLog = function (logType,url,rssUrl){
-	if( !url )
-		return;
-	
-	var cmd = new IS_Commands.AddLogCommand(logType, url, rssUrl);
-	IS_Request.LogCommandQueue.addCommand(cmd);
-}
-
-IS_Widget.updateRssMeta = function (contentType, url, rssUrl, title, pubDate){
-	if(!url )
-		return;
-	
-	var cmd = new IS_Commands.UpdateRssMetaCommand(contentType, url, rssUrl, title, pubDate);
-	IS_Request.LogCommandQueue.addCommand(cmd);
-}
 
 IS_Widget.parseRss = function(response) {
 	var jsonObj;
@@ -1851,7 +1787,23 @@ IS_Widget.getConfiguration = function( widgetType ){
 		var url = hostPrefix + "/widconf";
 		AjaxRequest.invoke(url, opt);
 	}
-	
+	if(!typeConf){
+		typeConf = {
+			type:"notAvailable",
+			ModulePrefs:{
+				title:IS_R.lb_notAvailable
+			},
+			"Icon": {"content": "__IS_IMAGE_URL__/not_available.gif"},
+			"Header": {
+				refresh:"off",
+				minimize:"off",
+				maximize:"off"
+			}
+		};
+		IS_WidgetConfiguration[typeConf.type] = typeConf;
+	} else if(!typeConf.type) {
+		typeConf.type = widgetType;
+	}
 	return typeConf;
 }
 /* delete by endoh on 20080725.
@@ -2072,7 +2024,7 @@ IS_Widget.addWidgetCommand = function(owner){
 	}
 	var widgetConf = owner.widgetConf;
 	
-	var cmd = new IS_Commands.AddWidgetCommand(owner.tabId.substring(3), owner, owner.widgetConf.column, sibling, IS_Widget.getWidgetConfJSONString(widgetConf), widgetConf.parentId, widgetConf.menuId);
+	var cmd = new IS_Commands.AddWidgetCommand(owner.tabId.substring(3), owner, owner.widgetConf.column, sibling, IS_Widget.getWidgetConfJSONString(widgetConf), widgetConf.parentId, widgetConf.menuId, widgetConf.ginstid);
 	IS_Request.CommandQueue.addCommand(cmd);
 	
 	if(owner.parent){
@@ -2321,27 +2273,30 @@ IS_Widget.getIcon = function(widgetType, opt){
 			return imageURL + widConf.icon;
 		return widConf.icon;
 	}
-	var isUploadGadget = widgetType.match(/^g_upload__(.*)\/gadget/);
+	var isUploadGadget = !widgetType.match(/^g_/);
 	if(isUploadGadget){
-		var gadgetType = RegExp.$1;
-		var icon = IS_WidgetIcons[gadgetType];
+		var icon = IS_WidgetIcons[widgetType];
 		if(icon) {
 			/*
 			if(!/^http[s]?:\/\//.test(icon)){
-				return hostPrefix + '/gadget/' + gadgetType + '/' + icon;
+				return hostPrefix + '/gadget/' + widgetType + '/' + icon;
 			}
 			return icon;
 			*/
-			return icon.replace("__IS_GADGET_BASE_URL__", hostPrefix + '/gadget/' + gadgetType);
+			if(icon.indexOf("__IS_IMAGE_URL__") == 0)
+				return icon.replace("__IS_IMAGE_URL__", imageURL);
+			return icon.replace("__IS_GADGET_BASE_URL__", hostPrefix + '/gadget/' + widgetType);
 		} else if(widConf && widConf.ModulePrefs && widConf.ModulePrefs.Icon){
 			icon = widConf.ModulePrefs.Icon.content;
+			if(icon.indexOf("__IS_IMAGE_URL__") == 0)
+				return icon.replace("__IS_IMAGE_URL__", imageURL);
 			/*
 			if(/http[s]?:\/\//.test()){
 				return icon;
 			} else if(widConf.ModulePrefs.resource_url){
 				return widConf.ModulePrefs.resource_url + icon;
 			} else {
-				return hostPrefix + '/gadget/' + gadgetType + '/' + icon;
+				return hostPrefix + '/gadget/' + widgetType + '/' + icon;
 			}
 			*/
 			if(widConf.ModulePrefs.resource_url){
@@ -2350,10 +2305,12 @@ IS_Widget.getIcon = function(widgetType, opt){
 				return icon;
 			}
 		}
+	}else{
+		if(widConf && widConf.ModulePrefs && widConf.ModulePrefs.Icon)
+			return widConf.ModulePrefs.Icon.content;
 	}
-	var isGadget = widgetType == 'Gadget' || widgetType.startsWith('g_');
 	if((isUploadGadget && typeof icon == 'undefined')
-		|| (!isGadget && !widConf)){
+		|| !widConf){
 		return imageURL + 'not_available.gif';
 	}
 	if(opt){

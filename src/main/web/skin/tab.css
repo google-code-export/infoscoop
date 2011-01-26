@@ -20,30 +20,21 @@
 .infoScoop #tab-container {
 	padding-top:3px;
 	padding-bottom:2px;
-	height:26px;
+	height:16px;
+	margin-left:8px;
 }
 
 .infoScoop #tabs{
-      float:left;
-      width:100%;
-      font-size:93%;
-      line-height:normal;
-	  border-bottom:1px solid gray;
+	float:left;
+	width:100%;
+	font-size:93%;
+	line-height:normal;
 }
 
 .infoScoop #tabs .tablink,
 .infoScoop.admin .tabs .tablink {
 	padding:2px 2px 2px 7px;
 	font-size:83%;
-}
-.infoScoop #tabs .tabsRefresh{
-	background: url( ./imgs/refresh.gif ) no-repeat center left;
-	width:16px;
-	height:16px;
-	float:left;
-	position:relative;
-	bottom:-3px;
-	cursor:pointer;
 }
 
 .infoScoop #tabs ul {
@@ -162,16 +153,6 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 .infoScoop.admin .tabs .addatab a {
 	color:#6677dd;
 }
-
-.infoScoop #tabs #tabsRefreshStop {
-	background: url( ./imgs/stopq.gif ) no-repeat center left;
-	width:16px;
-	height:16px;
-	float:left;
-	position:relative;
-	bottom:-3px;
-	cursor:pointer;
-}
 /*
 .selectedtab .tabIndicator {
 	width: 13px;
@@ -180,29 +161,6 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 .infoScoop #tabs .tabLoadingIcon {
 	position:relative;
 	margin-right: 4px;
-}
-.infoScoop #tabs #tabLoadStopIcon{
-	background: url( ./imgs/stopq.gif ) no-repeat center left;
-	width:16px;
-	height:16px;
-	cursor:pointer;
-}
-.infoScoop #tabs #tabLoadProgress{
-	background-color:white;
-	border:2px groove black;
-	height:1.2em;
-	position:relative;
-}
-.infoScoop #tabs #tabLoadProgressBar{
-	background-color:cyan;
-	height:1.2em;
-	position:relative;
-	margin-left:0 !important;
-}
-.infoScoop #tabs #tabLoadProgressCount{
-	position:absolute;
-	top:0;
-	right:0;
 }
 
 
@@ -230,9 +188,9 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 
 .infoScoop .tabMenu {
 	position: absolute;
-	border-left: 1px solid gray;
-	border-right: 1px solid gray;
-	border-bottom: 1px solid gray;
+	border-left: 1px solid #CCCCCC;
+	border-right: 1px solid #CCCCCC;
+	border-bottom: 1px solid #CCCCCC;
 	background-color: white;
 	z-index:50;
 	overflow: hidden;
@@ -274,7 +232,7 @@ html:not([lang*=""]) .infoScoop #tabs > #tabsUl > .addatab {
 }
 
 .infoScoop .tabMenu .refresh {
-	background: url( ./imgs/refresh.gif ) no-repeat center left;
+	background: url( ./imgs/refresh.png ) no-repeat center left;
 }
 .infoScoop .tabMenu .close {
 	background: url( ./imgs/trash.gif ) no-repeat center left;

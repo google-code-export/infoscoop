@@ -38,22 +38,6 @@ IS_Portal.buildTabs = function(){
 	var tabsContainer = $('tab-container');
 	var tabsDiv = document.createElement("div");
 	tabsDiv.id = "tabs";
-	//Loading all tabs
-	var tabsRefresh = document.createElement("div");
-	tabsRefresh.id = "tabsRefresh";
-	tabsRefresh.className = "tabsRefresh";
-	tabsRefresh.title = IS_R.ms_tabsRefresh;
-	tabsDiv.appendChild(tabsRefresh);
-	
-	Event.observe(tabsRefresh, "click",IS_Portal.buildAllTabsContents, false);
-	
-	var tabsRefreshStop = document.createElement("div");
-	tabsRefreshStop.id = "tabsRefreshStop";
-	tabsRefreshStop.title = IS_R.ms_stopRefresh;
-	tabsRefreshStop.style.display = "none";
-	tabsDiv.appendChild( tabsRefreshStop );
-	
-	Event.observe( tabsRefreshStop,"click",IS_Portal.stopLoadWidgets,false );
 	
 	var tabsUl = document.createElement("ul");
 	tabsUl.id = "tabsUl";
@@ -69,11 +53,9 @@ IS_Portal.buildTabs = function(){
 	addA.innerHTML = IS_R.lb_addTabLink;
 	addTab.appendChild(addA);
 	var addTabWithBuildColumns = function(){
-		if( IS_Portal.isTabLoading() )
-			return;
 		
 		var addNumber = IS_Portal.getNextTabNumber();
-		var tabObj = IS_Portal.addTab( addNumber, IS_R.lb_newTab, "dynamic", 3);
+		var tabObj = IS_Portal.addTab( addNumber, IS_R.lb_newTab, "dynamic", null, 3);
 
 		var tabId = tabObj.id;
 //		IS_WidgetsContainer.rebuildColumns( tabId, 3 );
@@ -118,7 +100,7 @@ IS_Portal.getNextTabNumber = function(){
 	@param numCol Column number of the tab adding.
 	@disabledDynamicPanel disable dynamic panel.
 */
-IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disabledDynamicPanel, isInitialize){
+IS_Portal.addTab = function( idNumber, name, type, layout, numCol, columnsWidth, disabledDynamicPanel, adjustStaticHeight, isInitialize){
 	/**
 		For managing tab information object
 		@param id id of tab
@@ -128,7 +110,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 		@param panel Div element of panel that correspond tab
 		@param tabNumber Number of displaying order of tab.
 	*/
-	var Tab = function(id, name, type, tab, panel, tabNumber, columnsWidth, disabledDynamicPanel){
+	var Tab = function(id, name, type, tab, panel, tabNumber, columnsWidth, disabledDynamicPanel, adjustStaticHeight){
 		this.id = id;
 		this.name = name;
 		this.type = type;
@@ -140,6 +122,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 		if(columnsWidth)
 			this.columnsWidth = columnsWidth;
 		this.disabledDynamicPanel = disabledDynamicPanel;
+		this.adjustStaticHeight = adjustStaticHeight;
 			
 		this.refresh = function(e){
 			Element.addClassName( tab,"loading");
@@ -147,6 +130,10 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 			return false;
 		}
 		this.close = function(){
+			if(IS_Portal.tabList.length == 1){
+				alert(IS_R.ms_cannotDeleteLastTab);
+				return false;
+			}
 			if( window.confirm(IS_R.getResource(IS_R.ms_deleteTabConfirm,[this.name]))){
 				IS_Portal.deleteTab(this.tab);
 			}
@@ -204,7 +191,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 	}
 	
 	
-	var panelDiv = IS_Portal.buildPanel( idNumber, type );
+	var panelDiv = IS_Portal.buildPanel( idNumber,  type, layout);
 	var panels = $("panels");
 	panels.appendChild( panelDiv );
 	
@@ -212,7 +199,7 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 //	IS_Portal.subWidgetLists[tabDiv.id] = new Object();
 	IS_Portal.columnsObjs[tabDiv.id] = {};
 	
-	var tabObj = new Tab(tabDiv.id, name, type, tabDiv, panelDiv, IS_Portal.tabList.length, columnsWidth, disabledDynamicPanel);
+	var tabObj = new Tab(tabDiv.id, name, type, tabDiv, panelDiv, IS_Portal.tabList.length, columnsWidth, disabledDynamicPanel, adjustStaticHeight);
 	IS_Portal.tabs[tabObj.id] = tabObj;
 	
 	IS_Portal.tabList.push(tabDiv);
@@ -227,7 +214,6 @@ IS_Portal.addTab = function( idNumber, name, type, numCol, columnsWidth, disable
 		// Hide "Add tab" link if the tab is added by maximum.
 		addTabDiv.style.display = "none";
 	}
-	
 	IS_WidgetsContainer.rebuildColumns(tabObj.id, numCol, columnsWidth, false, isInitialize);
 	return tabObj;
 }
@@ -859,11 +845,7 @@ IS_Portal.setTabDroppable = function(tab){
 				
 				// Call loadContents if the widget is dropped from menu(To display default)
 				var menuWidget = IS_Portal.getWidget(widget.id, tab.id);
-				if( Browser.isSafari1 ) {
-					menuWidget.onTabChangeReload = true;
-				} else {
-					if(menuWidget && menuWidget.isBuilt) menuWidget.loadContents();
-				}
+				if(menuWidget && menuWidget.isBuilt) menuWidget.loadContents();
 				
 				IS_Portal.widgetDropped( widget );
 			}else{
@@ -975,8 +957,7 @@ IS_Portal.setTabDroppable = function(tab){
 							if(!rssReaders[i]) continue;
 							menuId = IS_Portal.getTrueId(rssReaders[i].id, rssReaders[i].type).substring(2);
 							
-							if(!IS_Portal.isChecked(menuId))
-								IS_Portal.widgetDropped( rssReaders[i] );
+							IS_Portal.widgetDropped( rssReaders[i] );
 						}
 					}
 				}
@@ -1176,8 +1157,6 @@ IS_Portal.deleteTab = function( deleteTab ){
 	@param changeTab Tab element to be active
 */
 IS_Portal.changeActiveTab = function( changeTab, isInitialize ){
-	if( IS_Portal.isTabLoading() )
-		return;
 	
 	//changeTab.className = "tab selectedtab";
 	var lastTabId = IS_Portal.currentTabId;
@@ -1238,66 +1217,6 @@ IS_Portal.changeActiveTab = function( changeTab, isInitialize ){
 	changePanel.delay(0.001);
 }
 
-if( Browser.isSafari1 ) {
-	IS_Portal.changeActiveTab = ( function() {
-		var changeActiveTab = IS_Portal.changeActiveTab;
-		
-		return function( changeTab ) {
-			var applyPreference = IS_Portal.tabs[changeTab.id].applyPreference;
-			if( applyPreference )
-				IS_Portal.tabs[changeTab.id].applyPreference = false;
-			
-			changeActiveTab.apply( this,$A( arguments ));
-			
-			if( applyPreference )
-				IS_Portal.applyPreference(changeTab.id, true);
-			
-			$H( IS_Portal.widgetLists[changeTab.id] ).entries().each( function( entry ) {
-				var widget = entry.value;
-				if( widget.content && widget.content.repaint ) {
-					function repaint() {
-						if( widget.elm_widget.offsetHeight == 0 )
-							setTimeout( repaint,100 );
-						
-						widget.content.repaint();
-					}
-					setTimeout( repaint,100 );
-				}
-			});
-		}
-	}).apply( IS_Portal );
-}
-
-IS_Portal.adjustStaticWidgetHeight = function(){
-	var currentTab = IS_Portal.tabs[IS_Portal.currentTabId];
-	if(currentTab.type != "static")return;
-	
-	var tabNumber = IS_Portal.currentTabId.substr(3);
-	var adjustToWindowHeight = IS_Customization["staticPanel"+tabNumber].adjustToWindowHeight;
-	if(!adjustToWindowHeight)return;
-	var widgets = IS_Portal.widgetLists[IS_Portal.currentTabId];
-	var adjustHeight = getWindowSize(false) - findPosY($("panels")) - $("tab-container").getHeight() - 36;
-	var isReady = false;
-	for(widgetId in widgets){
-		var widget = widgets[widgetId];
-		if(!widget.isBuilt)break;
-		if(widget.panelType == "StaticPanel" && widget.widgetType != 'Ticker' && widget.widgetType != 'Ranking'){
-			var height = widget.headerContent ? adjustHeight : adjustHeight + 22;
-			if(widget.widgetConf && widget.widgetConf.noBorder) height += 2;
-			if(widget.iframe)
-			  widget.iframe.style.height = height + "px";
-			widget.elm_widgetContent.style.height = height + "px";
-			widget.staticWidgetHeight =  height ;
-
-			if(widget.widgetType == 'RssReader' && widget.content.rssContentView){
-				widget.content.rssContentView.setViewportHeight( height );
-			}
-		}
-		isReady = true;
-	}
-	if(!isReady)setTimeout(IS_Portal.adjustStaticWidgetHeight,300);
-}
-
 /**
   Cover div at switching tab
   
@@ -1312,12 +1231,44 @@ IS_Portal.endChangeTab = function(e){
 	IS_EventDispatcher.newEvent("changeTab");
 }
 
+IS_Portal.adjustStaticWidgetHeight = function(){
+	var currentTab = IS_Portal.tabs[IS_Portal.currentTabId];
+	if(!currentTab || currentTab.type != "static")return;
+	
+	var tabNumber = IS_Portal.currentTabId.substr(3);
+	var adjustToWindowHeight = currentTab.adjustStaticHeight;
+	if(!adjustToWindowHeight)return;
+	var widgets = IS_Portal.widgetLists[IS_Portal.currentTabId];
+	var isReady = false;
+	var adjustHeight = false;
+	for(widgetId in widgets){
+		var widget = widgets[widgetId];
+		if(!widget.isBuilt)break;
+		if(widget.panelType == "StaticPanel" && widget.widgetType != 'Ticker' && widget.widgetType != 'Ranking'){
+			if(!adjustHeight)
+				adjustHeight = getWindowSize(false) - findPosY(widget.elm_widgetContent) -36;
+			var height = widget.headerContent ? adjustHeight : adjustHeight + 22;
+			if(widget.widgetConf && widget.widgetConf.noBorder) height += 2;
+			if(widget.iframe)
+				widget.iframe.style.height = height + "px";
+			widget.elm_widgetContent.style.height = height + "px";
+			widget.staticWidgetHeight =  height ;
+
+			if(widget.widgetType == 'RssReader' && widget.content.rssContentView){
+				widget.content.rssContentView.setViewportHeight( height );
+			}
+		}
+		isReady = true;
+	}
+	if(!isReady)setTimeout(IS_Portal.adjustStaticWidgetHeight,300);
+}
+
 /**
 	Create panel 
 	@param panelNumber ID number of panel.
 	@param type The type of adding panel(Include static panel:static/Exclude:dynamic)
 */
-IS_Portal.buildPanel = function(panelNumber, type){
+IS_Portal.buildPanel = function(panelNumber, type, layout){
 	// Create panel
 	var panel = document.createElement("div");
 	panel.id = "panel"+panelNumber;
@@ -1325,39 +1276,24 @@ IS_Portal.buildPanel = function(panelNumber, type){
 	panel.style.display = "none";
 	panel.style.clear = "both";
 	
-	var table = document.createElement("table");
-	panel.appendChild(table);
-	table.style.width = "100%";
-	table.style.cellpadding = "0";
-	table.style.cellspacing = "0";
-//	table.style.tableLayout = "fixed";
-	var tbody = document.createElement("tbody");
-	table.appendChild(tbody);
-	
-	var tr = document.createElement("tr");
-	tbody.appendChild( tr );
-	var td = document.createElement("td");
-	td.style.width = "100%";
-	tr.appendChild( td );
-	
 	// static
-	var staticPanel = document.createElement("div");
-	
-	staticPanel.id = "static-panel"+panelNumber;
-	var staticDiv = document.createElement("div");
-	staticPanel.appendChild(staticDiv);
-	staticDiv.id = "static-portal-widgets"+panelNumber;
-	
-	if(type == "static"){
-		staticPanel.innerHTML = IS_Customization["staticPanel"+panelNumber].layout;
+	if(layout){
+		var staticPanel = document.createElement("div");
 		
-		td.appendChild(staticPanel);
+		staticPanel.id = "static-panel"+panelNumber;
+		var staticDiv = document.createElement("div");
+		staticPanel.appendChild(staticDiv);
+		staticPanel.style.marginBottom = '10px';
+		staticDiv.id = "static-portal-widgets"+panelNumber;
+		
+		if(type == "static"){
+			staticPanel.innerHTML = layout;
+			
+			panel.appendChild(staticPanel);
+		}
 	}
-	
 	// dynamic
 	var dynamicPanel = document.createElement("div");
-	dynamicPanel.style.clear = "both";
-	td.appendChild(dynamicPanel);
 	dynamicPanel.id = "dynamic-panel"+panelNumber;
 	var dynamicDiv = document.createElement("div");
 	dynamicPanel.appendChild(dynamicDiv);
@@ -1367,6 +1303,12 @@ IS_Portal.buildPanel = function(panelNumber, type){
 	columns.id = "columns"+panelNumber;
 	dynamicDiv.appendChild(columns);
 	
+	panel.appendChild(dynamicPanel);
+
+	var keepHeightDiv = document.createElement("div");
+	keepHeightDiv.style.clear = 'both';
+	panel.appendChild(keepHeightDiv);
+
 	return panel;
 }
 
@@ -1526,6 +1468,7 @@ IS_Portal.tabDrag = function( e, dragObj ){
 		var insertPoint = IS_Portal.tabList[targetNumber];
 		var centerX = findPosX( insertPoint.firstChild ) + (insertPoint.firstChild.offsetWidth / 2);
 		if(centerX < mouseX){
+
 			targetNumber++;
 			if(targetNumber == IS_Portal.tabList.length){
 				insertPoint = false;
@@ -1564,9 +1507,7 @@ IS_Portal.tabDrag = function( e, dragObj ){
 				*/
 			}else{
 				// Change active status if the none active tab is clicked
-				if(!IS_Portal.isTabLoading()){
-				  IS_Portal.controlTabs.setActiveTab( dragObj );
-				}
+				IS_Portal.controlTabs.setActiveTab( dragObj );
 			}
 		}else if(!isStatic){
 			
