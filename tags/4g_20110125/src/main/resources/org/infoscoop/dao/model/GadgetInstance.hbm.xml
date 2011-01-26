@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="org.infoscoop.dao.model">
+	<class
+		name="GadgetInstance"
+		table="IS_GADGET_INSTANCES"
+	>
+		<meta attribute="sync-DAO">false</meta>
+		<id
+			name="Id"
+			type="integer"
+			column="id"
+		>
+			<generator class="native"/>
+		</id>
+
+		<property
+			name="FkDomainId"
+			column="fk_domain_id"
+			type="integer"
+		/>
+		
+		<property
+			name="Type"
+			column="type"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+		<property
+			name="Title"
+			column="title"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+		<property
+			name="Href"
+			column="href"
+			type="string"
+			length="1024"
+		/>
+		<property
+			name="Icon"
+			column="icon"
+			type="string"
+			not-null="false"
+			length="1024"
+		/>
+		
+		<set name="gadgetInstanceUserPrefs" inverse="true" cascade="save-update">
+			<key column="fk_gadget_instance_id"/>
+			<one-to-many class="GadgetInstanceUserpref"/>
+		</set>
+
+		<!--set name="TabtemplateParsonalizeGadgets" inverse="true">
+			<key column="id"/>
+			<one-to-many class="TabTemplateParsonalizeGadget"/>
+		</set>
+
+		<set name="TabtemplateStaticGadgets" inverse="true">
+			<key column="id"/>
+			<one-to-many class="TabTemplateStaticGadget"/>
+		</set-->
+
+
+	</class>	
+</hibernate-mapping>

@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="org.infoscoop.dao.model">
+	<class
+		name="Group"
+		table="IS_GROUPS"
+	>
+		<meta attribute="sync-DAO">false</meta>
+		<id
+			name="Id"
+			type="java.lang.String"
+			column="id"
+		>
+			<generator class="native"/>
+		</id>
+
+		<property
+			name="FkDomainId"
+			column="fk_domain_id"
+			type="integer"
+		/>
+		
+		<property
+			name="Email"
+			column="email"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+
+		<property
+			name="Name"
+			column="name"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+
+		<property
+			name="Description"
+			column="description"
+			type="string"
+			not-null="false"
+		/>
+
+		<set name="Users" table="IS_USER_GROUP" lazy="false">
+			<key column="fk_group_id"/>
+			<many-to-many class="User" column="fk_user_id"/>
+		</set>
+
+
+	</class>
+</hibernate-mapping>

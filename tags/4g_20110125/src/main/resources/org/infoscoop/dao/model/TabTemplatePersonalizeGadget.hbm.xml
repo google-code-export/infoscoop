@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="org.infoscoop.dao.model">
+	<class
+		name="TabTemplatePersonalizeGadget"
+		table="IS_TAB_TEMPLATE_PERSONALIZE_GADGETS"
+	>
+		<meta attribute="sync-DAO">false</meta>
+		<id
+			name="Id"
+			type="integer"
+			column="id"
+		>
+			<generator class="native"/>
+		</id>
+
+		<property
+			name="WidgetId"
+			column="widget_id"
+			type="string"
+			not-null="true"
+		/>
+		<property
+			name="ColumnNum"
+			column="column_num"
+			type="integer"
+			not-null="true"
+			length="10"
+		/>
+		<many-to-one
+			cascade="save-update"
+			name="FkGadgetInstance"
+			column="fk_gadget_instance_id"
+			class="GadgetInstance"
+			not-null="true"
+			lazy="false"
+		>
+		</many-to-one>
+		<property
+			name="SiblingId"
+			column="sibling_id"
+			type="integer"
+			not-null="false"
+			insert="false" update="false"
+		>
+		</property>
+		<many-to-one
+			name="Sibling"
+			column="sibling_id"
+			class="TabTemplatePersonalizeGadget"
+		>
+		</many-to-one>
+		<!-- property
+			name="ParentId"
+			column="parent_id"
+			type="integer"
+			not-null="false"
+		>
+		</property-->
+		<many-to-one
+			name="FkTabTemplate"
+			column="fk_tabtemplate_id"
+			class="TabTemplate"
+			not-null="true"
+		>
+		</many-to-one>
+
+	</class>	
+</hibernate-mapping>

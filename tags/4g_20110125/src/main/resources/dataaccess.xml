@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+	<bean id="transactionManager"
+			class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory"/>
+		</property>
+	</bean>
+	<bean id="widgetDAO" class="org.infoscoop.dao.WidgetDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="tabDAO" class="org.infoscoop.dao.TabDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="commandBarDAO"	class="org.infoscoop.dao.CommandBarDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="preferenceDAO" class="org.infoscoop.dao.PreferenceDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="portalLayoutDAO" class="org.infoscoop.dao.PortalLayoutDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="propertiesDAO" class="org.infoscoop.dao.PropertiesDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="proxyConfDAO" class="org.infoscoop.dao.ProxyConfDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="i18NDAO" class="org.infoscoop.dao.I18NDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="gadgetDAO" class="org.infoscoop.dao.GadgetDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="cacheDAO" class="org.infoscoop.dao.CacheDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="portalAdminsDAO" class="org.infoscoop.dao.PortalAdminsDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="sessionDAO" class="org.infoscoop.dao.SessionDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="forbiddenURLDAO" class="org.infoscoop.dao.ForbiddenURLDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="authCredentialDAO" class="org.infoscoop.dao.AuthCredentialDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="oauth2LeggedConsumerDAO" class="org.infoscoop.dao.OAuth2LeggedConsumerDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="holidaysDAO" class="org.infoscoop.dao.HolidaysDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="menuCacheDAO" class="org.infoscoop.dao.MenuCacheDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="accessLogDAO" class="org.infoscoop.dao.AccessLogDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="adminRoleDAO" class="org.infoscoop.dao.AdminRoleDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="accountDAO" class="org.infoscoop.dao.AccountDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="gadgetIconDAO" class="org.infoscoop.dao.GadgetIconDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="oauthTokenDAO" class="org.infoscoop.dao.OAuthTokenDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="oauth3LeggedConsumerDAO" class="org.infoscoop.dao.OAuth3LeggedConsumerDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="oauthCertificateDAO" class="org.infoscoop.dao.OAuthCertificateDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="menuTreeDAO" class="org.infoscoop.dao.MenuTreeDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="menuItemDAO" class="org.infoscoop.dao.MenuItemDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="tabTemplateDAO" class="org.infoscoop.dao.TabTemplateDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="gadgetInstanceDAO" class="org.infoscoop.dao.GadgetInstanceDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="roleDAO" class="org.infoscoop.dao.RoleDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="tabTemplateStaticGadgetDAO" class="org.infoscoop.dao.TabTemplateStaticGadgetDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="tabTemplatePersonalizeGadgetDAO" class="org.infoscoop.dao.TabTemplatePersonalizeGadgetDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="domainDAO" class="org.infoscoop.dao.DomainDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="userDAO" class="org.infoscoop.dao.UserDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+	<bean id="groupDAO" class="org.infoscoop.dao.GroupDAO">
+		<property name="sessionFactory">
+   	   		<ref bean="sessionFactory"/>
+   	 	</property>
+	</bean>
+</beans>

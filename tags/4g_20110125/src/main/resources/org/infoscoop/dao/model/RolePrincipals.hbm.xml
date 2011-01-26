@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="org.infoscoop.dao.model">
+	<class
+		name="RolePrincipal"
+		table="IS_ROLE_PRINCIPALS"
+	>
+		<meta attribute="sync-DAO">false</meta>
+		<id
+			name="Id"
+			type="integer"
+			column="id"
+		>
+			<generator class="native"/>
+		</id>
+
+		<property
+			name="Type"
+			column="type"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+		<property
+			name="Name"
+			column="name"
+			type="string"
+			not-null="true"
+			length="255"
+		/>
+		<many-to-one
+			name="FkRole"
+			column="fk_role_id"
+			class="Role"
+			insert="false"
+			update="false"
+			not-null="true"
+		>
+		</many-to-one>
+
+
+	</class>
+</hibernate-mapping>

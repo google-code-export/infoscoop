@@ -1,0 +1,197 @@
+/* infoScoop OpenSource
+ * Copyright (C) 2010 Beacon IT Inc.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License version 3
+ * as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
+ */
+
+/**/
+/* Default Thema (navy widget header)*/
+/**/
+
+/** BASIC */
+body.infoScoop {
+	background:#DBE8F9;
+}
+a{text-decoration: none;}
+a:link {color:#0000cc; }
+a:visited { color:#551a8b; }
+a:active { color:#ff0000; }
+a:hover{text-decoration: underline;}
+/** HEADER */
+.header{
+	background-color:#DBE8F9;
+	border-color:1px solid #DBE8F9;
+}
+.launcher a{color:#21264B;}
+.launcher a:link{}
+.launcher a:visited{}
+.launcher a:hover{text-decoration:underline;color:#FFAB2E;}
+.launcher a:active{text-decoration:underline;color:#FFAB2E;}
+.launcher #home{
+	background:url(./imgs/header/house.gif) no-repeat;
+}
+.launcher #mail{
+	background:url(./imgs/header/email.gif) no-repeat;
+}
+.launcher #calendar{
+	background:url(./imgs/header/date.png) no-repeat;
+}
+.launcher #document{
+	background:url(./imgs/header/page.gif) no-repeat;
+}
+.launcher #admin{
+	background:url(./imgs/header/user_suit.png) no-repeat;
+}
+.search_box{
+	/*border:2px solid #DEEDF7;*/
+}
+/**search button*//*TODO://change search button and devide the code into color and the other*/
+.submit_button{
+	padding:0 0.4em;
+}
+a.submit_button {
+	imgsborder-top: 1px solid #bbbebf;
+	background: #bdc5c9;
+	background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#bdc5c9));
+	background: -moz-linear-gradient(top, #ffffff, #bdc5c9);
+	padding:0.5px 13px;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	-webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+	-moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+	box-shadow: rgba(0,0,0,1) 0 1px 0;
+	color: #4f4d4f;
+	font-size: 13px;
+	font-family: Georgia, serif;
+	text-decoration: none;
+	vertical-align: middle;
+}
+.submit_button:visited {
+	color: #4f4d4f;
+}
+.submit_button:hover {
+	border-top-color: #ccc8cc;
+	background: #ccc8cc;
+	color: #0d090d;
+	text-decoration:none;
+}
+.submit_button:active {
+	border-top-color: #dfe4e8;
+	background: #dfe4e8;
+	text-decoration:none;
+}
+.account{
+	color:#444444;
+}
+.logout a:link{color:#215894;text-decoration:underline;}
+.logout a:visited{color:#215894;text-decoration:underline;}
+.logout a:hover{color:#FFAB2E;text-decoration:underline;}
+.logout a:active{color:#FFAB2E;text-decoration:underline;}
+/*Panel*/
+/**main panel*/
+.infoScoop #panels .panel {
+	background-color:#FFFFFF;
+}
+#siteMenuOpen #blank{
+	background:#FFF;
+}
+/**side panel*/
+#portal-tree-menucontainer {
+	background:transparent url(./imgs/theme/stripe.png) repeat scroll 0 0;
+	border-top:1px solid #E1E1D6;
+}
+/***add contents*/
+.SidePanel_AddContents .input_url{
+	color:#4778B8;
+}
+.SidePanel_AddContents .url_example{
+	color:#333333;
+}
+.addContentsEx{
+	background:#FFFCDA;
+}
+/***menu*/
+.showAll, .hideAll {
+	color:#4778B8;
+}
+/***my site map*/
+.mySiteMap .tabListItem a.label {
+	color:#4778B8;
+}
+.mySiteMap .label {
+color:#333333;
+}
+/*Tab*/
+.infoScoop #tabs .addatab a,
+.infoScoop.admin .tabs .addatab a {
+	color:#215894;
+}
+/*Command bar*/
+#command-bar{
+	background-color:#FFF;
+}
+
+/*Gadgets*/
+/**gadget header*/
+.infoScoop .widget .widgetHeader {
+	background-color:#5A79A5;
+}
+.infoScoop .widget .subwidget .widgetHeader {
+	background-color:#DBE8F9;
+}
+.infoScoop .widget .widgetTitle{
+	color:#FFFFFF;
+	font-size:80%;
+}
+.infoScoop .widget .subwidget .widgetTitle,
+.infoScoop .widget .subwidget .widgetTitle a{
+	color:#666;
+}
+.infoScoop .widget .widgetHeader a{color:#FFFFFF;}
+.infoScoop .widget .widgetHeader a:link{text-decoration:underline;}
+.infoScoop .widget .widgetHeader a:visited{text-decoration:underline;}
+.infoScoop .widget .widgetHeader a:hover{text-decoration:none;}
+.infoScoop .widget .widgetHeader a:active{text-decoration:none;}
+
+/**gadget body*/
+.infoScoop .widget .widgetBox {
+	border:1px solid #5A79A5;
+}
+.infoScoop .widget .subwidget .widgetBox{border:none;}
+/**RSS Reader*/
+/***item*/
+.infoScoop .RssReader .rssItem a:link{color:#1757AB;}
+.infoScoop .RssReader .rssItem a:visited{color:#1757AB;}
+.infoScoop .RssReader .rssItem a:hover{color:#1757AB;}
+.infoScoop .RssReader .rssItem a:active{
+	color:#FFAB2E;
+	text-decoration:underline;
+}
+/***more button*/
+.infoScoop .RssReader .rssMore{
+	color:#777777;
+}
+.infoScoop .RssReader .rssMoreOver{
+	color:#FFAB2E;
+}
+/***fotter*/
+.infoScoop .RssReader .RssReader_itemsCountPanel {
+	color: #7777CC;
+	background-color: #EFEFEF;
+}
+.infoScoop .RssReader .RssReader_itemsCount{
+	color:#4778B8;
+	background-color: #EAEAEA;
+}
