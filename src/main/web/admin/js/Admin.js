@@ -34,6 +34,17 @@ IS_Portal.getWidget = function(widgetId) {
 	return IS_Portal.widgetLists[IS_Portal.currentTabId][widgetId];
 }
 IS_Portal.lang = "ja";
+
+IS_R.getResource = function(message, array){
+	if(message && array){
+		for(var i=0;i<array.length;i++){
+			message = message.replace("{" + i + "}", array[i]);
+		}
+	}
+	return message;
+}
+ISA_R.getResource = IS_R.getResource;
+
 var IS_DroppableOptions = {};
 
 var freshDays = 1;
@@ -91,6 +102,7 @@ ISA_Admin.clearAdminCache = function() {
 	IS_Event.unloadCache("_adminPortal");
 	IS_Event.unloadCache("_adminAdmins");
 	IS_Event.unloadCache("_adminAuthentication");
+	IS_Event.unloadCache("_adminAuthenticationTwoLeggedOAuth");
 	IS_Event.unloadCache("_adminAuthenticationCert");
 	for(var i=0;i<ISA_DragDrop.draggableList.length;i++){
 		ISA_DragDrop.draggableList[i].destroy();

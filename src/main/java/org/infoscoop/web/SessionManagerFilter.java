@@ -21,6 +21,8 @@
 package org.infoscoop.web;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -35,21 +37,30 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.account.AuthenticationService;
+import org.infoscoop.account.DomainManager;
 import org.infoscoop.account.SessionCreateConfig;
+import org.infoscoop.acl.ISAdminPrincipal;
 import org.infoscoop.acl.ISPrincipal;
 import org.infoscoop.acl.SecurityController;
 import org.infoscoop.admin.web.PreviewImpersonationFilter;
+import org.infoscoop.dao.DomainDAO;
 import org.infoscoop.dao.PropertiesDAO;
-import org.infoscoop.util.RSAKeyManager;
+import org.infoscoop.dao.model.Domain;
+import org.infoscoop.dao.model.Group;
+import org.infoscoop.dao.model.Properties;
+import org.infoscoop.dao.model.User;
+import org.infoscoop.request.ProxyRequest;
+import org.infoscoop.service.UserService;
 
 /**
  * The filter which manages the login state.
@@ -66,11 +77,12 @@ public class SessionManagerFilter implements Filter {
 	private static Log log = LogFactory.getLog(SessionManagerFilter.class);
 	public static String LOGINUSER_ID_ATTR_NAME = "Uid";
 	public static String LOGINUSER_NAME_ATTR_NAME = "loginUserName";
+	public static String LOGINUSER_DOMAIN_NAME_ATTR_NAME = "Domain";
 	public static String LOGINUSER_SUBJECT_ATTR_NAME = "loginUser";
 
 	private Collection excludePaths = new HashSet();
 	private Collection<String> excludePathx = new HashSet<String>();
-	private Collection redirectPaths = new HashSet();
+	private boolean withoutCotextPath = false;
 
 	public void init(FilterConfig config) throws ServletException {
 
@@ -86,71 +98,42 @@ public class SessionManagerFilter implements Filter {
 				}
 			}
 		}
-
-		String redirectPathStr = config.getInitParameter("redirectPath");
-		if(redirectPathStr != null){
-			String[] pathArray = redirectPathStr.split(",");
-			for(int i = 0; i < pathArray.length; i++){
-				redirectPaths.add(pathArray[i].trim());
-			}
-		}
+		String withoutCotextPath = config.getInitParameter("withoutCotextPath");
+		if (withoutCotextPath != null)
+			this.withoutCotextPath = Boolean.valueOf(withoutCotextPath);
 	}
 
 	private String getUidFromHeader(HttpServletRequest req){
 		String uidHeader = SessionCreateConfig.getInstance().getUidHeader();
-		boolean uidIgnoreCase = SessionCreateConfig.getInstance().isUidIgnoreCase();
-
-		String uid = null;
+		String _uid = null;
 
 		if(uidHeader != null){
-			uid = req.getHeader(uidHeader);
+			_uid = req.getHeader(uidHeader);
 
 			if(log.isDebugEnabled()){
-				log.debug("Got UID from Header : [" + uid + "]");
+				log.debug("Got UID from Header : [" + _uid + "]");
 			}
 		} else {
-			uid = req.getRemoteUser();
+			_uid = req.getRemoteUser();
 			if(log.isDebugEnabled()){
-				log.debug("Got UID from RemoteUser : [" + uid + "]");
+				log.debug("Got UID from RemoteUser : [" + _uid + "]");
 			}
 		}
-		if(uid == null){
+		if(_uid == null){
 			if(log.isInfoEnabled())
 				log.info("uidHeader is null");
 			return null;
 		}
 
-		if("true".equalsIgnoreCase( req.getParameter(CheckDuplicateUidFilter.IS_PREVIEW ))){
-			HttpSession session = req.getSession(true);
-			String sessionUid = (String)session.getAttribute("Uid");
-			String uidParam = req.getParameter("Uid");
-			if(uidParam.equalsIgnoreCase(sessionUid)){
-				uid = uidParam;
-				session.setAttribute("Uid",uid );
-			}
-		}else if( uidIgnoreCase && uid != null )
-			uid = uid.toLowerCase();
-
-		return uid.trim();
+		String uid = _uid.trim().toLowerCase();
+				
+		return _uid;
 	}
 
 	private String getUidFromSession(HttpServletRequest req){
 		HttpSession session = req.getSession(true);
 		String uid = (String)session.getAttribute("Uid");
-		boolean uidIgnoreCase = SessionCreateConfig.getInstance().isUidIgnoreCase();
-
-		if("true".equalsIgnoreCase( req.getParameter(CheckDuplicateUidFilter.IS_PREVIEW ))){
-			String uidParam = req.getParameter("Uid");
-			if(uid.equalsIgnoreCase(uidParam)){
-				uid = uidParam;
-				session.setAttribute("Uid",uid );
-			}
-		}else if( uidIgnoreCase && uid != null ) {
-			uid = uid.toLowerCase();
-
-			session.setAttribute("Uid",uid );
-		}
-
+				
 		return uid;
 	}
 
@@ -159,6 +142,17 @@ public class SessionManagerFilter implements Filter {
 		HttpServletRequest httpReq = (HttpServletRequest) request;
 		if(log.isDebugEnabled()){
 			log.debug("Enter SessionManagerFilter form " + httpReq.getRequestURI());
+		}
+		
+		String[] requestURI = httpReq.getRequestURI().split("/");
+		if (httpReq.getRequestURI()
+				.indexOf(httpReq.getContextPath() + "/admin") == 0
+				|| httpReq.getRequestURI().indexOf(
+						httpReq.getContextPath() + "/gapps_openid_login.jsp") == 0
+				|| requestURI.length > 0
+				&& "notready.jsp".equals(requestURI[requestURI.length - 1])) {
+			chain.doFilter(request, response);
+			return;
 		}
 
 		if (request instanceof javax.servlet.http.HttpServletRequest) {
@@ -169,9 +163,6 @@ public class SessionManagerFilter implements Filter {
 			if(SessionCreateConfig.doLogin()){
 				uid = getUidFromSession(httpReq);
 				
-				if(redirectPaths.contains(httpReq.getServletPath())){
-					httpResponse.addCookie(new Cookie("redirect_path", httpReq.getServletPath()));
-				}
 				if( uid == null && !isExcludePath(httpReq.getServletPath())){
 					if (httpRequest.getHeader("MSDPortal-Ajax") != null) {
 						if(log.isInfoEnabled())
@@ -191,46 +182,14 @@ public class SessionManagerFilter implements Filter {
 				}
 			}
 			
-			if( uid == null ) {
-				Cookie[] cookies = httpReq.getCookies();
-				if( cookies != null ) {
-					for( Cookie cookie : cookies ) {
-						if( cookie.getName().equals("portal-credential")) {
-							int keepPeriod = 7;
-							try {
-								keepPeriod = Integer.parseInt( PropertiesDAO.newInstance()
-										.findProperty("loginStateKeepPeriod").getValue());
-							} catch( Exception ex ) {
-								log.warn("",ex );
-							}
-							
-							if( keepPeriod <= 0 ) {
-								Cookie credentialCookie = new Cookie("portal-credential","");
-								credentialCookie.setMaxAge( 0 );
-								credentialCookie.setPath("/");
-								httpResponse.addCookie( credentialCookie );
-								
-								log.info("clear auto login credential ["+credentialCookie.getValue()+"]");
-							} else {
-								try {
-									uid = tryAutoLogin( cookie );
-									httpReq.getSession().setAttribute("Uid",uid );
-									
-									log.info("auto login success.");
-								} catch( Exception ex ) {
-									log.info("auto login failed.",ex );
-								}
-							}
-						}
-					}
-				}
-			}
 			
-			if( uid == null && SessionCreateConfig.doLogin() && !isExcludePath(httpReq.getServletPath())) {
-				String requestUri = httpReq.getRequestURI();
-				String loginUrl = requestUri.lastIndexOf("/admin/") > 0 ?
-					requestUri.substring( 0,requestUri.lastIndexOf("/"))+"/../login.jsp" : "login.jsp";
-				
+			if (uid == null && SessionCreateConfig.doLogin()
+					&& !isExcludePath(httpReq.getServletPath())) {
+				String loginUrl = this.withoutCotextPath ? "" : httpReq
+						.getContextPath();
+				loginUrl += "/login.jsp?url="
+						+ URLEncoder.encode(httpReq.getRequestURI() + "?"
+								+ httpReq.getQueryString(), "UTF-8");
 				httpResponse.sendRedirect(loginUrl);
 				return;
 			}
@@ -243,25 +202,61 @@ public class SessionManagerFilter implements Filter {
 
 
 			Subject loginUser = (Subject)session.getAttribute(LOGINUSER_SUBJECT_ATTR_NAME);
-
 			if(loginUser == null || ( isChangeLoginUser(uid, loginUser) && !(session instanceof PreviewImpersonationFilter.PreviewHttpSession) )){
-				if( !SessionCreateConfig.getInstance().hasUidHeader() && uid != null ) {
-					AuthenticationService service= AuthenticationService.getInstance();
+				AuthenticationService service= AuthenticationService.getInstance();
+				try {
+					if (service != null){
+						String domainName = (String) session.getAttribute(LOGINUSER_DOMAIN_NAME_ATTR_NAME);
+						loginUser = service.getSubject(uid, domainName);
+						setLoginUserName(httpRequest, loginUser);
+						Domain domain = DomainDAO.newInstance().getByName(domainName);
+						User user = UserService.getHandle().getUser(uid,
+								domain.getId());
+						if( (user != null && user.isAdministrator())){
+							Principal adminPrincipal = new ISAdminPrincipal();
+							loginUser.getPrincipals().add(adminPrincipal);
+						}
+						Set<Group> groups = user.getGroups();
+						for (Group group : groups) {
+							ISPrincipal groupPrincipal = new ISPrincipal(
+									ISPrincipal.ORGANIZATION_PRINCIPAL, group
+									.getEmail());
+							groupPrincipal.setDisplayName(group.getName());
+							loginUser.getPrincipals().add(groupPrincipal);
+						}
+					}
+				} catch (Exception e) {
+					log.error("",e);
 					try {
-						if (service != null)
-							loginUser = service.getSubject(uid);
-					} catch (Exception e) {
-						log.error("",e);
+						if( isAppsAdmin(uid, httpRequest) ){
+							loginUser = new Subject();
+							ISPrincipal up = new ISPrincipal(ISPrincipal.UID_PRINCIPAL, uid);
+							String userName = (String)session.getAttribute(LOGINUSER_NAME_ATTR_NAME);
+							up.setDisplayName(userName);
+							loginUser.getPrincipals().add(up);
+
+							Principal adminPrincipal = new ISAdminPrincipal();
+							loginUser.getPrincipals().add(adminPrincipal);
+
+							Domain domain = DomainDAO.newInstance().getByName((String) session.getAttribute(LOGINUSER_DOMAIN_NAME_ATTR_NAME));
+							if(domain != null){
+								ISPrincipal domainPrincipal = new ISPrincipal(ISPrincipal.DOMAIN_PRINCIPAL, domain.getId().toString());
+								domainPrincipal.setDisplayName(domain.getName());
+								loginUser.getPrincipals().add(domainPrincipal);
+							}
+
+							session.setAttribute(LOGINUSER_SUBJECT_ATTR_NAME, loginUser);
+							httpResponse.sendRedirect("manager/user/index.jsp");
+							return;
+						}else{
+							httpResponse.sendRedirect("notready.jsp");
+							return;
+						}
+					} catch (Exception e1) {
+						log.error("",e1);
 					}
 				}
-				
-				if( loginUser == null || isChangeLoginUser( uid, loginUser )) {
-					loginUser = new Subject();
-					loginUser.getPrincipals().add(new ISPrincipal(ISPrincipal.UID_PRINCIPAL, uid));
-				}
-				
-				setLoginUserName(httpRequest, loginUser);
-				
+
 				for(Map.Entry entry : SessionCreateConfig.getInstance().getRoleHeaderMap().entrySet()){
 					String headerName = (String)entry.getKey();
 					String roleType = (String)entry.getValue();
@@ -285,9 +280,19 @@ public class SessionManagerFilter implements Filter {
 			}
 			SecurityController.registerContextSubject(loginUser);
 
+			//TODO:This value is set by OpenIDFilter.
+			if(loginUser != null)
+				for(ISPrincipal p :loginUser.getPrincipals(ISPrincipal.class))
+					if(ISPrincipal.DOMAIN_PRINCIPAL == p.getType())
+						DomainManager.registerContextDomainId(Integer.valueOf(p.getName()));
+			
 		}
+
+		
 		chain.doFilter(request, response);
 
+		//TODO:
+		DomainManager.clearContextDomainId();
 		if(log.isDebugEnabled()){
 			log.debug("Exit SessionManagerFilter　form " + httpReq.getRequestURI());
 		}
@@ -389,30 +394,40 @@ public class SessionManagerFilter implements Filter {
 		return false;
 	}
 
-	private String tryAutoLogin( Cookie cookie ) throws Exception {
-		String credentialStr = cookie.getValue();
-		
+	private boolean isAppsAdmin(String uid, HttpServletRequest request) throws Exception{
+		HttpClient http = new HttpClient();
+		Properties property = PropertiesDAO.newInstance().findProperty("appsServiceURL");
+		String url = property.getValue();
+		if (!url.endsWith("/"))
+			url += "/";
+		String response = singedRequest(url + "checkadmin", request);
+		return Boolean.valueOf(response);
+	}
+	
+	private String singedRequest(String url, HttpServletRequest request)
+			throws Exception {
+		ProxyRequest proxyRequest = null;
 		try {
-			String[] credentialPair = credentialStr.split(":");
-			String portalUid = new String(
-					Base64.decodeBase64( credentialPair[0].getBytes("UTF-8")),"UTF-8");
-			String portalPassword = RSAKeyManager.getInstance().decrypt( credentialPair[1] );
-			
-			AuthenticationService service = AuthenticationService.getInstance();
-			if (service == null)
-				throw new Exception(
-						"No bean named \"authenticationService\" is defined."
-								+ " When loginAuthentication property is true,"
-								+ " authenticationService must be defined.");
-			
-			service.login( portalUid,portalPassword );
-			
-			portalUid = portalUid.trim();
-			return portalUid;
-		} catch( Exception ex ) {
-//			log.info("Auto Login Failed by ["+credentialStr+"]");
-			
-			throw ex;
+			proxyRequest = new ProxyRequest(url, "NoOperation");
+			proxyRequest.setLocales(request.getLocales());
+			proxyRequest.setPortalUid((String) request.getSession()
+					.getAttribute("Uid"));
+			proxyRequest.setTimeout(ProxyServlet.DEFAULT_TIMEOUT);
+			proxyRequest.putRequestHeader("authType", "signed");
+
+			int statusCode = proxyRequest.executeGet();
+
+			if (statusCode != 200)
+				throw new Exception("url=" + proxyRequest.getProxy().getUrl()
+						+ ", statucCode=" + statusCode);
+
+			if (log.isInfoEnabled())
+				log.info("gadget url : " + proxyRequest.getProxy().getUrl());
+
+			return proxyRequest.getResponseBodyAsStringWithAutoDetect();
+		} finally {
+			if (proxyRequest != null)
+				proxyRequest.close();
 		}
 	}
 }

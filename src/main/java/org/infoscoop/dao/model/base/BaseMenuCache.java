@@ -1,39 +1,22 @@
-/* infoScoop OpenSource
- * Copyright (C) 2010 Beacon IT Inc.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 3
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
- */
-
 package org.infoscoop.dao.model.base;
 
 import java.io.Serializable;
 
 
 /**
- * This is an object that contains data related to the MENUCACHE table.
+ * This is an object that contains data related to the IS_MENUCACHES table.
  * Do not modify this class because it will be overwritten if the configuration file
  * related to this class is modified.
  *
  * @hibernate.class
- *  table="MENUCACHE"
+ *  table="IS_MENUCACHES"
  */
 
 public abstract class BaseMenuCache  implements Serializable {
 
 	public static String REF = "MenuCache";
-	public static String PROP_MENUIDS = "MenuIds";
 	public static String PROP_ID = "Id";
+	public static String PROP_MENU_IDS = "MenuIds";
 
 
 	// constructors
@@ -92,10 +75,10 @@ public abstract class BaseMenuCache  implements Serializable {
 
 	/**
 	 * Set the value related to the column: MENUIDS
-	 * @param menuids the MENUIDS value
+	 * @param menuIds the MENUIDS value
 	 */
-	public void setMenuIds (byte[] menuids) {
-		this.menuIds = menuids;
+	public void setMenuIds (byte[] menuIds) {
+		this.menuIds = menuIds;
 	}
 
 
@@ -105,9 +88,9 @@ public abstract class BaseMenuCache  implements Serializable {
 		if (null == obj) return false;
 		if (!(obj instanceof org.infoscoop.dao.model.MenuCache)) return false;
 		else {
-			org.infoscoop.dao.model.MenuCache menucache = (org.infoscoop.dao.model.MenuCache) obj;
-			if (null == this.getId() || null == menucache.getId()) return false;
-			else return (this.getId().equals(menucache.getId()));
+			org.infoscoop.dao.model.MenuCache menuCache = (org.infoscoop.dao.model.MenuCache) obj;
+			if (null == this.getId() || null == menuCache.getId()) return false;
+			else return (this.getId().equals(menuCache.getId()));
 		}
 	}
 

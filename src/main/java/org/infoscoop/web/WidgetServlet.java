@@ -22,7 +22,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +38,7 @@ import org.infoscoop.dao.WidgetDAO;
 import org.infoscoop.dao.model.Tab;
 import org.infoscoop.dao.model.Widget;
 import org.infoscoop.service.TabService;
+import org.infoscoop.service.TabService.TabDetail;
 import org.infoscoop.util.I18NUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,18 +48,9 @@ public class WidgetServlet extends HttpServlet {
 	private static final long serialVersionUID = "org.infoscoop.web.WidgetServlet"
 			.hashCode();
 	
-	private static String defaultUid = "default";
-
 	private static Log log = LogFactory.getLog(WidgetServlet.class);
 	
-	public static String getDefaultUid() {
-		return defaultUid;
-	}
-
 	public void init(ServletConfig config) throws ServletException {
-		defaultUid = config.getInitParameter("defaultUid");
-		if(defaultUid == null) defaultUid = "default";
-		
 		super.init(config);
 	}
 
@@ -82,9 +73,9 @@ public class WidgetServlet extends HttpServlet {
 		String tabIdParam = request.getParameter("tabId");
 		if("true".equalsIgnoreCase( resetStr )) {
 			try{
-				Integer tabId = null;
+				String tabId = null;
 				if(tabIdParam != null)
-					tabId = Integer.valueOf(tabIdParam.trim().replace("tab", ""));
+					tabId = tabIdParam.trim().replace("tab", "");
 					
 				TabService.getHandle().clearConfigurations( uid, tabId );
 			}catch (Exception e) {
@@ -111,13 +102,8 @@ public class WidgetServlet extends HttpServlet {
 			bvObj.append("buildVersion", getServletContext().getAttribute("buildTimestamp"));
 			responseAray.put(bvObj);
 			
-			Collection widgetsList;
-			if(tabOrderStr == null)
-				widgetsList = getDisplayContents(uid, request);
-			else{
-				int tabOrder = Integer.parseInt(tabOrderStr);
-				widgetsList = getDisplayContents(uid, tabOrder, request);
-			}
+			Collection<TabDetail> widgetsList = getDisplayContents(uid, request);
+			
 			
 			if (widgetsList == null || widgetsList.isEmpty()) {
 				if(log.isInfoEnabled())
@@ -127,30 +113,18 @@ public class WidgetServlet extends HttpServlet {
 			}
 			
 			Map resMap = I18NUtil.getResourceMap( I18NUtil.TYPE_LAYOUT,request.getLocale() );
-			Set dynamicPanelWidgetIds = new HashSet();
-			for(Iterator it = widgetsList.iterator(); it.hasNext();){
-				Object[] t = ( Object[] )it.next();
+			for(TabDetail t : widgetsList){
 				
-				Tab tab = (Tab)t[0];
-				Collection dynamicWidgets = ( Collection )t[1];
-				Collection staticWidgets = ( Collection )t[2];
+				Tab tab = t.getTab();
+				String layout = t.getLayout();
+				Collection<Widget> dynamicWidgets = t.getPersonalWidgets();
+				Collection<Widget> staticWidgets = t.getStaticWidgets();
 				
-				//Because there is the possibility that the widgetID repeats depending on the setting situation of the dynamic panel of the initial screen setting, we remove it.
-				List removeWidgetList = new ArrayList();
-				for(Iterator widgets = dynamicWidgets.iterator(); widgets.hasNext();){
-					Widget wid = (Widget)widgets.next();
-					if(dynamicPanelWidgetIds.contains(wid.getWidgetid())){
-						removeWidgetList.add(wid);
-					}
-					if(!"MultiRssReader".equals(wid.getType())){
-						dynamicPanelWidgetIds.add(wid.getWidgetid());
-					}
-				}
-				
-				//FIXME dirty
-				WidgetDAO.newInstance().getHibernateTemplate().deleteAll( removeWidgetList );
-				
-				responseAray.put( tab.toJSONObject( dynamicWidgets,staticWidgets,resMap ));
+				JSONObject tabJson = tab.toJSONObject(layout, dynamicWidgets,
+						staticWidgets, resMap);
+				if (t.isChanged())
+					tabJson.put("isChanged", t.isChanged());
+				responseAray.put(tabJson);
 			}
 			
 			String jsonStr = responseAray.toString();
@@ -166,24 +140,9 @@ public class WidgetServlet extends HttpServlet {
 			long end = System.currentTimeMillis();
 			log.trace("--- WidgetServlet doPost: " + (end - start));
 		}
-		long end = System.currentTimeMillis();
 	}
 	
-	protected Collection getDisplayContents(String uid, HttpServletRequest request) throws Exception{
-		return TabService.getHandle().getWidgetsNode(uid, defaultUid);
+	protected Collection<TabDetail> getDisplayContents(String uid, HttpServletRequest request) throws Exception{
+		return TabService.getHandle().getWidgetsNode(uid);
 	}
-	
-	protected Collection getDisplayContents(String uid, int tabOrder,
-			HttpServletRequest req) throws Exception {
-		
-		Object tabObj = TabService.getHandle().getWidgetsNodeByTabOrder(uid, getDefaultUid(), tabOrder);
-		if(tabObj == null)
-			return null;
-		
-		List result = new ArrayList();
-		result.add(tabObj);
-		return (Collection)result;
-	}
-
-	
 }

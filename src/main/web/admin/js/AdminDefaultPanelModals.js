@@ -241,21 +241,24 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 		setTimeout(viewForm, 10);
 	},
 	build: function(formDiv) {
-		formDiv.appendChild(
-			$.DIV({style:"clear:both;padding:3px;"},
-				  $.DIV({}, ISA_R.alb_selectTemplate),
-				  $.DIV({style:"color:red;fontWeight:bold"},ISA_R.alb_destroyOldSettings)
-					)
-			);
-		
+		var messageLabel = document.createElement("div");
+		messageLabel.style.clear = "both";
+		messageLabel.appendChild(document.createTextNode(ISA_R.alb_selectTemplate));
+		var messageNotice = document.createElement("span");
+		messageNotice.style.color = "red";
+		messageNotice.style.fontWeight = "bold";
+		messageNotice.appendChild(document.createTextNode(ISA_R.alb_destroyOldSettings));
+		messageLabel.appendChild(document.createElement("br"));
+		messageLabel.appendChild(messageNotice);
+		formDiv.appendChild(messageLabel);
+		formDiv.appendChild(document.createElement("br"));
 		// This must be increased if any file is added to admin/staticPanel
-		var adjustToWindowHeight = (this.isaDefaultPanel.displayRoleJsons[this.isaDefaultPanel.displayRoleId] && this.isaDefaultPanel.displayRoleJsons[this.isaDefaultPanel.displayRoleId].adjustToWindowHeight ? true : false);
 		for(var i=0; i < 8; i++){
 			var json = {};
 			json = this.templates.setStaticLayout(json, i);
 			if(!json) continue;
-			var nothing = (!adjustToWindowHeight && i == 0);
-			formDiv.appendChild(this.buildLayout(json, nothing,i));
+			var nothing = (i == 0);
+			formDiv.appendChild(this.buildLayout(json, nothing));
 		}
 		
 		var buttonDiv = document.createElement("div");
@@ -269,16 +272,16 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 		IS_Event.observe(closeButton, "click", this.hide.bind(this), false, "_adminPanel");
 		formDiv.appendChild(buttonDiv);
 	},
-	buildLayout: function(json, isNothing, i) {
+	buildLayout: function(json, isNothing) {
 		var self = this;
 		var layoutDiv = document.createElement("div");
 		layoutDiv.className = "staticLayout";
 		layoutDiv.innerHTML = json.layout;
 		this.drawOutLine(layoutDiv);
-		var layoutMouseOver = function(i) {
+		var layoutMouseOver = function(e) {
 			layoutDiv.style.backgroundColor = "#7777cc";
 		};
-		var layoutMouseOut = function(i) {
+		var layoutMouseOut = function(e) {
 			layoutDiv.style.backgroundColor = "";
 		};
 		var layoutClick = function(e) {
@@ -294,9 +297,9 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 				e.stopPropagation();
 			}
 		};
-		IS_Event.observe(layoutDiv, 'mouseover', layoutMouseOver.bind(this,i), false, "_adminPanel");
-		IS_Event.observe(layoutDiv, 'mouseout', layoutMouseOut.bind(this,i), false, "_adminPanel");
-		IS_Event.observe(layoutDiv, 'click', layoutClick.bind(this,i), false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'mouseover', layoutMouseOver, false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'mouseout', layoutMouseOut, false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'click', layoutClick, false, "_adminPanel");
 		IS_Event.observe(layoutDiv, 'click', eventCancelBubble, false, "_adminPanel");
 		return layoutDiv;
 	},
@@ -694,9 +697,8 @@ ISA_DefaultPanel.prototype.templates = {
 		return jsonObject;
 	},
 	getStaticLayout: function(number){
-	//	if(this.layouts[number]) return this.layouts[number];
-		var defaultPanel = ISA_DefaultPanel.defaultPanel;
-		var url = adminHostPrefix + ( defaultPanel.displayRoleJsons[defaultPanel.displayRoleId] && defaultPanel.displayRoleJsons[defaultPanel.displayRoleId].adjustToWindowHeight ? '/staticPanelAdjustHeight/' : '/staticPanel/') + number + ".html";
+		if(this.layouts[number]) return this.layouts[number];
+		var url = adminHostPrefix + "/staticPanel/" + number + ".html";
 		var html = null;
 		var opt = {
 			method: 'get' ,
@@ -719,11 +721,8 @@ ISA_DefaultPanel.prototype.templates = {
 		return html;
 	},
 	// Set for default fixed area
-	setStaticLayout0: function(jsonObject, number){
-		for(var i=0; i < 8; i++)
-		  this.getStaticLayout(i);
-		
-		return this.setStaticLayout(jsonObject, (number ? number : 3));
+	setStaticLayout0: function(jsonObject){
+		return this.setStaticLayout(jsonObject, 3);
 	},
 	/**
 		Set fixed area of command bar

@@ -38,7 +38,7 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 	var maximizeIcons = [
 		{
 		  type:	"refresh",
-		  imgUrl:	"refresh.gif",
+		  imgUrl:	"refresh.png",
 
 		  alt: IS_R.lb_refresh
 		},
@@ -162,7 +162,7 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 			if(header.refresh != 'off'){
 			  visibleIcons.push({
 				type:	"refresh",
-				imgUrl:	"refresh.gif",
+				imgUrl:	"refresh.png",
 				  
 				alt: IS_R.lb_refresh
 			  });
@@ -413,25 +413,6 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 		}
 	}
 	
-	if( Browser.isSafari1 ) {
-		this.buildTitle = (function() {
-			var buildTitle = this.buildTitle;
-			
-			return function( type ) {
-				buildTitle.apply( this,[type] );
-				
-				if( !widget.title_url ) {
-					widget.elm_title.style.position = "relative";
-					var dragHandle = document.createElement("div");
-					dragHandle.style.position = "absolute"
-					dragHandle.style.top = dragHandle.style.left = 0;
-					dragHandle.style.width = dragHandle.style.height = "100%";
-					widget.elm_title.appendChild( dragHandle );
-				}
-			}
-		}).apply( this );
-	}
-
 	this.getTitle = function() {
 		return IS_Widget.WidgetHeader.getTitle(widget);
 	}
@@ -510,15 +491,19 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 		div.title = alt;
 		if(imgUrl){
 			var url = '';
-			if(/__IS_GADGET_BASE_URL__/.test(imgUrl) && widget.gadgetType){
-				imgUrl = imgUrl.replace("__IS_GADGET_BASE_URL__", hostPrefix + '/gadget/' + widget.gadgetType)
+			if(/__IS_IMAGE_URL__/.test(imgUrl)){
+				div.src = imgUrl.replace("__IS_IMAGE_URL__", imageURL);
+			} else {
+				if(/__IS_GADGET_BASE_URL__/.test(imgUrl) && widget.gadgetType){
+					imgUrl = imgUrl.replace("__IS_GADGET_BASE_URL__", hostPrefix + '/gadget/' + widget.gadgetType)
+				}
+				if(/http[s]?:\/\//.test(imgUrl)){
+					url = imgUrl;
+				}else{
+					url = (!isCommonType(type) && widget.resourceUrl ? widget.resourceUrl : imageURL) + imgUrl;
+				}
+				div.src = url;
 			}
-			if(/http[s]?:\/\//.test(imgUrl)){
-				url = imgUrl;
-			}else{
-				url = (!isCommonType(type) && widget.resourceUrl ? widget.resourceUrl : imageURL) + imgUrl;
-			}
-			div.src = url;
 		}
 		
 
@@ -604,7 +589,7 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 					element.beforeParent = element.parentNode;
 					element.beforeNextSibling = element.nextSibling;
 					
-					if (IS_Portal.isSubWidget(widget.id) && !Browser.isSafari1 ) {
+					if (IS_Portal.isSubWidget(widget.id) ) {
 						document.body.appendChild(element);
 					}
 					
@@ -651,7 +636,6 @@ IS_Widget.WidgetHeader.prototype.classDef = function() {
 		if( handler )
 			handler( div );
 		
-		if( Browser.isSafari1 ) self.adjustWidth();
 	}
 	
 	function getIconHandler( type ) {

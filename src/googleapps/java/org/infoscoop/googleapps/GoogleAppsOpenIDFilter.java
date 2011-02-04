@@ -118,6 +118,10 @@ public class GoogleAppsOpenIDFilter implements Filter {
 
 		String actionName = request.getServletPath();
 		String uid = (String) session.getAttribute("Uid");
+		if (uid != null && "/openid_login".equalsIgnoreCase(actionName)) {
+			response.sendRedirect(".");
+			return;
+		}
 		if (uid == null) {
 			UserInfo user = (UserInfo) session.getAttribute("user");
 			if (user != null) {
@@ -127,6 +131,11 @@ public class GoogleAppsOpenIDFilter implements Filter {
 				if (log.isInfoEnabled())
 					log.info(uid + " is logged in by openid.");
 				session.setAttribute("Uid", uid);
+				String[] email = uid.split("@");
+				if(email.length == 2)
+					session.setAttribute("Domain", email[1]);
+				else
+					log.error("User id \"" + uid + "\" is invalid email address.");
 				session.setAttribute(
 						SessionManagerFilter.LOGINUSER_NAME_ATTR_NAME, userName);
 			}
@@ -149,6 +158,8 @@ public class GoogleAppsOpenIDFilter implements Filter {
 					response.sendRedirect(authReq.getDestinationUrl(true));
 				} catch (OpenIDException e) {
 					log.error(e.getMessage(), e);
+					String loginUrl = host_url + "/gapps_openid_login.jsp";
+					response.sendRedirect(loginUrl);
 				}
 				return;
 			} else if ("/openid_consumer_return".equalsIgnoreCase(actionName)) {
@@ -175,6 +186,8 @@ public class GoogleAppsOpenIDFilter implements Filter {
         			}
 				} catch (IOException e) {
 					log.error(e.getMessage(), e);
+					String loginUrl = host_url + "/gapps_openid_login.jsp";
+					response.sendRedirect(loginUrl);
 				}
 				return;
 			}

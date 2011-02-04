@@ -21,7 +21,10 @@ import java.io.Serializable;
 import java.security.Principal;
 
 public class ISPrincipal implements Principal, Serializable{
-	public static String UID_PRINCIPAL = "UIDPrincipal";
+	public static final String DOMAIN_PRINCIPAL = "DomainPrincipal";
+	public static final String ADMINISTRATOR_PRINCIPAL = "AdministratorPrincipal";
+	public static final String UID_PRINCIPAL = "UIDPrincipal";
+	public static final String ORGANIZATION_PRINCIPAL = "OrganizationPrincipal";
 	
 	private String type;
 	private String name;
@@ -52,7 +55,7 @@ public class ISPrincipal implements Principal, Serializable{
 
 	public boolean equals(Object obj) {
 		if(obj == null)return false;
-		if(obj instanceof ISPrincipal)return false;
+		if(!(obj instanceof ISPrincipal))return false;
 		
 		ISPrincipal p = (ISPrincipal)obj;
 		boolean isNameEquals = false;

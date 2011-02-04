@@ -238,7 +238,7 @@ IS_Widget.Maximize.getMaximizeConfiguration = function( widgetConf ) {
 	if( maximizeHeader.refresh != 'off'){
 		maximizeHeader.icon.push({
 		  type:	"refresh",
-		  imgUrl:	"refresh.gif",
+		  imgUrl:	"refresh.png",
 			
 		  alt: IS_R.lb_refreshKey
 		});
@@ -304,36 +304,10 @@ IS_Widget.Maximize.restoreMaximizeView = function() {
 	IS_Portal.adjustIS_PortalStyle();
 	
 	IS_Widget.adjustDescWidth();
-	IS_Widget.Information2.adjustDescWidth();
 	
 	IS_Widget.WidgetHeader.adjustHeaderWidth();
 	
 	IS_Widget.MaximizeWidget = null;
-}
-
-//For Safari: Not process descriptions except for the current tub
-//Set handler that replaces currentTabId
-if( Browser.isSafari1 ) {
-	IS_Widget.Maximize.setupMaximizeView = ( function() {
-		var setup = IS_Widget.Maximize.setupMaximizeView;
-		
-		return function() {
-			IS_Portal.disableCommandBar();
-			setup.apply( IS_Widget.Maximize,$A( arguments ));
-			IS_Portal.currentTabId = "_"+IS_Portal.currentTabId;
-		}
-	})();
-	IS_Widget.Maximize.restoreMaximizeView = ( function() {
-		var restore = IS_Widget.Maximize.restoreMaximizeView;
-		
-		return function() {
-			IS_Portal.currentTabId = IS_Portal.currentTabId.substring(1);
-			restore.apply( IS_Widget.Maximize,$A( arguments ));
-			IS_Portal.enableCommandBar();
-			
-			IS_Portal.adjustCurrentTabSize();
-		}
-	})();
 }
 
 IS_Widget.MaximizeWidget = null;

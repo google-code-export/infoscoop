@@ -55,7 +55,7 @@ public class NewSessionIdServlet extends HttpServlet{
 				sessionId = SessionService.getHandle().newSessionId( uid );
 			}
 			resp.getWriter().println(
-					"is_sessionId = \"" + sessionId.replace("\\", "\\\\") +  "\"");	
+					"is_sessionId = \"" + sessionId+ "\"");	
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
