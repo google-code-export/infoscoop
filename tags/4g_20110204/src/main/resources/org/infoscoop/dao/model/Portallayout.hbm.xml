@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="org.infoscoop.dao.model">
+	<class
+		name="Portallayout"
+		table="IS_PORTALLAYOUTS"
+	>
+		<meta attribute="sync-DAO">false</meta>
+		<composite-id name="Id" class="PortallayoutsPK">
+			<key-property
+				name="Name"
+				column="name"
+				type="string"
+			/>
+			<key-property
+				name="Lang"
+				column="lang"
+				type="string"
+			/>
+			<key-property
+				name="Country"
+				column="country"
+				type="string"
+			/>
+		</composite-id>
+
+		<property
+			name="Layout"
+			column="layout"
+			type="string"
+			not-null="true"
+		/>
+
+
+	</class>	
+</hibernate-mapping>

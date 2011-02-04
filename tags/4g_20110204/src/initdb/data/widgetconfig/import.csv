@@ -1,0 +1,7 @@
+"RssReader",<LOB FILE='RssReader.xml' />
+"MultiRssReader",<LOB FILE='MultiRssReader.xml' />
+"Ticker",<LOB FILE='Ticker.xml' />
+"MiniBrowser", <LOB FILE='MiniBrowser.xml' />
+"FragmentMiniBrowser", <LOB FILE='FragmentMiniBrowser.xml' />
+"Calendar",<LOB FILE='Calendar.xml' />
+"notAvailable",<LOB FILE='notAvailable.xml' />
