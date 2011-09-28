@@ -142,7 +142,7 @@ public class RssFilter extends ProxyFilter {
 		return new ByteArrayInputStream(returnStream.toByteArray());
 	}
 
-	public static byte[] process(ProxyRequest request, InputStream responseStream)
+	private static byte[] process(ProxyRequest request, InputStream responseStream)
 			throws IOException {
 
 		String dateTimeFormat = request.getRequestHeader("X-IS-DATETIMEFORMAT");

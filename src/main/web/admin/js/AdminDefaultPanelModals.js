@@ -37,10 +37,8 @@ ISA_DefaultPanel.CommandItemEditor.prototype.classDef = function() {
 	this.buildEditorWindow = function(form){
 		var editorDiv = document.createElement("div");
 		commandItem.title;
-		var editorFieldSet = document.createElement("div");
-		editorDiv.className = "modalConfigSet";
-		var editorFieldSetLegend = document.createElement("p");
-		editorFieldSetLegend.className = "modalConfigSetHeader";
+		var editorFieldSet = document.createElement("fieldset");
+		var editorFieldSetLegend = document.createElement("legend");
 		editorFieldSetLegend.appendChild(document.createTextNode(ISA_R.getResource(ISA_R.alb_settingOf,[commandItem.title])));
 		editorFieldSet.appendChild(editorFieldSetLegend);
 		editorFieldSet.appendChild(form);
@@ -667,9 +665,6 @@ ISA_DefaultPanel.prototype.templates = {
 		//Give id attribute to HTML
 		//TODO Is class="column" suite for Widget?
 		var regexp = new RegExp("class=\"static_column\"");
-		if(Browser.isIE){
-			regexp = new RegExp("class=static_column");
-		}
 		var newhtml = "";
 		var s = html;
 		var cnt = 0;
@@ -699,24 +694,34 @@ ISA_DefaultPanel.prototype.templates = {
 		return jsonObject;
 	},
 	getStaticLayout: function(number){
-		if(this.layouts[number]) return this.layouts[number];
-		
+	//	if(this.layouts[number]) return this.layouts[number];
 		var defaultPanel = ISA_DefaultPanel.defaultPanel;
-		var targetClass = (defaultPanel.displayRoleJsons[defaultPanel.displayRoleId] && defaultPanel.displayRoleJsons[defaultPanel.displayRoleId].adjustToWindowHeight)
-			? 'staticLayoutAdjustHeight' : 'staticLayout';
-		$jq("#select_layout_modal ." + targetClass).each(function(idx, element){
-			this.layouts[idx] = $jq(element).html();
-		}.bind(this));
-		
-//		this.layouts[number] = html;
-//		return html;
-		return this.layouts[number];
+		var url = adminHostPrefix + ( defaultPanel.displayRoleJsons[defaultPanel.displayRoleId] && defaultPanel.displayRoleJsons[defaultPanel.displayRoleId].adjustToWindowHeight ? '/staticPanelAdjustHeight/' : '/staticPanel/') + number + ".html";
+		var html = null;
+		var opt = {
+			method: 'get' ,
+			asynchronous:false,
+			onSuccess: function(response){
+				html = response.responseText;
+			},
+			on404: function(t) {
+				msg.error(ISA_R.ams_fixedAreaTemplateNF+'(' + url + ')' + t.status + " - " + t.statusText);
+			},
+			onFailure: function(t) {
+				msg.error(ISA_R.ams_fixedAreaTemplateNR+'(' + url + ')' + t.status + " - " + t.statusText);
+			},
+			onException: function(r, t){
+				msg.error(ISA_R.ams_fixedAreaTemplateNR+'(' + url + ')' + getErrorMessage(t));
+			}
+		};
+		AjaxRequest.invoke(url, opt);
+		this.layouts[number] = html;
+		return html;
 	},
 	// Set for default fixed area
 	setStaticLayout0: function(jsonObject, number){
-//		for(var i=0; i < 8; i++)
-//		  this.getStaticLayout(i);
-		this.getStaticLayout();
+		for(var i=0; i < 8; i++)
+		  this.getStaticLayout(i);
 		
 		return this.setStaticLayout(jsonObject, (number ? number : 3));
 	},

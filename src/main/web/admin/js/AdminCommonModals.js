@@ -67,7 +67,7 @@ ISA_CommonModals.EditorForm.prototype.classDef = function() {
 		this.currentModal = new Control.Modal(
 			editorElement,
 			{
-			  contents: "<div/>",
+			  contents: "",
 			  opacity: 0.2,
 			  containerClassName:"adminTreeMenu",
 			  afterClose:this.hideWidgetEditorForm.bind(this)
@@ -207,10 +207,6 @@ ISA_CommonModals.EditorForm.prototype.classDef = function() {
 			editorFormFieldDiv.id = 'editorFormFieldDiv';
 			self.loadEditorForm(editorFormFieldDiv);
 			self.currentModal.update(editorFormFieldDiv);
-//			
-//			var editPanel = document.getElementById('treeMenuEditPanel');
-//			editPanel.appendChild(editorFormFieldDiv);
-			
 					
 //			if(ISA_CommonModals.EditorForm.previewWidget){ // May not be necessary
 //				ISA_CommonModals.EditorForm.loadPreviewWidget();
@@ -520,25 +516,16 @@ ISA_CommonModals.EditorForm.makeWidgetEditFieldSet = function(disabled, _menuIte
 		menuItem.properties = {};
 	
 	/* Widget settings */
-//	var widgetFieldSet = document.createElement("fieldset");
-//	var widgetFieldSetLegend = document.createElement("legend");
-//	var widgetFieldSetTitle = options.title || ISA_R.alb_widgetSettings;
-//	widgetFieldSetLegend.appendChild(document.createTextNode( widgetFieldSetTitle ));
-//	widgetFieldSet.appendChild(widgetFieldSetLegend);
-	
-	var widgetFieldSet = document.createElement("div");
-	widgetFieldSet.className = "modalConfigSet";
-	var widgetFieldSetLegend = document.createElement("p");
-	widgetFieldSetLegend.className = "modalConfigSetHeader";
+	var widgetFieldSet = document.createElement("fieldset");
+	var widgetFieldSetLegend = document.createElement("legend");
 	var widgetFieldSetTitle = options.title || ISA_R.alb_widgetSettings;
 	widgetFieldSetLegend.appendChild(document.createTextNode( widgetFieldSetTitle ));
 	widgetFieldSet.appendChild(widgetFieldSetLegend);
 	
+	
 	var contentSubDiv = document.createElement("div");
 	var editorFormSubTable = document.createElement("table");
-	editorFormSubTable.className = "modalConfigSetContent";
-//	editorFormSubTable.style.width = "100%";
-//	editorFormSubTable.style.margin = "5px";
+	editorFormSubTable.style.width = "100%";
 	contentSubDiv.appendChild(editorFormSubTable);
 	var editorFormSubTbody = document.createElement("tbody");
 	editorFormSubTable.appendChild(editorFormSubTbody);
@@ -551,7 +538,7 @@ ISA_CommonModals.EditorForm.makeWidgetEditFieldSet = function(disabled, _menuIte
 		subTr.appendChild(subTd);
 		subTd = document.createElement("td");
 		subTd.style.width = "70%";
-		var checkbox =ISA_Admin.createBaseCheckBox("ignoreHeader", menuItem.ignoreHeader, false, document);
+		var checkbox =ISA_Admin.createBaseCheckBox("ignoreHeader", menuItem.ignoreHeader);
 		checkbox.id = "ignoreHeaderCheckbox";
 		subTd.appendChild(checkbox);
 		subTr.appendChild(subTd);
@@ -566,7 +553,7 @@ ISA_CommonModals.EditorForm.makeWidgetEditFieldSet = function(disabled, _menuIte
 		subTr.appendChild(subTd);
 		subTd = document.createElement("td");
 		subTd.style.width = "70%";
-		var checkbox =ISA_Admin.createBaseCheckBox("noBorder", menuItem.noBorder, false, document);
+		var checkbox =ISA_Admin.createBaseCheckBox("noBorder", menuItem.noBorder);
 		checkbox.id = "noBorderCheckbox";
 		subTd.appendChild(checkbox);
 		subTr.appendChild(subTd);
@@ -972,21 +959,13 @@ ISA_CommonModals.EditorForm.makeWidgetEditFieldSet = function(disabled, _menuIte
 
 
 ISA_CommonModals.EditorForm.makeMenuAlertEditFieldSet = function(disabled, menuItem){
-//	var menuItemFieldSet = document.createElement("fieldset");
-//	var menuItemFieldSetLegend = document.createElement("legend");
-//	menuItemFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_alertSettings));
-//	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
-	
-	var menuItemFieldSet = document.createElement("div");
-	menuItemFieldSet.className = "modalConfigSet";
-	var menuItemFieldSetLegend = document.createElement("p");
-	menuItemFieldSetLegend.className = "modalConfigSetHeader";
+	var menuItemFieldSet = document.createElement("fieldset");
+	var menuItemFieldSetLegend = document.createElement("legend");
 	menuItemFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_alertSettings));
 	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
 	
 	menuItemFieldSet.appendChild(
-//		document.createTextNode(ISA_R.alb_informNewMenu)
-		$.P({className:"modalConfigSetContent"}, ISA_R.alb_informNewMenu )
+		document.createTextNode(ISA_R.alb_informNewMenu)
 		);
 	
 	/* Create main */
@@ -1051,21 +1030,13 @@ ISA_CommonModals.EditorForm.makeMenuAlertEditFieldSet.setForceDropOpton = functi
 }
 
 ISA_CommonModals.EditorForm.makeMenuUpdateSettingFieldSet = function(disabled, menuItem){
-//	var menuItemFieldSet = document.createElement("fieldset");
-//	var menuItemFieldSetLegend = document.createElement("legend");
-//	menuItemFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_selectUpdateProperties));
-//	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
-	
-	var menuItemFieldSet = document.createElement("div");
-	menuItemFieldSet.className = "modalConfigSet";
-	var menuItemFieldSetLegend = document.createElement("p");
-	menuItemFieldSetLegend.className = "modalConfigSetHeader";
+	var menuItemFieldSet = document.createElement("fieldset");
+	var menuItemFieldSetLegend = document.createElement("legend");
 	menuItemFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_selectUpdateProperties));
 	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
 
 	var forceUpdatePropertyDiv = document.createElement('div');
-	forceUpdatePropertyDiv.className = "modalConfigSetContent";
-//	forceUpdatePropertyDiv.style.paddingTop = '3px';
+	forceUpdatePropertyDiv.style.paddingTop = '3px';
 	forceUpdatePropertyDiv.appendChild(document.createTextNode(ISA_R.alb_forcedUpdatePrefsMessage));
 
 	var properties = [];
@@ -1148,15 +1119,8 @@ ISA_CommonModals.EditorForm.makeMenuUpdateSettingFieldSet = function(disabled, m
  * @obj {id:ID of widget,type:Type of widget,properties:Properties of widget}
  */
 ISA_CommonModals.EditorForm.makeMenuItemEditFieldSet = function(disabled, menuItem, options){
-//	var menuItemFieldSet = document.createElement("fieldset");
-//	var menuItemFieldSetLegend = document.createElement("legend");
-//	menuItemFieldSetLegend.appendChild(document.createTextNode(options.menuFieldSetLegend));
-//	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
-	
-	var menuItemFieldSet = document.createElement("div");
-	menuItemFieldSet.className = "modalConfigSet";
-	var menuItemFieldSetLegend = document.createElement("p");
-	menuItemFieldSetLegend.className = "modalConfigSetHeader";
+	var menuItemFieldSet = document.createElement("fieldset");
+	var menuItemFieldSetLegend = document.createElement("legend");
 	menuItemFieldSetLegend.appendChild(document.createTextNode(options.menuFieldSetLegend));
 	menuItemFieldSet.appendChild(menuItemFieldSetLegend);
 	
@@ -1165,8 +1129,7 @@ ISA_CommonModals.EditorForm.makeMenuItemEditFieldSet = function(disabled, menuIt
 	
 	/* Create main */
 	var editorFormTable = document.createElement("table");
-	editorFormTable.className = "modalConfigSetContent";
-//	editorFormTable.style.width = "100%";
+	editorFormTable.style.width = "100%";
 	var editorFormTbody = document.createElement("tbody");
 	editorFormTable.appendChild(editorFormTbody);
 	
@@ -1398,20 +1361,12 @@ ISA_CommonModals.EditorForm.makeMenuItemEditFieldSet = function(disabled, menuIt
 ISA_CommonModals.EditorForm.makeMenuTreeAdminsFieldSet = function(disabled, menuItem){
 	menuTreeAdmins = [];
 	
-//	var fieldSet = document.createElement("fieldset");
-//	var fieldSetLegend = document.createElement("legend");
-//	fieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_adminSettings));
-//	fieldSet.appendChild(fieldSetLegend);
-	
-	var fieldSet = document.createElement("div");
-	fieldSet.className = "modalConfigSet";
-	var fieldSetLegend = document.createElement("p");
-	fieldSetLegend.className = "modalConfigSetHeader";
+	var fieldSet = document.createElement("fieldset");
+	var fieldSetLegend = document.createElement("legend");
 	fieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_adminSettings));
 	fieldSet.appendChild(fieldSetLegend);
 	
 	var content = document.createElement("div");
-	content.className = "modalConfigSetContent";
 	var formField = document.createElement("div");
 	var valueField = document.createElement("div");
 	valueField.style.padding = "10px";
@@ -1512,15 +1467,8 @@ ISA_CommonModals.EditorForm.makeMenuTreeAdminsFieldSet = function(disabled, menu
 ISA_CommonModals.EditorForm.makeMenuItemACLEditFieldSet = function(disabled, menuItem){
 	authorizations = [];
 	/* ACL settings */
-//	var publicFieldSet = document.createElement("fieldset");
-//	var publicFieldSetLegend = document.createElement("legend");
-//	publicFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_publicSettings));
-//	publicFieldSet.appendChild(publicFieldSetLegend);
-	
-	var publicFieldSet = document.createElement("div");
-	publicFieldSet.className = "modalConfigSet";
-	var publicFieldSetLegend = document.createElement("p");
-	publicFieldSetLegend.className = "modalConfigSetHeader";
+	var publicFieldSet = document.createElement("fieldset");
+	var publicFieldSetLegend = document.createElement("legend");
 	publicFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_publicSettings));
 	publicFieldSet.appendChild(publicFieldSetLegend);
 	
@@ -1529,7 +1477,6 @@ ISA_CommonModals.EditorForm.makeMenuItemACLEditFieldSet = function(disabled, men
 	
 	function makePublicCheckBox(){
 		var publicDiv = document.createElement("div");
-		publicDiv.className = "modalConfigSetContent";
 		publicDiv.appendChild(document.createTextNode(ISA_R.alb_pulic));
 		
 		var elementInput = document.createElement("input");
@@ -1689,18 +1636,10 @@ ISA_CommonModals.EditorForm.makeMenuItemACLEditFieldSet = function(disabled, men
 ISA_CommonModals.EditorForm.makeWidgetInstListFieldSet = function(disabled, widgetInst, opt){
 	var selectDynamicPanelWidget = document.createElement('div');
 	
-//	var menuListFieldSet = document.createElement("fieldset");
-//	var menuListFieldSetLegend = document.createElement("legend");
-//	menuListFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_menuItemlist));
-//	menuListFieldSet.appendChild(menuListFieldSetLegend);
-	
-	var menuListFieldSet = document.createElement("div");
-	menuListFieldSet.className = "modalConfigSet";
-	var menuListFieldSetLegend = document.createElement("p");
-	menuListFieldSetLegend.className = "modalConfigSetHeader";
+	var menuListFieldSet = document.createElement("fieldset");
+	var menuListFieldSetLegend = document.createElement("legend");
 	menuListFieldSetLegend.appendChild(document.createTextNode(ISA_R.alb_menuItemlist));
 	menuListFieldSet.appendChild(menuListFieldSetLegend);
-	
 	ISA_buildMenuExplorer(
 		menuListFieldSet,
 		function(menuItem){

@@ -4,11 +4,9 @@ ISA_WidgetConf.EditWidgetConf.render = function(editConfNode, type, conf){
 	var isExistEditPref = false;
 	
 	// Add edit of WidgetPref
-	var editWidgetPref = document.createElement("div");
-	editWidgetPref.className = "configSet";
+	var editWidgetPref = document.createElement("fieldset");
 	editWidgetPref.style.marginBottom = "10px";
-	var editLabel = document.createElement("p");
-	editLabel.className = "configSetHeader"
+	var editLabel = document.createElement("legend");
 	editWidgetPref.appendChild( editLabel );
 	editLabel.innerHTML = ISA_R.alb_editWidgetSettings;
 	
@@ -101,11 +99,9 @@ ISA_WidgetConf.EditWidgetConf.render = function(editConfNode, type, conf){
 	
 	// Adding edit of UserPref
 	var existUserPrefs = false;
-	var editUserPref = document.createElement("div");
-	editUserPref.className = "configSet";
-	//editUserPref.style.marginBottom = "10px";
-	var editLabel = document.createElement("p");
-	editLabel.className = "configSetHeader";
+	var editUserPref = document.createElement("fieldset");
+	editUserPref.style.marginBottom = "10px";
+	var editLabel = document.createElement("legend");
 	editUserPref.appendChild( editLabel );
 	editLabel.innerHTML = ISA_R.alb_editUserSettings;
 	
@@ -137,7 +133,7 @@ ISA_WidgetConf.EditWidgetConf.render = function(editConfNode, type, conf){
 		isExistEditPref = true;
 			
 		var serviceList = conf.ModulePrefs.OAuth.Service;
-		var oauthFieldSet = $.DIV({className:"configSet"}, $.P({className: "configSetHeader"},ISA_R.alb_oauthConsumerSettings));
+		var oauthFieldSet = $.FIELDSET({}, $.LEGEND({},ISA_R.alb_oauthConsumerSettings));
 
 		for(var i = 0; i < serviceList.length; i++){
 			var serviceName = serviceList[i].name;
@@ -178,7 +174,7 @@ ISA_WidgetConf.EditWidgetConf.render = function(editConfNode, type, conf){
 			editConfNode.appendChild( oauthFieldSet );
 		}
 		
-		var url = adminHostPrefix + "/services/authentication/getGetConsumerListJsonByUrl";
+		var url = findHostURL() + "/services/authentication/getGetConsumerListJsonByUrl";
 		var opt = {
 		  method: 'post',
 		  contentType: "application/json",
@@ -597,7 +593,7 @@ ISA_WidgetConf.makeForm = function(prefType, prefConf, widgetType, prefValue, is
 				var indicator = $("indicatorMini");
 				if (!indicator) {
 					var indicator = document.createElement("img");
-					indicator.src = imageURL + "ajax-loader.gif";
+					indicator.src = "../skin/imgs/ajax-loader.gif";
 					indicator.style.top = "3px";
 					indicator.id = "indicatorMini";
 					formContainer.appendChild(indicator);
@@ -1024,7 +1020,7 @@ ISA_WidgetConf.EditWidgetConf.validate = function(conf, prefix, pref, value){
 }
 
 ISA_WidgetConf.EditWidgetConf.requestSaveConf = function(type, conf, oauthServiceList, onSuccess, onError){
-	var url = adminHostPrefix + "/services/" + ( (conf.ModulePrefs) ? "gadget/updateGadget" :  "widgetConf/updateWidgetConf");
+	var url = findHostURL() + "/services/" + ( (conf.ModulePrefs) ? "gadget/updateGadget" :  "widgetConf/updateWidgetConf");
 	var opt = {
 		method: 'post' ,
 		contentType: "application/json",

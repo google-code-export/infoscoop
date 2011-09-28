@@ -27,29 +27,16 @@ ISA_PortalForbiddenURL.prototype = {
 		tr.forbiddenURL_ID = urlId;
 		
 		tr.appendChild(document.createElement("td"))
-		tr.lastChild.style.padding = "3px";
+		tr.lastChild.style.padding = "0.2em";
 		var urlInput = this.createUrlInput(forbiddenUrl);
 //		urlInput.style.border = "none";
 //		urlInput.style.padding = 2;
-		tr.lastChild.className = "configTableTd";
 		tr.lastChild.appendChild( urlInput );
 		
-		tr.appendChild(document.createElement("td"));
-//		var removeForbiddenURLButton = ISA_Admin.createIconButton("", ISA_R.alb_delete, "trash.gif");
-		var removeForbiddenURLButton =
-			$.IMG({
-				id:"removeForbiddenURLButton_" + urlId,
-				className: "deleteButton",
-				src:"../../skin/imgs/trash.gif", 
-				title:ISA_R.alb_delete,
-				style: "cursor: pointer;"});
-//		removeForbiddenURLButton.src = imageURL + "trash.gif";
-//		removeForbiddenURLButton.style.cursor = "pointer";
-//		removeForbiddenURLButton.id = "removeForbiddenURLButton_" + urlId;
-//		removeForbiddenURLButton.style.textAlign = "center";
-		tr.lastChild.className = "configTableTd";
-		tr.lastChild.style.padding = "3px";
-		tr.lastChild.style.textAlign = 'center';
+		tr.appendChild(document.createElement("td"))
+		var removeForbiddenURLButton = ISA_Admin.createIconButton("", ISA_R.alb_delete, "trash.gif");
+		removeForbiddenURLButton.id = "removeForbiddenURLButton_" + urlId;
+		removeForbiddenURLButton.style.textAlign = "center"
 		tr.lastChild.appendChild(removeForbiddenURLButton);
 		
 		return tr;
@@ -120,8 +107,8 @@ ISA_PortalForbiddenURL.prototype = {
 	},
 	removeForbiddenURL: function( event ) {
 		var source = Event.element( event );
-		while( source && source.className != "deleteButton")
-			source = source.parentNode;
+		while( source && source.className != "iconButton")
+			source = source.parentNode
 		
 		if( !source || source.id.indexOf("removeForbiddenURLButton_") != 0 ) return;
 		ISA_Admin.isUpdated = true;
@@ -146,7 +133,7 @@ ISA_PortalForbiddenURL.prototype = {
 			overlayCloseOnClick: false
 		});
 		
-		var url = adminHostPrefix + "/services/forbiddenUrls/updateForbiddenURLs";
+		var url = findHostURL() + "/services/forbiddenUrls/updateForbiddenURLs";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -189,7 +176,7 @@ ISA_PortalForbiddenURL.prototype = {
 		loadingMessage.style.cssFloat = "left";
 		container.appendChild(loadingMessage);
 		
-		var url = adminHostPrefix + "/services/forbiddenUrls/getForbiddenURLsJSON";
+		var url = findHostURL() + "/services/forbiddenUrls/getForbiddenURLsJSON";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,
@@ -227,17 +214,15 @@ ISA_PortalForbiddenURL.prototype = {
 		
 		var table = ISA_Admin.buildTableHeader(
 			[ISA_R.alb_URLregularExpression, ISA_R.alb_delete],
-			['85%', '5%']
+			['95%', '5%']
 			);
 		table.id = "forbiddenURL_contentTable";
 		container.appendChild( table );
-//		table.className = "configTable";
-		table.className = "configTableHeader";
-		table.style.tableLayout = "fixed";
-		table.style.clear ="both";
+		table.className = "proxyConfigList";
+		table.style.tableLayout = "fixed"
 		//TODO:Function for generating table needs to be arranged
 		table.style.borderLeft = "1px solid #EEEEEE";
-		table.style.width = "90%";
+		table.style.width = "100%";
 		
 		var tbody = table.firstChild;
 		var this_ = this;
@@ -249,8 +234,7 @@ ISA_PortalForbiddenURL.prototype = {
 	},
 	displayHeader: function(container){
 		var controlDiv = document.createElement("div");
-		controlDiv.className ='refreshAll';
-		//controlDiv.style.textAlign = "right";
+		controlDiv.style.textAlign = "right";
 		
 		var commitDiv = ISA_Admin.createIconButton(ISA_R.alb_changeApply, ISA_R.alb_changeApply, "database_save.gif", "right");
 		controlDiv.appendChild(commitDiv);
@@ -262,10 +246,10 @@ ISA_PortalForbiddenURL.prototype = {
 		
 		container.appendChild(controlDiv);
 		
-//		var titleDiv = document.createElement("div");
-//		titleDiv.className = "proxyTitle";
-//		titleDiv.appendChild(document.createTextNode(ISA_R.alb_forbiddenURLsettings));
-//		container.appendChild(titleDiv);
+		var titleDiv = document.createElement("div");
+		titleDiv.className = "proxyTitle";
+		titleDiv.appendChild(document.createTextNode(ISA_R.alb_forbiddenURLsettings));
+		container.appendChild(titleDiv);
 		
 		var addButton = ISA_Admin.createIconButton(ISA_R.alb_add, ISA_R.alb_add, "add.gif", "left");
 		addButton.style.textAlign = "left"

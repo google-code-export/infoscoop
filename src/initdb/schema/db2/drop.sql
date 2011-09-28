@@ -30,6 +30,3 @@ drop table is_accesslogs;
 drop table is_userprefs;
 drop table is_messages;
 drop table is_systemmessages;
-drop table is_oauth_certificate;
-drop table is_oauth_consumers;
-drop table is_oauth_tokens;

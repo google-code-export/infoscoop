@@ -48,9 +48,9 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		portalAdminsDiv.style.clear = "both";
 		
 		var refreshAllDiv = document.createElement("div");
-		refreshAllDiv.className = "refreshAll";
-//		refreshAllDiv.style.textAlign = "right";
-//		refreshAllDiv.style.width = "100%";
+		refreshAllDiv.id = "refreshAll";
+		refreshAllDiv.style.textAlign = "right";
+		refreshAllDiv.style.width = "100%";
 		
 		var commitDiv = ISA_Admin.createIconButton(ISA_R.alb_changeApply, ISA_R.alb_changeApply, "database_save.gif", "right");
 		refreshAllDiv.appendChild(commitDiv);
@@ -68,11 +68,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		var refreshDiv = ISA_Admin.createIconButton(ISA_R.alb_refresh, ISA_R.alb_reloadWithourSaving, "refresh.gif", "right");
 		refreshAllDiv.appendChild(refreshDiv);
 		IS_Event.observe( refreshDiv , 'click', function() {
-			if( !ISA_Admin.checkUpdated() )
-				return;
-			
-			ISA_PortalAdmins.portalAdmins = new ISA_PortalAdmins();
-			ISA_PortalAdmins.portalAdmins.build();
+			ISA_Admin.AdminTabs.setActiveTab("portalAdmin")
 		}, false, "_adminAdmins");
 		
 		/*
@@ -87,39 +83,27 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		
 		var tabContainer = document.createElement("div");
 		tabContainer.id = "tabContainer";
-		//tabContainer.className= "side-bar";
-		var sideBar = document.getElementById("administrator-side-bar");
+		
 		var tabsUl = document.createElement("ul");
 		var tabLiAdmins = document.createElement("li");
 		var tabLiAdminsA = document.createElement("a");
 		var tabLiRoles = document.createElement("li");
 		var tabLiRolesA = document.createElement("a");
 		
-		if($("adminsTab"))
-			$("adminsTab").remove();
-		
 		tabsUl.id = "adminsTab";
-		//tabsUl.className = "subsection_tabs tabs";
-		tabsUl.className = "subsection_tabs ";
-		
-//		tabLiAdmins.className="tab";
-		tabLiAdmins.id = "tab_admins";
+		tabsUl.className = "subsection_tabs tabs";
 		
 		tabLiAdminsA.href = "#admins";
-		tabLiAdminsA.className = "sideBarTab-ui";
-//		tabLiAdminsA.id = "tab_admins";
+		tabLiAdminsA.className = "tab";;
+		tabLiAdminsA.id = "tab_admins";
 		tabLiAdminsASpan = document.createElement("span");
 		tabLiAdminsASpan.className = "title";
 		tabLiAdminsASpan.appendChild(document.createTextNode(ISA_R.alb_adminSettings));
 		tabLiAdminsA.appendChild( tabLiAdminsASpan );
 		
-//		tabLiRoles.className= "tab";
-		tabLiRoles.id = "tab_roles";
-		
 		tabLiRolesA.href = "#roles";
-		tabLiRolesA.className = "sideBarTab-ui";
-//		tabLiRolesA.className = "side-bar";
-//		tabLiRolesA.id = "tab_roles";
+		tabLiRolesA.className = "tab";
+		tabLiRolesA.id = "tab_roles";
 		tabLiRolesASpan = document.createElement("span");
 		tabLiRolesASpan.className = "title";
 		tabLiRolesASpan.appendChild(document.createTextNode(ISA_R.alb_roleSettings));
@@ -138,8 +122,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		adminsPanel.appendChild(self.buildPortalAdmins(portalAdminsList));
 		rolesPanel.appendChild(self.buildAdminRole());
 		
-		sideBar.appendChild(tabsUl);
-		//tabContainer.appendChild(tabsUl);
+		tabContainer.appendChild(tabsUl);
 		tabContainer.appendChild(adminsPanel);
 		tabContainer.appendChild(rolesPanel);
 		portalAdminsDiv.appendChild(tabContainer);
@@ -158,15 +141,8 @@ ISA_PortalAdmins.prototype.classDef = function() {
 	}
 	
 	this.buildAdminRole = function(){
-//		var rolesField = document.createElement("fieldSet");
-//		var rolesLabel = document.createElement("legend");
-//		rolesLabel.innerHTML = ISA_R.alb_roleSettings;
-//		rolesField.appendChild(rolesLabel);
-		
-		var rolesField = document.createElement("div");
-		rolesField.className= "configSet";
-		var rolesLabel = document.createElement("p");
-		rolesLabel.className = "configSetHeader";
+		var rolesField = document.createElement("fieldSet");
+		var rolesLabel = document.createElement("legend");
 		rolesLabel.innerHTML = ISA_R.alb_roleSettings;
 		rolesField.appendChild(rolesLabel);
 		
@@ -193,10 +169,10 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		
 		var rolesTable = document.createElement("table");
 		rolesTable.border = "1";
-		rolesTable.cellSpacing = "0";
-		rolesTable.cellPadding = "0";
+		rolesTable.cellSpacing = "1";
+		rolesTable.cellPadding = "1";
 		rolesTable.className = "portalAdminsGroup";
-		rolesTable.style.width = "900px";
+		rolesTable.style.width = "100%";
 
 		var rolesTbody = document.createElement("tbody");
 		rolesTbody.id = "rolesTbody";
@@ -208,6 +184,8 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		var roleNameTd;
 		roleNameTd = document.createElement("td");
 		roleNameTd.className = "headerPortalAdmins";
+		roleNameTd.style.whiteSpace = "nowrap";
+		roleNameTd.style.width = "30%";
 		roleNameTd.appendChild(document.createTextNode(ISA_R.alb_roleName2));
 		roleHeaderTr.appendChild(roleNameTd);
 
@@ -254,7 +232,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		var td;
 		td = document.createElement("td");
 		td.className = "adminRoles";
-		$(td).setStyle({whiteSpace:"nowrap",padding:"5px"});
+		$(td).setStyle({whiteSpace:"nowrap",paddingLeft:"5px"});
 		var roleTitleInput = document.createElement("input");
 		roleTitleInput.className = "portalAdminInput";
 		roleTitleInput.type = "text";
@@ -355,10 +333,8 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		}
 		
 		var container = document.createElement("div");
-		var roleEditField = document.createElement("div");
-		roleEditField.className = "modalConfigSet";
-		var roleEditLabel = document.createElement("p");
-		roleEditLabel.className = "modalConfigSetHeader";
+		var roleEditField = document.createElement("fieldSet");
+		var roleEditLabel = document.createElement("legend");
 		roleEditLabel.innerHTML = ISA_R.alb_editRole;
 		roleEditField.appendChild(roleEditLabel);
 		container.appendChild(roleEditField);
@@ -367,12 +343,10 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		
 		var authDivListDiv = document.createElement("div");
 		var checkboxList = [];
-		var count = 0;
 		ISA_PortalAdmins.portalPermissionTypeInfo.each(function(permissionInfo){
-			var authDiv = createCheckBoxSet(myPermissionList.contains(permissionInfo.key), permissionInfo.value, permissionInfo.key, count);
+			var authDiv = createCheckBoxSet(myPermissionList.contains(permissionInfo.key), permissionInfo.value, permissionInfo.key);
 			checkboxList.push(authDiv.firstChild);
 			authDivListDiv.appendChild(authDiv);
-			count++;
 		});
 		roleEditField.appendChild(authDivListDiv);
 		
@@ -416,13 +390,9 @@ ISA_PortalAdmins.prototype.classDef = function() {
 			return button;
 		}
 		
-		function createCheckBoxSet(checked, label, value, count){
+		function createCheckBoxSet(checked, label, value){
 			var authDiv = document.createElement("div");
-			if(count == ISA_PortalAdmins.portalPermissionTypeInfo.values().length-1){
-				$(authDiv).setStyle({width:'100px', 'clear' :'both',whiteSpace:'nowrap'});
-			}else{
-				$(authDiv).setStyle({width:'100px', 'float' :'left',whiteSpace:'nowrap'});
-			}
+			$(authDiv).setStyle({width:'100px', 'float' :'left',whiteSpace:'nowrap'});
 			
 			var authName = document.createElement("label");
 			var authCheck = document.createElement("input");
@@ -441,15 +411,8 @@ ISA_PortalAdmins.prototype.classDef = function() {
 	}
 	
 	this.buildPortalAdmins = function(portalAdminsList) {
-//		var portalAdminsField = document.createElement("fieldSet");
-//		var portalAdminsLabel = document.createElement("legend");
-//		portalAdminsLabel.innerHTML = ISA_R.alb_adminSettings;
-//		portalAdminsField.appendChild(portalAdminsLabel);
-		
-		var portalAdminsField = document.createElement("div");
-		portalAdminsField.className ="configSet";
-		var portalAdminsLabel = document.createElement("p");
-		portalAdminsLabel.className = "configSetHeader";
+		var portalAdminsField = document.createElement("fieldSet");
+		var portalAdminsLabel = document.createElement("legend");
 		portalAdminsLabel.innerHTML = ISA_R.alb_adminSettings;
 		portalAdminsField.appendChild(portalAdminsLabel);
 		
@@ -471,10 +434,10 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		
 		var portalAdminsTable = document.createElement("table");
 		portalAdminsTable.border = "1";
-		portalAdminsTable.cellSpacing = "0";
-		portalAdminsTable.cellPadding = "0";
+		portalAdminsTable.cellSpacing = "1";
+		portalAdminsTable.cellPadding = "1";
 		portalAdminsTable.className = "portalAdminsGroup";
-		portalAdminsTable.style.width = "900px";
+		portalAdminsTable.style.width = "100%";
 
 		var portalAdminsTbody = document.createElement("tbody");
 		portalAdminsTbody.id = "portalAdminsTbody";
@@ -529,7 +492,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		var td;
 		td = document.createElement("td");
 		td.className = "portalAdmins";
-		$(td).setStyle({whiteSpace:"nowrap",padding:"5px"});
+		$(td).setStyle({whiteSpace:"nowrap",paddingLeft:"5px"});
 		var portalAdminValueInput = document.createElement("input");
 		portalAdminValueInput.className = "portalAdminInput";
 		portalAdminValueInput.type = "text";
@@ -669,9 +632,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 		
 		var roleIndex = 0;
 		var isSuccess = true;
-		
-		for(var i=0;i<inputs.length;i++){
-			var input = inputs[i];
+		inputs.each(function(input){
 			var name = input.value;
 			roleIndex++;
 			if(name.length == 0) {
@@ -679,7 +640,6 @@ ISA_PortalAdmins.prototype.classDef = function() {
 				isSuccess = false;
 				this.controlTabs.setActiveTab("roles");
 				input.select();
-				return;
 			}else{
 				var error = IS_Validator.validate(name, {maxBytes:256, label:ISA_R.alb_roleName2});
 				if(error){
@@ -687,11 +647,10 @@ ISA_PortalAdmins.prototype.classDef = function() {
 					isSuccess = false;
 					this.controlTabs.setActiveTab("roles");
 					input.select();
-					return;
 				}
 			}
 			this.getRole(input.id).name = name;
-		};
+		}.bind(this));
 		if(!isSuccess) return;
 		
 		// Update to DB
@@ -700,7 +659,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 	
 	this.updatePortalAdmins = function(sendData) {
 		controlModal.open();
-		var url = adminHostPrefix + "/services/portalAdmins/updatePortalAdmins";
+		var url = findHostURL() + "/services/portalAdmins/updatePortalAdmins";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -712,8 +671,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 			onFailure: function(t) {
 				alert(ISA_R.ams_failedUpdateAdmin+'\n' + t.responseText);
 				msg.error(ISA_R.ams_failedUpdateAdmin + t.status + " - " + t.statusText + "-" + t.responseText);
-				ISA_PortalAdmins.portalAdmins = new ISA_PortalAdmins();
-				ISA_PortalAdmins.portalAdmins.build();
+				ISA_Admin.TabBuilders.portalAdmin.build();
 			},
 			onException: function(r, t){
 				alert(ISA_R.ams_failedUpdateAdmin);
@@ -729,7 +687,7 @@ ISA_PortalAdmins.prototype.classDef = function() {
 	}
 	
 	this.build = function() {
-		var url = adminHostPrefix + "/services/portalAdmins/getPortalAdminsJson";
+		var url = findHostURL() + "/services/portalAdmins/getPortalAdminsJson";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,

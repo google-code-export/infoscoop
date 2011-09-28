@@ -7,12 +7,10 @@ ISA_Admin.buildInputBundleForm = function( type,isaWidgetConf ) {
 	var inputBundleForm = document.createElement("div");
 	inputBundleForm.className = "gadgetResources";
 	
-	var uploadFieldSet = document.createElement("div");
-	uploadFieldSet.className = "configSet"
+	var uploadFieldSet = document.createElement("fieldset");
 	inputBundleForm.appendChild( uploadFieldSet)
 	
-	var uploadFieldSetLabel = document.createElement("p");
-	uploadFieldSetLabel.className = "configSetHeader";
+	var uploadFieldSetLabel = document.createElement("legend");
 	uploadFieldSetLabel.innerHTML = ISA_R.alb_uploadGadget;
 	uploadFieldSet.appendChild( uploadFieldSetLabel );
 	
@@ -55,17 +53,14 @@ ISA_Admin.buildInputBundleForm = function( type,isaWidgetConf ) {
 	} ));
 	
 	if( type ) {
-		var resourcesFieldSet = document.createElement("div");
-		resourcesFieldSet.className = "configSet";
+		var resourcesFieldSet = document.createElement("fieldset");
 		inputBundleForm.appendChild( resourcesFieldSet );
 		
-		var resourcesFieldSetLabel = document.createElement("p");
-		resourcesFieldSetLabel.className = "configSetHeader";
+		var resourcesFieldSetLabel = document.createElement("legend");
 		resourcesFieldSetLabel.innerHTML = ISA_R.alb_gadgetResources;
 		resourcesFieldSet.appendChild( resourcesFieldSetLabel );
 		
 		var gadgetResourcesContainer = document.createElement("div");
-		gadgetResourcesContainer.style.margin = "3px";
 		resourcesFieldSet.appendChild( gadgetResourcesContainer );
 		
 		new ISA_GadgetResources( type,isaWidgetConf,eventId ).load( gadgetResourcesContainer );
@@ -93,9 +88,8 @@ ISA_GadgetUpload.buildForm = function( opt ) {
 	var form = document.createElement("form");
 	form.method = "POST";
 	form.encoding = "multipart/form-data";
-	form.action = adminHostPrefix + "/uploadgadget";
+	form.action = "uploadgadget";
 	form.target = "upLoadDummyFrame";
-	form.style.margin = "0.25em";
 	
 	var fileInput = document.createElement("input");
 	fileInput.type = "file";
@@ -157,10 +151,11 @@ ISA_GadgetUpload.error = function( message ) {
 		}
 		
 		message = msgs.join("\n");
-		alert( message );
 	} catch( ex ) {
 		alert( ISA_R.ams_gadgetResourceUploadFailed+": "+message );
 	}
+	
+	alert( message );
 	msg.error( message )
 }
 ISA_GadgetResource = Class.create();
@@ -172,7 +167,7 @@ ISA_GadgetResource.prototype = {
 		this.resources = r.resources;
 	},
 	get: function( opt ) {
-		var url = adminHostPrefix + "/services/gadgetResource/selectResource";
+		var url = findHostURL() + "/services/gadgetResource/selectResource";
 		
 		AjaxRequest.invoke( url, Object.extend( opt || {},{
 			method: 'post' ,
@@ -182,7 +177,7 @@ ISA_GadgetResource.prototype = {
 		}) );
 	},
 	create: function( opt ) {
-		var url = adminHostPrefix + "/services/gadgetResource/insertResource";
+		var url = findHostURL() + "/services/gadgetResource/insertResource";
 		
 		AjaxRequest.invoke( url,Object.extend( opt || {},{
 			method: 'post' ,
@@ -192,7 +187,7 @@ ISA_GadgetResource.prototype = {
 		}) );
 	},
 	update: function( data,opt ) {
-		var url = adminHostPrefix + "/services/gadgetResource/updateTextResource";
+		var url = findHostURL() + "/services/gadgetResource/updateTextResource";
 		
 		AjaxRequest.invoke( url, Object.extend( opt || {},{
 			method: 'post' ,
@@ -202,7 +197,7 @@ ISA_GadgetResource.prototype = {
 		}));
 	},
 	remove: function( opt ) {
-		var url = adminHostPrefix + "/services/gadgetResource/deleteResource";
+		var url = findHostURL() + "/services/gadgetResource/deleteResource";
 		
 		AjaxRequest.invoke( url, Object.extend( opt || {},{
 			method: 'post' ,
@@ -243,7 +238,7 @@ ISA_GadgetResource.prototype = {
 	}
 }
 ISA_GadgetResource.list = function( type,opt ) {
-	var url = adminHostPrefix + "/services/gadgetResource/getResourceListJson";
+	var url = findHostURL() + "/services/gadgetResource/getResourceListJson";
 	
 	AjaxRequest.invoke(url, Object.extend( opt || {},{
 		method: 'post' ,
@@ -293,7 +288,7 @@ ISA_GadgetResources.prototype = {
 		layout.setStyle({ textAlign: "right"});
 		var link = document.createElement("a");
 		link.className = "button download";
-		link.href = adminHostPrefix + "/uploadgadget?"+$H({
+		link.href = "uploadgadget?"+$H({
 			type: this.type
 		}).toQueryString();
 		link.title = ISA_R.alb_gadgetResourcesZipDownloadDescription;

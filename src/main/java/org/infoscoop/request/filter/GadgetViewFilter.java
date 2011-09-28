@@ -133,9 +133,6 @@ public class GadgetViewFilter extends ProxyFilter {
 					matches = content;
 					break;
 				}
-				else if("home".equalsIgnoreCase(content.getAttribute("view"))){
-					matches = content;
-				}
 			} else {
 				matches = content;
 			}
