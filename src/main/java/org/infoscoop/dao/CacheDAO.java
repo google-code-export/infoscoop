@@ -208,7 +208,7 @@ public class CacheDAO extends HibernateDaoSupport {
 	}
 
 	/**
-	 * Get the DOM object of the cache of appointed URL.
+	 * Get the DOM object of the cash of appointed URL.
 	 * @param uid
 	 * @param url
 	 * @return
@@ -226,8 +226,9 @@ public class CacheDAO extends HibernateDaoSupport {
 	}
 	
 	/**
-	 * Get all of is_caches .
+	 * Get all  of is_caches .
 	 * @param uid
+	 * @param url
 	 * @return
 	 */
 	public List getCaches(String uid){
@@ -239,7 +240,7 @@ public class CacheDAO extends HibernateDaoSupport {
 		return results;
 		
 	}
-	
+
 	/**
 	 * Get list of caches include id and timestamp.
 	 * @param uid

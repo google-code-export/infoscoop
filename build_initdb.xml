@@ -26,7 +26,7 @@
 				<include name="*.hbm.xml"/>
 			</fileset>
 		</copy>
-		<javac srcdir="${main.java}" encoding="utf-8" destdir="${build.work}/initdb/infoscoop" source="${compile.level}" target="${compile.level}">
+		<javac srcdir="${main.java}" encoding="utf-8" destdir="${build.work}/initdb/infoscoop">
 			<classpath>
 				<fileset dir="${basedir}/lib" includes="*.jar" />
 				<fileset dir="${main.web}/WEB-INF/lib" includes="*.jar" />
@@ -45,14 +45,14 @@
 				<include name="jta.jar"/>
 				<include name="log4j*.jar"/>
 				<include name="opencsv*.jar"/>
-				<include name="org.springframework.*.jar"/>
+				<include name="spring.jar"/>
 				<include name="xercesImpl.jar"/>
 				<include name="json.jar"/>
 			</fileset>
 			<fileset dir="${initdb.home}/importTool/lib" includes="*.jar"/>
 		</copy>
 
-		<javac srcdir="${initdb.home}/importTool/src" encoding="utf-8" destdir="${build.work}/initdb/bin" debug="true" source="${compile.level}" target="${compile.level}">
+		<javac srcdir="${initdb.home}/importTool/src" encoding="utf-8" destdir="${build.work}/initdb/bin" debug="true">
 			<classpath>
 				<fileset dir="${build.work}/initdb/lib" includes="*.jar" />
 			</classpath>

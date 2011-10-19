@@ -17,19 +17,17 @@
 
 package org.infoscoop.web;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.dao.model.Holidays;
-import org.infoscoop.request.filter.CalendarFilter;
 import org.infoscoop.service.HolidaysService;
 
 public class HolidayServlet extends HttpServlet {
@@ -56,26 +54,13 @@ public class HolidayServlet extends HttpServlet {
 			holiday = HolidaysService.getHandle().getHoliday( request.getLocale() );
 		}
 		
-		String contentType = "application/xml;charset=utf-8";
-		response.setContentType(contentType);
+		response.setContentType("text/plain;charset=utf-8");
 		if( holiday != null ) {
-			if( holiday.getData() != null ){
-				CalendarFilter filter = new CalendarFilter();
-				byte[] resByte = filter.process("text/plain;charset=utf-8", null, null, new ByteArrayInputStream(holiday.getData().getBytes("UTF-8")));
-
-				OutputStream w = null;
-				try{
-					w = response.getOutputStream();
-					w.write( resByte );
-				}finally{
-					if(w != null)
-						w.close();
-				}
-			}
+			if( holiday.getData() != null )
+				response.getWriter().write( holiday.getData());
 		} else {
 			log.error("Holiday ICS for default Locale ALL_ALL was deleted. Needs initialize of holidays table.");
 			response.sendError( 500 );
 		}
 	}
 }
-

@@ -254,9 +254,8 @@ public class ProxyFilterContainer {
 				if( request.getRedirectURL() != null )
 					responseHeaders.put("X-IS-REDIRECTED-FROM",Arrays.asList( new String[]{ request.getRedirectURL() }));
 				if(method instanceof GetMethod){
-					putCache(request.getOriginalURL(),new ByteArrayInputStream(responseBody), responseHeaders );					
+					putCache(request.getOriginalURL(),new ByteArrayInputStream(responseBody), responseHeaders );	
 				}
-
 				responseStream = new ByteArrayInputStream(responseBody);
 			}else{
 				responseStream = method.getResponseBodyAsStream();

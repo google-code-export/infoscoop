@@ -55,74 +55,35 @@ ISA_WidgetConf.prototype.classDef = function() {
 		var editWidgetsTr = document.createElement("tr");
 		tbody.appendChild( editWidgetsTr );
 		var editWidgetsTd = document.createElement("td");
-		editWidgetsTd.style.width = "280px";
-		editWidgetsTd.style.height = '100%';
+		editWidgetsTd.style.width = "25%";
 		editWidgetsTd.style.verticalAlign = "top";
 
+		var widgetListFieldSet = document.createElement("fieldset");
+		widgetListFieldSet.style.marginBottom = "10px";
+		var widgetListLabel = document.createElement("legend");
+		widgetListLabel.innerHTML = ISA_R.ams_widgetList;
+		widgetListFieldSet.appendChild( widgetListLabel );
+	
 		this.widgetConfPanel = document.createElement("div");
-		this.widgetConfPanel.id = "widgetList_div";
-		this.widgetConfPanel.className ="gadgetListDiv";
+		this.widgetConfPanel.style.height = "100%";
+		widgetListFieldSet.appendChild(this.widgetConfPanel)
+		editWidgetsTd.appendChild(widgetListFieldSet);
+
+		
+		var gadgetListFieldSet = document.createElement("fieldset");
+		var gadgetListLabel = document.createElement("legend");
+		gadgetListLabel.innerHTML = ISA_R.alb_gadgetsList;
+		gadgetListFieldSet.appendChild( gadgetListLabel );
 		
 		this.gadgetPanel = document.createElement("div");
-		this.gadgetPanel.id = "gadgetList_div";
-		this.gadgetPanel.className ="gadgetListDiv";
-		
-		// start create accordion
-		var gadgetAcc = document.createElement("ul");
-		gadgetAcc.id = "gadgetAcc";
-		gadgetAcc.className = "acc";
-		
-		var accHeader1 = document.createElement("li");
-		accHeader1.className = "accHeader"
-		
-		var gadgetListLabel1 = document.createElement("div");
-		gadgetListLabel1.id = "gadgetListLabel";
-		gadgetListLabel1.className = "opened";
-		
-		var gadgetListLabelText1 = document.createElement("a");
-		gadgetListLabelText1.appendChild(document.createTextNode(ISA_R.alb_gadgetsList));
-		
-		var gadgetList = document.createElement("div");
-		gadgetList.id = "gadgetList";
-		gadgetList.className = "accContent";
-		
-		accHeader1.appendChild(gadgetListLabel1);
-		gadgetListLabel1.appendChild(gadgetListLabelText1);
-		accHeader1.appendChild(gadgetList);
-		
-		var accHeader2 = document.createElement("li");
-		accHeader2.className = "accHeader"
-		
-		var gadgetListLabel2 = document.createElement("div");
-		gadgetListLabel2.id = "gadgetListLabel";
-		gadgetListLabel2.className = "closed";
-		Element.setStyle(gadgetListLabel2, { 
-			top: -1,
-			position: "relative"
-		});
-		
-		var gadgetListLabelText2 = document.createElement("a");
-		gadgetListLabelText2.appendChild(document.createTextNode(ISA_R.ams_widgetList));
-		var buildInGadgetList = document.createElement("div");
-		buildInGadgetList.id = "buildInGadgetList";
-		buildInGadgetList.className = "accContent";
-		buildInGadgetList.style.display = "none";
-		
-		accHeader2.appendChild(gadgetListLabel2);
-		gadgetListLabel2.appendChild(gadgetListLabelText2);
-		accHeader2.appendChild(buildInGadgetList);
-		
-		gadgetAcc.appendChild(accHeader1);
-		gadgetAcc.appendChild(accHeader2);
-		
-		gadgetList.appendChild(this.gadgetPanel);
-		buildInGadgetList.appendChild(this.widgetConfPanel);
-		// end create accordion
-		
-		editWidgetsTd.appendChild(gadgetAcc);
-		
+		this.gadgetPanel.style.height = "100%";
+		this.gadgetPanel.style.paddingTop = "2px";
+		gadgetListFieldSet.appendChild(this.gadgetPanel);
+		editWidgetsTd.appendChild(gadgetListFieldSet);
+
 		editWidgetsTr.appendChild( editWidgetsTd );
 		var displayEditTd = document.createElement("td");
+		displayEditTd.style.width = "75%";
 		displayEditTd.style.verticalAlign = "top";
 		displayEditTd.appendChild( self._buildEditWidgetPanel() );
 		editWidgetsTr.appendChild( displayEditTd );
@@ -130,7 +91,8 @@ ISA_WidgetConf.prototype.classDef = function() {
 		displayEditTd.appendChild( self._buildGadgetUploadPanel() );
 		
 		return containerDiv;
-	};
+	}
+	
 	
 	function sortConf(a, b){
 		if( !b.type ) return -1;
@@ -195,17 +157,9 @@ ISA_WidgetConf.prototype.classDef = function() {
 		
 		var itemDiv = document.createElement("div");
 		itemDiv.id = "editWidgetConfItem_"+conf.type;
-		IS_Event.observe(itemDiv, 'mouseover', function(){
-			if(this.className != "selectedEditConf" && this.className != "selectEditConf")
-				Element.addClassName(this, "selectEditConf");
-		}.bind(itemDiv), false, this.id);
-		IS_Event.observe(itemDiv, 'mouseout', function(){
-			if(this.className != "selectedEditConf")
-				Element.removeClassName(this, "selectEditConf");
-		}.bind(itemDiv), false, this.id);
 		
 		var itemTable = document.createElement("table");
-//		itemTable.className = "editConfListTable";
+		itemTable.className = "editConfListTable";
 		itemTable.cellSpacing = "0";
 		itemTable.cellPadding = "0";
 		itemDiv.appendChild( itemTable );
@@ -213,27 +167,24 @@ ISA_WidgetConf.prototype.classDef = function() {
 		itemTable.appendChild( tbody );
 		
 		var tr = document.createElement("tr");
-//		tr.className = "editConfListTr";
+		tr.className = "editConfListTr";
 		
 		var widgetNameTd = document.createElement("td");
 		widgetNameTd.className = "editConfListTitleTd";
-		var widgetNameSpan = document.createElement("span");
-		widgetNameTd.appendChild( widgetNameSpan );
-		
-		var nameText = document.createElement("a");
-		nameText.href = "javascript:void(0);";
+		var widgetNameDiv = document.createElement("div");
+		widgetNameTd.appendChild( widgetNameDiv );
+		var nameText = document.createElement("span");
 		nameText.id = "editConf_"+conf.type+"_title";
 		nameText.className = "editConfListTitleText";
 		nameText.title = title;
 		nameText.appendChild( document.createTextNode(title) );
-		widgetNameSpan.appendChild( nameText );
+		widgetNameDiv.appendChild( nameText );
 		tr.appendChild( widgetNameTd );
 
 		tbody.appendChild( tr );
 		
 		// Add Events
-//		IS_Event.observe(widgetNameTd, 'click', this.displayEditWidgetConf.bind(this, conf.type), false, this.id);
-		IS_Event.observe(itemDiv, 'click', this.displayEditWidgetConf.bind(this, conf.type), false, this.id);
+		IS_Event.observe(widgetNameTd, 'click', this.displayEditWidgetConf.bind(this, conf.type), false, this.id);
 		return itemDiv;
 	}
 	
@@ -309,7 +260,7 @@ ISA_WidgetConf.prototype.classDef = function() {
 		//self.widgetConfPanel.appendChild(gadgetUploadFieldSet);
 	}
 	
-	this.displayEditWidgetConf = function(type, e) {
+	this.displayEditWidgetConf = function(type) {
 		Element.show('widgetConfEditPanel');
 		Element.hide('widgetConfGadgetUpload');
 		
@@ -332,14 +283,13 @@ ISA_WidgetConf.prototype.classDef = function() {
 		this.editWidgetType = String( type );
 		this.editConfContent.style.display = "";
 		if(isGadget) {
-			$("gadgetList").show();
-			this.editUpdateButton.style.display = this.editDeleteButton.style.display = "";
+		  this.editUpdateButton.style.display = this.editDeleteButton.style.display = "";
 		}
 		if(isBuiltEdit){
 			this.editOKButton.style.display = "";
 			this.editCancelButton.style.display = "";
 		}
-		if(e) Event.stop(e);
+		
 	}
 	
 	/**
@@ -381,7 +331,7 @@ ISA_WidgetConf.prototype.classDef = function() {
 		if( !confirm( ISA_R.ams_deleteGadgetConfirm ))
 			return;
 		
-		var url = adminHostPrefix + "/services/gadget/deleteGadget";
+		var url = findHostURL() + "/services/gadget/deleteGadget";
 		var opt = {
 		  method: 'post',
 		  contentType: "application/json",
@@ -490,22 +440,10 @@ ISA_WidgetConf.prototype.classDef = function() {
 		
 		this.buildWidgetConfs();
 		this.buildGadgetConfs();
-
-		$jq("#gadgetAcc .accHeader").each(function(idx, li){
-			$jq(li).click(function(){
-				$jq(".accContent", $jq(this)).toggle();
-				var accContent = $jq(".accContent", $jq(this));
-				if(accContent.is(":visible")){
-					$jq("#gadgetListLabel", $jq(this)).removeClass("closed").addClass("opened");
-				}else {
-					$jq("#gadgetListLabel", $jq(this)).removeClass("opened").addClass("closed");
-				}
-			});
-		}); 
 	}
 	
 	this.buildWidgetConfs = function() {
-		var url = adminHostPrefix + "/services/widgetConf/getWidgetConfJson";
+		var url = findHostURL() + "/services/widgetConf/getWidgetConfJson";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,
@@ -539,7 +477,7 @@ ISA_WidgetConf.prototype.classDef = function() {
 	}
 	
 	this.buildGadgetConfs = function( callback ) {
-		var url = adminHostPrefix + "/services/gadget/getGadgetJson";
+		var url = findHostURL() + "/services/gadget/getGadgetJson";
 		var opt = {
 		  method: 'get' ,
 		  asynchronous:true,

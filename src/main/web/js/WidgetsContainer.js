@@ -25,7 +25,7 @@ IS_Portal.loadWidgetQueue = {};
 IS_Portal.loadingWidgetCount = 0;
 var IS_WidgetsContainer = IS_Class.create();
 IS_WidgetsContainer.prototype.classDef = function() {
-	this.initialize = function(srvName) {
+	this.initialize = function() {
 		var opt = {
 		    method: 'get' ,
 		    asynchronous:true,
@@ -61,10 +61,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 		        IS_WidgetsContainer.loadFailed = true;
 		    }
 		};
-
-		if(typeof srvName == "undefined"){
-			var srvName = "widsrv" + ( (typeof displayTabOrder != "undefined") ? "?tabOrder=" + displayTabOrder : "" );
-		}
+		var srvName = "widsrv" + ( (typeof displayTabOrder != "undefined") ? "?tabOrder=" + displayTabOrder : "" );
 		AjaxRequest.invoke(hostPrefix + "/" + srvName, opt);
 	}
 	
@@ -405,7 +402,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 					IS_Portal.addTab( id, tabName, tabType, numCol, columnsWidth, disabledDynamicPanel, true);
 					buildTargetTabIds.push(id);
 					
-					if(!useTab && IS_Portal.tabList.length > 0){
+					if(!useTab){
 						if(widgetConfList[0].tabNumber){
 							IS_Portal.tabs["tab0"].tabNumber = widgetConfList[0].tabNumber;
 						}
@@ -427,9 +424,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			}
 
 			//Holiday information
-//			IS_Holiday = new IS_Widget.Calendar.iCalendar(localhostPrefix + "/holidaysrv");
-			IS_Holiday = new IS_Widget.Calendar.iCalendar(hostPrefix + "/holidaysrv");
-			IS_Holiday.noProxy = true;
+			IS_Holiday = new IS_Widget.Calendar.iCalendar(localhostPrefix + "/holidaysrv");
 			IS_Holiday.load({asynchronous:false});
 			freshDays = IS_Portal.getFreshDays(IS_Portal.freshDays);
 			//IS_Portal.freshDays = freshDays;
@@ -546,8 +541,7 @@ IS_WidgetsContainer.prototype.classDef = function() {
 			
 			//Check new messages
 			//This line should be here as IS_Portal.msgLastViewTime is needed
-			if(IS_Widget.Message)
-				IS_Widget.Message.checkNewMsgRepeat();
+			IS_Widget.Message.checkNewMsgRepeat();
 			
 			if(fixedPortalHeader) 
 				IS_Portal.adjustPanelHeight(null);

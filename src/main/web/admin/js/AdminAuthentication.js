@@ -1,31 +1,31 @@
 ISA_Authentication = {
 	build: function(){
+		
 		var container = document.getElementById("authentication");
-		var sideBar = document.getElementById("authentication-side-bar");
 		var tabUl =
-			$.UL({id:"oauth_setting_tabs"},
-				$.LI({id:"oauth_consumer_tab",className:"", style:"width:100%;"},
-					$.A({href:"#oauth_consumer", className:"sideBarTab-ui"},
-							$.SPAN({className:"title"},ISA_R.alb_oauthConsumerSettings))
-						),
-				$.LI({id:"oauth_container_tab",className:"", style:"width:100%;"},
-					$.A({href:"#oauth_container", className:"sideBarTab-ui"},
-						$.SPAN({className:"title"},ISA_R.alb_oauthContainerCertificate))
-						)
-				);
-		sideBar.appendChild(tabUl);
+		  $.DIV({id:"tabContainer"},
+				$.UL({id:"oauth_setting_tabs", className:"subsection_tabs tabs"},
+					 $.LI({},
+						  $.A({id:"oauth_consumer_tab",href:"#oauth_consumer", className:"tab"},
+							  $.SPAN({className:"title"},ISA_R.alb_oauthConsumerSettings))
+							),
+					 $.LI({},
+						  $.A({id:"oauth_container_tab",href:"#oauth_container", className:"tab"},
+							  $.SPAN({className:"title"},ISA_R.alb_oauthContainerCertificate))
+							)
+					   )
+				  );
+		container.appendChild(tabUl);
 
 		container.appendChild(
-			$.DIV({style:"clear:both;"},
-				  $.DIV({id:"oauth_consumer"}),
-				  $.DIV({id:"oauth_container"})
-				)
-			);
+			$.DIV({style:"clear:both;padding:5px;"},
+				  $.DIV({id:"oauth_consumer" }),
+				  $.DIV({id:"oauth_container"})));
 		
 		this.controlTabs = new Control.Tabs("oauth_setting_tabs", {
 			beforeChange: function(old_container, new_container){
-				Element.removeClassName(old_container.id + "_tab","selected active");
-				Element.addClassName(new_container.id+ "_tab", "selected active");
+				Element.removeClassName(old_container.id + "_tab","selected");
+				Element.addClassName(new_container.id+ "_tab", "selected");
 			}.bind(this)
 		});
 		this._displayConsumer();
@@ -72,7 +72,7 @@ ISA_Authentication = {
 			})
 		}
 
-		var url = adminHostPrefix + "/services/authentication/saveOAuthConsumerList";
+		var url = findHostURL() + "/services/authentication/saveOAuthConsumerList";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -154,7 +154,7 @@ ISA_Authentication = {
 	},
 	
 	_displayConsumer: function(){
-		var url = adminHostPrefix + "/services/authentication/getOAuthConsumerListJson";
+		var url = findHostURL() + "/services/authentication/getOAuthConsumerListJson";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -182,7 +182,6 @@ ISA_Authentication = {
 	_renderHeader: function(container){
 		var controlDiv = document.createElement("div");
 		controlDiv.style.textAlign = "right";
-		controlDiv.className= "refreshAll";
 		
 		var commitDiv = ISA_Admin.createIconButton(ISA_R.alb_changeApply, ISA_R.alb_changeApply, "database_save.gif", "right");
 		controlDiv.appendChild(commitDiv);
@@ -213,14 +212,14 @@ ISA_Authentication = {
 		
 		var table = ISA_Admin.buildTableHeader(
 			[ ISA_R.alb_gadgetUrl, ISA_R.alb_oauthServiceName, ISA_R.alb_oauthSignatureAlgorithm, ISA_R.alb_oauthConsumerKey, ISA_R.alb_oauthConsumerSecret, ISA_R.alb_delete],
-			[ '25%', '10%', "15%", "20%", "25%", "5%"]
+			[ '30%', '10%', "10%", "20%", "25%", "5%"]
 			);
 		table.id = "authentication_contentTable";
-		table.cellPadding = "0";
-		table.cellSpacing = "0";
-		table.className = "configTableHeader";
+		table.className = "proxyConfigList";
+		table.style.tableLayout = "fixed"
 		//TODO:Function for generating table needs to be arranged
-		//table.style.borderLeft = "1px solid #EEEEEE";
+		table.style.borderLeft = "1px solid #EEEEEE";
+		table.style.width = "100%";
 		
 		container.appendChild( table );
 		
@@ -234,7 +233,7 @@ ISA_Authentication = {
 	},
 	
 	_createTextbox: function(id, value){
-		return $.INPUT({id: id, value: value, className:'portalAdminInput',style:"width:95%;",
+		return $.INPUT({id: id, value: value, className:'portalAdminInput',style:"width:100%;",
 		  onchange:{handler: function(){ ISA_Admin.isUpdated = true; }}
 		});
 	},
@@ -255,12 +254,11 @@ ISA_Authentication = {
 	
 	_createRow: function( consumer, index ){
 		var elementId = 'oauth_consumer_setting_' + index;
-//		var deleteIcon = ISA_Admin.createIconButton("", ISA_R.alb_delete, "trash.gif");
-		var deleteIcon = $.IMG({src:"../../skin/imgs/trash.gif", title:ISA_R.alb_delete, style:'cursor:pointer'});
+		var deleteIcon = ISA_Admin.createIconButton("", ISA_R.alb_delete, "trash.gif");
 		var tr = $.TR({id:elementId },
-					$.TD({className:"configTableTd"}, this._createTextbox(elementId + '_gadget_url', consumer['gadget_url']) ),
-					$.TD({className:"configTableTd"}, this._createTextbox(elementId + '_service_name', consumer['service_name']) ),
-					$.TD({className:"configTableTd"},
+					$.TD({}, this._createTextbox(elementId + '_gadget_url', consumer['gadget_url']) ),
+					$.TD({}, this._createTextbox(elementId + '_service_name', consumer['service_name']) ),
+					$.TD({},
 						 $.SELECT(
 							 {id: elementId + '_signature_method',
 							   onchange:{handler:this._displayConsumerKeySecret.bind(this, elementId),
@@ -269,9 +267,9 @@ ISA_Authentication = {
 							 $.OPTION({value:'HMAC-SHA1', selected: ('HMAC-SHA1' == consumer['signature_method']) }, 'HMAC-SHA1'),
 							 $.OPTION({value:'RSA-SHA1', selected: ('RSA-SHA1' == consumer['signature_method'])}, 'RSA-SHA1')
 							   )),
-					$.TD({className:"configTableTd"}, this._createTextbox(elementId + '_consumer_key', consumer['consumer_key'] ) ),
-					$.TD({className:"configTableTd"}, this._createTextbox(elementId + '_consumer_secret', consumer['consumer_secret'] ) ),
-					$.TD({className:"configTableTd", style:"textAlign:center;"}, deleteIcon )
+					$.TD({}, this._createTextbox(elementId + '_consumer_key', consumer['consumer_key'] ) ),
+					$.TD({}, this._createTextbox(elementId + '_consumer_secret', consumer['consumer_secret'] ) ),
+					$.TD({style:"textAlign:center;"}, deleteIcon )
 			   );
 		IS_Event.observe( deleteIcon,"click",function(tr, delObj){ tr.parentNode.removeChild(tr);}.bind(this, tr, {gadgetUrl:consumer['gadget_url'],serviceName:consumer['service_name']}),true,"_adminAuthentication" );
 		return tr;
@@ -283,7 +281,7 @@ ISA_Authentication = {
 		var privateKey = $F('oauth_container_private_key');
 		var certificate = $F('oauth_container_certificate');
 		
-		var url = adminHostPrefix + "/services/authentication/saveContainerCertificate";
+		var url = findHostURL() + "/services/authentication/saveContainerCertificate";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -326,7 +324,7 @@ ISA_Authentication = {
 	},
 
 	_displayContainerCert: function(){
-		var url = adminHostPrefix + "/services/authentication/getContainerCertificateJson";
+		var url = findHostURL() + "/services/authentication/getContainerCertificateJson";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -380,35 +378,23 @@ ISA_Authentication = {
 		certificateNote.innerHTML = ISA_R.getResource(ISA_R.ams_oauthCertificateNote, [publicKeyUrl, publicKeyUrl]);
 		var forms = $.DIV(
 			{id:'oauthContainerCertForm'},
-			$.DIV({className:"configSet"}, 
-				$.P({className:"configSetHeader"},ISA_R.alb_oauthConsumerKey),
-				consumerKeyNote,
-				$.INPUT({id:'oauth_container_consumer_key', className:"configSetContent",value:certificate.consumerKey})),
-			$.DIV({className:"configSet"}, 
-				$.P({className:"configSetHeader"},ISA_R.alb_oauthPrivateKey),
-				privateKeyNote, 
-				$.TEXTAREA({id:'oauth_container_private_key', className:"configSetContent", value:certificate.privateKey})),
-			$.DIV({className:"configSet"}, 
-				$.P({className:"configSetHeader"},ISA_R.alb_oauthCertificate),
-				  certificateNote, 
-				$.TEXTAREA({id:'oauth_container_certificate', className:"configSetContent",value:certificate.certificate}))
-//			$.UL({},
-//				 $.LI({},
-//					  $.LABEL({}, ISA_R.alb_oauthConsumerKey),
-//					  $.INPUT({id:'oauth_container_consumer_key',value:certificate.consumerKey}),
-//					  consumerKeyNote
-//						),
-//				 $.LI({},
-//					  $.LABEL({}, ISA_R.alb_oauthPrivateKey),
-//					  $.TEXTAREA({id:'oauth_container_private_key',value:certificate.privateKey}),
-//					  privateKeyNote
-//						),
-//				 $.LI({},
-//					  $.LABEL({}, ISA_R.alb_oauthCertificate),
-//					  $.TEXTAREA({id:'oauth_container_certificate',value:certificate.certificate}),
-//					  certificateNote
-//						)
-			);
+			$.UL({},
+				 $.LI({},
+					  $.LABEL({}, ISA_R.alb_oauthConsumerKey),
+					  $.INPUT({id:'oauth_container_consumer_key',value:certificate.consumerKey}),
+					  consumerKeyNote
+						),
+				 $.LI({},
+					  $.LABEL({}, ISA_R.alb_oauthPrivateKey),
+					  $.TEXTAREA({id:'oauth_container_private_key',value:certificate.privateKey}),
+					  privateKeyNote
+						),
+				 $.LI({},
+					  $.LABEL({}, ISA_R.alb_oauthCertificate),
+					  $.TEXTAREA({id:'oauth_container_certificate',value:certificate.certificate}),
+					  certificateNote
+						)
+			) );
 		
 		container.appendChild( forms );
 	}

@@ -38,7 +38,8 @@ var IS_DroppableOptions = {};
 
 var freshDays = 1;
 
-var adminHostPrefix = hostPrefix + "/admin";
+var adminHostPrefix = (typeof hostPrefix != "undefined") ? hostPrefix : findHostURL(false);
+var hostPrefix = adminHostPrefix.substring(0, adminHostPrefix.lastIndexOf("/"));
 var portalSSLURL = hostPrefix;
 //var searchEngineURL = hostPrefix + "/schsrv";
 var proxyServerURL = hostPrefix + "/proxy";
@@ -118,23 +119,23 @@ ISA_Admin.clearAdminCache = function() {
 	IS_EventDispatcher.newEvent("clearAdminCache","");
 }
 
-var windowBeforeUnload = function(e) {
+window.onload = function() {
+	ISA_Admin.buildAdminTabs();
+};
+
+window.onunload = function() {
+	ISA_Admin.clearAdminCache();
+	IS_Event.unloadAllCache();
 	IS_EventDispatcher.newEvent("deleteTemp","",true);
 	if(ISA_WidgetConf.widgetConf.uploadData){
 		ISA_WidgetConf.widgetConf.requestDeleteGadget(ISA_WidgetConf.widgetConf.uploadData.id);
 	}
 };
 
-Event.observe(window, 'beforeunload',  windowBeforeUnload );
-Event.observe(window, 'unload', function(){
-	ISA_Admin.clearAdminCache();
-	IS_Event.unloadAllCache();
-});
-
 ISA_loadProperties = function(_callback){
 	
 	var container = document.getElementById("properties");
-	var url = adminHostPrefix + "/services/properties/getPropertiesJson";
+	var url = findHostURL() + "/services/properties/getPropertiesJson";
 	var opt = {
 	  method: 'get' ,
 	  asynchronous:true,
@@ -169,39 +170,184 @@ ISA_loadProperties = function(_callback){
 	};
 	AjaxRequest.invoke(url, opt);
 }
+ISA_Admin.buildAdminTabs = function() {
+	var adminTabsUl = $("admin-leftbox-navigator");
+	var adminMainContainer = $("admin-main-container");
+	
+	$H( ISA_Admin.permissions ).keys().each( function( permission ) {
+		if( !ISA_Admin.permissions[ permission ] )
+			return;
+		
+		var li = $( document.createElement("li"));
+		adminTabsUl.appendChild( li );
+		var anchor = $( document.createElement("a"));
+		anchor.href = "#"+permission;
+		anchor.className = "tab";
+		anchor.id = "tab_"+permission;
+		li.appendChild( anchor );
+		var title = $( document.createElement("span"));
+		title.innerHTML = ISA_Admin.TabBuilders[ permission ].text;
+		anchor.appendChild( title );
+		
+		var container = $( document.createElement("div"));
+		container.id = permission;
+		adminMainContainer.appendChild( container );
+	});
+	
+	ISA_Admin.AdminTabs = new Control.Tabs("admin-leftbox-navigator",{
+		defaultTab: "first",
+		beforeChange: function( oldContainer,newContainer ) {
+			if(!ISA_Admin.checkUpdated() || !ISA_Admin.requestComplete)
+				throw $break;
+			
+			ISA_Admin.clearAdminCache();
+			
+			if( oldContainer ) 
+				$( oldContainer.id ).innerHTML = "";
+			
+			if( newContainer )
+				ISA_Admin.TabBuilders[ newContainer.id ].build();
+			
+			return true;
+		}
+	});
+}
+
+ISA_Admin.TabBuilders = {
+	information: {
+		test: "",
+		build: function() {
+			ISA_PortalAdmins.information = new ISA_Information();
+			ISA_PortalAdmins.information.build();
+		}
+	},
+	menu: {
+		text: ISA_R.alb_menu,
+		build: function(menuType, isTreeAdminUser) {
+			function buildMenu(){
+				ISA_SiteAggregationMenu.treeMenu = new ISA_SiteAggregationMenu(
+					(menuType)? menuType : "topmenu", isTreeAdminUser);
+				ISA_SiteAggregationMenu.treeMenu.build();
+			}
+			
+			ISA_loadProperties(buildMenu);
+		}
+	},
+	menuTree: {
+		text: ISA_R.alb_menu,
+		build: function() {
+			ISA_Admin.TabBuilders.menu.build("topmenu", true);
+		}
+	},
+
+	searchEngine: {
+		text: ISA_R.alb_searchForm,
+		build: function() {
+			ISA_SearchEngine.searchEngine = new ISA_SearchEngine();
+			ISA_SearchEngine.searchEngine.build();
+		}
+	},
+	
+	widgetConf: {
+		text: ISA_R.alb_widget,
+		build: function() {
+			if(ISA_WidgetConf.widgetConf.uploadData){
+				ISA_WidgetConf.widgetConf.requestDeleteGadget(ISA_WidgetConf.widgetConf.uploadData.id);
+			}
+			ISA_WidgetConf.widgetConf = new ISA_WidgetConf();
+			ISA_WidgetConf.widgetConf.build();
+		}
+	},
+	
+	properties: {
+		text: ISA_R.alb_properties,
+		build: function() {
+			ISA_Properties.properties = new ISA_Properties();
+			ISA_Properties.properties.build();
+		}
+	},
+	
+	proxy: {
+		text: ISA_R.alb_proxy,
+		build: function() {
+			ISA_ProxyConf.proxyConf = new ISA_ProxyConf();
+			ISA_ProxyConf.proxyConf.build();
+		}
+	},
+	
+	i18n: {
+		text: ISA_R.alb_i18n,
+		build: function() {
+			ISA_I18N.i18n = new ISA_I18N();
+			ISA_I18N.i18n.build();
+		}
+	},
+	
+	defaultPanel: {
+		text: ISA_R.alb_defaultPanel,
+		build: function() {
+			ISA_DefaultPanel.defaultPanel = new ISA_DefaultPanel();
+			IS_SiteAggregationMenu.init();
+		
+			ISA_loadProperties(ISA_DefaultPanel.defaultPanel.build);
+		}
+	},
+	
+	portalLayout: {
+		text: ISA_R.alb_otherLayout,
+		build: function() {
+			ISA_PortalLayout.portalLayout = new ISA_PortalLayout();
+			ISA_PortalLayout.portalLayout.build();
+		}
+	},
+	
+	portalAdmin: {
+		text: ISA_R.alb_admin,
+		build: function() {
+			ISA_PortalAdmins.portalAdmins = new ISA_PortalAdmins();
+			ISA_PortalAdmins.portalAdmins.build();
+		}
+	},
+	forbiddenURL: {
+		text: ISA_R.alb_forbiddenURL,
+		build: function() {
+			ISA_PortalAdmins.portalForbiddenURL = new ISA_PortalForbiddenURL();
+			ISA_PortalAdmins.portalForbiddenURL.build();
+		}
+	},
+	authentication: {
+		text: "OAuth",
+		build: function() {
+			ISA_Authentication.build();
+		}
+	}
+}
 
 ISA_Admin.createIconButton = function(text, title, imgName, floatValue) {
-	//var div = document.createElement("div");
-	var button = document.createElement("a");
-	button.className = "iconButton";
-	//div.type = "button";
+	var div = document.createElement("div");
+	div.className = "iconButton";
 	if(floatValue) {
 		if(Browser.isIE)
-			button.style.styleFloat = floatValue;
+			div.style.styleFloat = floatValue;
 		else
-			button.style.cssFloat = floatValue;
+			div.style.cssFloat = floatValue;
 	}
-	button.title = title;
+	div.title = title;
 	var img = document.createElement("img");
 	img.src = imageURL + imgName;
 	img.style.position = "relative";
 	img.style.top = "2px";
-	img.style.margin = "0 5 0 0";
-//	var anc = document.createElement("a");
-//	anc.appendChild(document.createTextNode(text));
-//	anc.className = "button";
-//	anc.href = "#";
-	button.href = "#";
-	button.appendChild(img);
-	button.appendChild(document.createTextNode(text));
-//	button.appendChild(anc);
-	return button;
+	var anc = document.createElement("a");
+	anc.appendChild(document.createTextNode(text));
+	anc.className = "button";
+	anc.href = "#";
+	div.appendChild(img);
+	div.appendChild(anc);
+	return div;
 };
 
-ISA_Admin.createBaseRadio = function(name, isChecked, isDisabled, d) {
-	var doc = d ? d : document;
-	
-	var radio = doc.createElement("input");
+ISA_Admin.createBaseRadio = function(name, isChecked, isDisabled) {
+	var radio = document.createElement("input");
 	radio.type = "radio";
 	radio.name = name;
 	if(isChecked)
@@ -218,15 +364,13 @@ ISA_Admin.createBaseRadio = function(name, isChecked, isDisabled, d) {
 		if(isDisabled)
 			inputElement += " disabled";
 		inputElement += ">";
-		radio = doc.createElement(inputElement);
+		radio = document.createElement(inputElement);
 	}
 	return radio;
 };
 
-ISA_Admin.createBaseCheckBox = function(name, isChecked, isDisabled, d) {
-	var doc = d ? d : document;
-	
-	var checkbox = doc.createElement("input");
+ISA_Admin.createBaseCheckBox = function(name, isChecked, isDisabled) {
+	var checkbox = document.createElement("input");
 	checkbox.type = "checkbox";
 	checkbox.name = name;
 	if(isChecked)
@@ -243,7 +387,7 @@ ISA_Admin.createBaseCheckBox = function(name, isChecked, isDisabled, d) {
 		if(isDisabled)
 			inputElement += " disabled";
 		inputElement += ">";
-		checkbox = doc.createElement(inputElement);
+		checkbox = document.createElement(inputElement);
 	}
 	return checkbox;
 };
@@ -349,24 +493,25 @@ ISA_Admin.stopIndicator = function() {
 ISA_Admin.buildTableHeader = function(labels, widths){
 	
 	var configTable = document.createElement("table");
-	configTable.className ="configTableHeader";
-	configTable.width = "900px";
+	//configTable.id = "proxyConfigHeader";
+	configTable.style.clear = "both";
+	configTable.width = "900";
+	configTable.style.tableLayout = "fixed";
+	configTable.style.emptyCells = "show";
 	configTable.cellSpacing = "0";
 	configTable.cellPadding = "0";
 	var configTbody = document.createElement("tbody");
 	configTable.appendChild(configTbody);
-	
 	var configTr;
 	configTr = document.createElement("tr");
-//	configTr.id = "proxyConfigHeader";
+	configTr.id = "proxyConfigHeader";
 	configTbody.appendChild(configTr);
 
 	var configTh;
 	var configTd;
 	for(var i = 0; i < labels.length; i++){
 		configTh = document.createElement("td");
-		configTh.className = "configTableHeaderTd";
-//		configTh.style.whiteSpace = "nowrap";
+		configTh.style.whiteSpace = "nowrap";
 		if(widths && widths[i])
 		  configTh.style.width = widths[i];
 		configTh.appendChild(document.createTextNode(labels[i]));
@@ -432,7 +577,7 @@ var ISA_Principals = {
 	
   get: function(){
 	  if(this.principalObjs) return this.principalObjs;
-	var url = adminHostPrefix + "/role.jsp";
+	var url = findHostURL() + "/role.jsp";
 	var opt = {
 	  method: 'get' ,
 	  asynchronous:false,
@@ -496,7 +641,6 @@ ISA_previewFormModal = {
 		
 		var messageLabel = document.createElement("div");
 		messageLabel.style.clear = "both";
-		messageLabel.style.marginBottom = "5px";
 		messageLabel.appendChild(document.createTextNode(ISA_R.alb_selectPermissionLevel));
 		formDiv.appendChild(document.createElement("br"));
 		formDiv.appendChild(messageLabel);
@@ -511,9 +655,11 @@ ISA_previewFormModal = {
 		previewA.style.cursor = "pointer";
 		previewDiv.appendChild(previewA);
 		var previewClick = function(e) {
+			var path = findHostURL(false);
+			path = path.substring(0, path.lastIndexOf("/"));
 			
 			var isFirst = true;
-			var url = hostPrefix + "/adminpreview";
+			var url = path + "/adminpreview";
 			var principalValues = document.getElementsByClassName("panelPrincipalValue", $("panelPreviewFormInputWrap"));
 			var principalNames = document.getElementsByClassName("panelPrincipalName", $("panelPreviewFormInputWrap"));
 			for(var i = 0, n = principalValues.length; i < n; i++) {
@@ -548,10 +694,9 @@ ISA_previewFormModal = {
 		return editAreaDiv;
 	},
 	buildInput: function() {
-		var editDiv = document.createElement("div");
-		editDiv.style.marginTop = "8px";
 		var inputDiv = document.createElement("div");
-		inputDiv.style.marginTop = "5px";
+		
+		// 
 		var selectPrincipal = document.createElement("select");
 		selectPrincipal.className = "panelPrincipalName";
 		var principalMap = ISA_Principals.get();
@@ -571,8 +716,8 @@ ISA_previewFormModal = {
 		editRoleInput.type = "text";
 		editRoleInput.size = 30;
 		inputDiv.appendChild(editRoleInput);
-		editDiv.appendChild(inputDiv);
-		return editDiv;
+		
+		return inputDiv;
 	},
 	hide: function() {
 		Control.Modal.close();

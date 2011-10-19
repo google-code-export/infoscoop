@@ -21,7 +21,6 @@ IS_Widget.Calendar.iCalendar.prototype.classDef = function() {
 	var NS_RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 	var eventTargetId = "[" + (++IS_Widget.Calendar.iCalendar.eventIdNum) + "]";
 	
-	this.noProxy = false;
 	/**
 	 * @param urlStr: URL that gets ical
 	 * @param format: specifies url; ical, CalDAV, or Feed
@@ -208,8 +207,7 @@ IS_Widget.Calendar.iCalendar.prototype.classDef = function() {
 				IS_EventDispatcher.newEvent("loadCalendarComplete", eventTargetId, null);
 			}
 		};
-		requestUrl = this.noProxy ? requestUrl : is_getProxyUrl(requestUrl, "Calendar");
-		AjaxRequest.invoke(requestUrl, opt);
+		AjaxRequest.invoke(is_getProxyUrl(requestUrl, "Calendar"), opt);
 	};
 	
 	this.parseText = function(icstxt) {
