@@ -2,17 +2,17 @@ var ISA_DefaultPanel = IS_Class.create();
 IS_EventDispatcher.addListener("deleteTemp", "", function(all){
 	if(all || ISA_DefaultPanel.defaultPanel){
 		// Deleting Temp data
-		var url = adminHostPrefix + "/services/tabLayout/deleteTemp";
+		var url = findHostURL() + "/services/tabLayout/deleteTemp";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
-			asynchronous:false,
+			asynchronous:true,
 			onSuccess: function(response){
 				msg.info(ISA_R.ams_deleteEdittingMenuData);
 			},
 			onFailure: function(t) {
 				var errormsg = t.responseText && typeof t.responseText == "string" ? t.responseText.substr(0, 100) : "";
-				msg.info(ISA_R.ams_failedDeleteEdittingData + errormsg);
+				msg.error(ISA_R.ams_failedDeleteEdittingData + errormsg);
 			},
 			onException: function(r, t){
 				msg.error(ISA_R.ams_failedDeleteEdittingData + getErrorMessage(t));
@@ -169,12 +169,12 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				dialogTable.addRow(ISA_R.alb_linkUrl, editURLInput);
 
 				var windowTargetDiv = document.createElement('div');
-				var newWindowRadio = ISA_Admin.createBaseRadio("panelAddCommandBarTarget", isNewwindow, false, document);
+				var newWindowRadio = ISA_Admin.createBaseRadio("panelAddCommandBarTarget", isNewwindow);
 				newWindowRadio.id = "panelAddCommandBarNewwindow";
 				windowTargetDiv.appendChild(newWindowRadio);
 				windowTargetDiv.appendChild(document.createTextNode(ISA_R.alb_newWindow));
 
-				var iFrameRadio = ISA_Admin.createBaseRadio("panelAddCommandBarTarget", isIframe, false, document);
+				var iFrameRadio = ISA_Admin.createBaseRadio("panelAddCommandBarTarget", isIframe);
 				iFrameRadio.id = "panelAddCommandBarIFrame";
 				windowTargetDiv.appendChild(iFrameRadio);
 				windowTargetDiv.appendChild(document.createTextNode(ISA_R.alb_portalframe));
@@ -273,6 +273,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 	}
 
 	this.initialize = function() {
+		//
 		controlModal = new Control.Modal(
 			false,
 			{
@@ -317,9 +318,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		container.replaceChild(this.panelTabsContainer.tabContainer, loadingMessage);
 
 		var previewDivWrap = document.createElement("div");
-		previewDivWrap.className = "refreshAll";
-//		previewDivWrap.style.clear = "both";
-//		previewDivWrap.style.width = "98%";
+		previewDivWrap.style.clear = "both";
+		previewDivWrap.style.width = "98%";
 
 		container.insertBefore(previewDivWrap, this.panelTabsContainer.tabContainer);
 		var previewDiv = ISA_Admin.createIconButton(ISA_R.alb_previewTop, ISA_R.alb_previewTop, "minibrowser.gif", "right");
@@ -339,7 +339,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		previewDivWrap.appendChild( resetDiv );
 		IS_Event.observe( resetDiv,"click",this.resetUserCustomization.bind( this ),false,"_adminPanel");
 		this.tab = new Control.Tabs("panelTabs",{
-			//defaultTab: "tab_" + self.tabIdList[0],
 			defaultTab: "tab_"+commandBarTabId,
 			beforeChange: function( old_container,container ) {
 				if(self.changeTab( container.id.substring(4),false ))
@@ -353,7 +352,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		controlModal.open();
 
-		var url = adminHostPrefix + "/services/tabLayout/commitDefaultPanel";
+		var url = findHostURL() + "/services/tabLayout/commitDefaultPanel";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -361,9 +360,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			onSuccess: function(response){
 				controlModal.update(ISA_R.ams_changeUpdated);
 				ISA_Admin.isUpdated = false;
-				ISA_DefaultPanel.updateRaws = [];
-				this.updateRawStyle();
-			}.bind(this),
+			},
 			onFailure: function(t) {
 				var errormsg = t.responseText && typeof t.responseText == "string" ? t.responseText.substr(0, 100) : "";
 				alert(ISA_R.ams_failedToSaveTop+'\n' + errormsg);
@@ -432,7 +429,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		modal.open();
 	}
 	this._resetUserCustomization = function( uid ) {
-		var url = adminHostPrefix + "/services/tab/clearConfigurations";
+		var url = findHostURL() + "/services/tab/clearConfigurations";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -441,8 +438,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			onSuccess: function(response){
 			},
 			onFailure: function(t) {
-				var errMsg = IS_R.ms_clearConfigurationFailed+ "\n" +
-					((t.responseText && typeof t.responseText == "string") ? t.responseText.substr(0, 100) : "");
+				var errMsg = IS_R.ms_clearConfigurationFailed+
+					t.responseText && typeof t.responseText == "string" ? t.responseText.substr(0, 100) : "";
 				alert( errMsg );
 				msg.error( errMsg );
 			},
@@ -467,11 +464,11 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		this.panelTabsContainer = null;
 
 		var tabsDiv = document.createElement("div");
-		tabsDiv.id = "tabsDiv";
 		tabsDiv.style.clear = "both";
+
 		var tabsUl = document.createElement("ul");
 		tabsUl.id = "panelTabs";
-		tabsUl.className = "tabs-ui";
+		tabsUl.className = "tabs";
 
 		for(var i=0; i<this.tabIdList.length; i++){
 			tabsUl.appendChild(this.buildTab(this.tabIdList[i]));
@@ -481,9 +478,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		addTabDiv.noWrap = "-1";
 		addTabDiv.className = "addatab";
 		addTabDiv.id = "addTabDiv";
-		var addA = ISA_Admin.createIconButton(ISA_R.alb_addTab, ISA_R.alb_addTab, "add.gif", "left");
-		addA.removeAttribute('href');
-		addA.style.margin = "0 0 3px 0";
+		var addA = document.createElement("a");
+		addA.innerHTML = ISA_R.alb_addTab;
 		addTabDiv.appendChild(addA);
 		tabsUl.appendChild(addTabDiv);
 		var addTabHandler = function(e) {
@@ -494,7 +490,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			var jsonObject = {
 				id : String( datetime ),
 				tabId : "",
-				tabName : ISA_R.alb_newTab,
+			  tabName : ISA_R.alb_newTab,
 				columnsWidth : "",
 				principalType : null,
 				role : defaultRoleRegex,
@@ -507,6 +503,9 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				tabNumber : "",
 				isDefault : true
 			};
+			// Set default fixed area
+			jsonObject = self.templates.setStaticLayout0(jsonObject);
+
 			self.displayRoleJsons = {};
 			self.displayRoleJsons[datetime] = jsonObject;
 			self.displayRoleId = jsonObject.id;
@@ -515,10 +514,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			IS_EventDispatcher.addListener('updatePanelOnSuccess', 'default', self.addAfter, true);
 			jsonObject = self.setColumnsArray(jsonObject);
 			self.isUpdated = true;
-			
-			// Set default fixed area
-			jsonObject = self.templates.setStaticLayout0(jsonObject);
-			
 			self.updatePanel( false );
 			
 			ISA_Admin.isUpdated = true;
@@ -576,7 +571,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		var tabAnchor = document.createElement("a");
 		tabAnchor.id = "panelTab_" + tabId;
-		tabAnchor.className = "tab-ui";
+		tabAnchor.className = "tab";
 		tabAnchor.href = "#tab_"+tabId;
 		
 		var tabTitleSpan = document.createElement("span");
@@ -605,14 +600,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 	*/
 	this.changeTab = function(activeTabId, addTab) {
 		if(!self.updatePanel()) return true;
-
-		if(self.editRoleWin && !self.editRoleWin.closed){
-			if(!confirm(ISA_R.ams_confirmCloseEditRoleWin)){
-				return true;
-			}else{
-				self.editRoleWin.close();
-			}
-		}
 		
 		var link = $("panelTab_"+activeTabId );
 		if( !link || link.hasClassName("selected"))
@@ -646,20 +633,17 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			displayDeleteImgSpan = document.createElement("span");
 			var deleteImg = document.createElement("img");
 			deleteImg.src = imageURL+"x.gif";
-			deleteImg.width = 14;
-			deleteImg.height = 14;
 			deleteImg.style.verticalAlign = 'middle';
 			deleteImg.style.cursor = 'pointer';
 			deleteImg.title = ISA_R.ams_deleteThisTab;
 			displayDeleteImgSpan.appendChild(deleteImg);
 		}
 		//
-		if(String(targetTabId) != String(this.displayTabId)){
-			targetTabDiv.className = "tab-ui";
+		if(targetTabId != this.displayTabId){
+			targetTabDiv.className = "tab";
 //			IS_Event.observe(targetTabDiv, "click", this.changeTab.bind(this, targetTabId), false, ["_adminPanelTab","_adminPanel"]);
 		}else{
-//			targetTabDiv.className = "tab-ui selected";
-			targetTabDiv.className = "tab-ui active";
+			targetTabDiv.className = "tab selected";
 			// The tab can diplay delete button or not.
 			var isIgnored = false;
 			for(var i = 0; i < ignoreTabIdList.length; i++) {
@@ -710,7 +694,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			}
 			tabTitleSpan.firstChild.nodeValue = tabName;
 		})
-		//this.tab.setActiveTab("tab_"+self.tabIdList[0] );
 		this.tab.setActiveTab("tab_"+commandBarTabId );
 		ISA_Admin.isUpdated = true;
 	}
@@ -725,9 +708,9 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		var refreshAllDiv = document.createElement("div");
 		refreshAllDiv.id = "refreshAll";
-		refreshAllDiv.style.textAlign = "left";
+		refreshAllDiv.style.textAlign = "right";
 		refreshAllDiv.style.width = "100%";
-		//defaultPanelDiv.appendChild(refreshAllDiv);
+		defaultPanelDiv.appendChild(refreshAllDiv);
 
 		var dummyDiv = document.createElement("div");
 		dummyDiv.style.clear = "both";
@@ -735,16 +718,13 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		var backDiv = ISA_Admin.createIconButton(ISA_R.alb_backToList, ISA_R.alb_backToList, "back.gif", "right");
 		backDiv.id = "tab_"+this.displayTabId+"_backListPanel";
-		$(backDiv).setStyle({"float":"left"});
 		backDiv.style.display = "none";
-		
 		refreshAllDiv.appendChild(backDiv);
 		IS_Event.observe(backDiv, 'click', self.backToList.bind(self, true), ["_adminPanelTab","_adminPanel"]);
 
 		var defaultPanelTable = document.createElement("table");
 		defaultPanelTable.id = "panelTabContentsTable";
 		defaultPanelTable.style.width = "100%";
-		defaultPanelTable.style.borderTop = "gray 1px solid";
 		defaultPanelDiv.appendChild(defaultPanelTable);
 
 		var defaultPanelTbody = document.createElement("tbody");
@@ -761,7 +741,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		defaultPanelTr.appendChild(defaultPanelTdLeft);
 
 		var roleListDiv = self.buildRoleList();
-		defaultPanelTdLeft.appendChild(refreshAllDiv);
+
 		defaultPanelTdLeft.appendChild(roleListDiv);
 
 		var roleEditDiv = document.createElement("div");
@@ -779,8 +759,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		}
 
 		this.addSortableEvent();
-		
-		this.updateRawStyle();
 	}
 
 	/**
@@ -843,10 +821,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			// Added at last
 			roleParent.appendChild(self.buildRole(jsonObject));
 			// Change display to the permission added at the last minute
-//			self.editRole(jsonObject);
-			
-			self.addSortableEvent();
-			
+			self.editRole(jsonObject);
 			self.isUpdated = true;
 			ISA_Admin.isUpdated = true;
 		};
@@ -874,11 +849,9 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				// Update to public object
 				defaultRoleJson.disabledDefault = checkbox.checked;
 				if(checkbox.checked)
-//				  Element.hide("tab_"+self.displayTabId+'_role_' + defaultRoleJson.roleOrder);
-				  Element.hide("tab_"+self.displayTabId+'_role_' + defaultRoleJson.id);
+				  Element.hide("tab_"+self.displayTabId+'_role_' + defaultRoleJson.roleOrder);
 				else
-//				  Element.show("tab_"+self.displayTabId+'_role_' + defaultRoleJson.roleOrder);
-				  Element.show("tab_"+self.displayTabId+'_role_' + defaultRoleJson.id);
+				  Element.show("tab_"+self.displayTabId+'_role_' + defaultRoleJson.roleOrder);
 				this.isUpdated = true;
 				ISA_Admin.isUpdated = true;
 			}.bind(this, disableDefaultCheckbox, defaultRoleJson), false, ["_adminPanelTab","_adminPanel"]);
@@ -941,7 +914,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			{
 				tag: 'div',
 				handle: 'handle',
-				//className: 'configListDiv',
 				onChange: function(div){
 					draggingDivId = div.id;
 				},
@@ -958,8 +930,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 					}
 					for(var i in oldJsons) {
 						if( !(oldJsons[i] instanceof Function) ){
-//							var divId = divIdPrefix + oldJsons[i].roleOrder;
-							var divId = divIdPrefix + oldJsons[i].id;
+							var divId = divIdPrefix + oldJsons[i].roleOrder;
 							if( siblingDivId && divId == draggingDivId)continue;
 							newJsons[i] = oldJsons[i];
 							if( siblingDivId && divId == siblingDivId){
@@ -981,19 +952,16 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		jsonRole = this.setColumnsArray(jsonRole);
 
 		var roleDiv = document.createElement("div");
-//		roleDiv.id = "tab_"+this.displayTabId+"_role_" + jsonRole.roleOrder;
-		roleDiv.id = "tab_"+this.displayTabId+"_role_" + jsonRole.id;
+		roleDiv.id = "tab_"+this.displayTabId+"_role_" + jsonRole.roleOrder;
 		roleDiv.roleId = jsonRole.id;
-		roleDiv.className = "configTableDiv";
 
 		var table = document.createElement("table");
-		table.className = "configTableHeader";
+		table.className = "proxyConfigList";
 		table.cellPadding = "0";
 		table.cellSpacing = "0";
 		table.border = "0";
 		table.style.width = "900px";
 		table.style.tableLayout = "fixed";
-		table.style.margin = "0";
 		roleDiv.appendChild(table);
 
 		var tbody = document.createElement("tbody");
@@ -1004,7 +972,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		tbody.appendChild(tr);
 
 		var sortableTd = document.createElement("td");
-		sortableTd.className = "configTableTd";
+		//sortableTd.className = "panelRoleTd";
 		sortableTd.style.width = "40px";
 		sortableTd.style.textAlign = 'center';
 //		if(jsonRole.id != this.displayTabId + "_" + defaultRoleRegex){
@@ -1021,7 +989,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			}
 			sortableImg.style.width = 16;
 			sortableImg.style.height = 16;
-			sortableImg.style.cursor = "move";
+			sortableImg.style.cursor = "pointer";
 			sortableImg.title = ISA_R.alb_changingOrder;
 
 			sortableTd.appendChild( sortableImg );
@@ -1029,9 +997,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		tr.appendChild(sortableTd);
 
 		var roleNameTd = document.createElement("td");
-		roleNameTd.className = "configTableTd";
+		//roleNameTd.className = "panelRoleTd";
 		roleNameTd.style.width = "175px";
-		roleNameTd.style.textAlign = "left";
 		tr.appendChild(roleNameTd);
 		var textDiv1 = document.createElement("div");
 		roleNameTd.appendChild(textDiv1);
@@ -1049,7 +1016,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			IS_Event.observe(textDiv1, 'click', clickTextHandler, false, ["_adminPanelTab","_adminPanel"]);
 
 		var roleTypeTd = document.createElement("td");
-		roleTypeTd.className = "configTableTd";
 		roleTypeTd.style.width = "85px";
 
 		if(jsonRole.defaultUid != defaultDefaultUid){
@@ -1084,9 +1050,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		tr.appendChild(roleTypeTd);
 
 		var roleTd = document.createElement("td");
-		roleTd.className = "configTableTd";
+		//roleTd.className = "panelRoleTd";
 		roleTd.style.width = "350px";
-		roleTd.style.textAlign = "left";
 		tr.appendChild(roleTd);
 		var textDiv2 = document.createElement("div");
 		roleTd.appendChild(textDiv2);
@@ -1104,7 +1069,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			IS_Event.observe(textDiv2, 'click', clickTextHandler, false, ["_adminPanelTab","_adminPanel"]);
 
 		var editTd = document.createElement("td");
-		editTd.className = "configTableTd";
+		//editTd.className = "panelRoleTd";
 		editTd.style.width = "40px";
 		editTd.style.textAlign = "center";
 		tr.appendChild(editTd);
@@ -1113,33 +1078,10 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		editImg.style.cursor = "pointer";
 		editImg.title = ISA_R.alb_editing;
 		editTd.appendChild(editImg);
-		
-		// for debug
-		/*
-		var editImg2 = document.createElement("img");
-		editImg2.src = imageURL + "edit.gif";
-		editImg2.style.cursor = "pointer";
-		editImg2.title = ISA_R.alb_editing;
-		editTd.appendChild(editImg2);
-		IS_Event.observe(editImg2, "click", this.editRole.bind(this, jsonRole, roleDiv), false, ["_adminPanelTab","_adminPanel"]);
-		*/
-		if(self.displayTabId == commandBarTabId){
-			IS_Event.observe(editImg, "click", this.editRole.bind(this, jsonRole, roleDiv), false, ["_adminPanelTab","_adminPanel"]);
-		}else{
-			IS_Event.observe(editImg, "click", function(jsonRole){
-				this.displayRoleId = jsonRole.id;
-				this.displayRoleOrder = jsonRole.roleOrder;
-				
-				if(!self.updatePanel())
-					return;
-				
-				this.editRoleWin = null;
-				this.editRoleWin = window.open("editRole?id=" + jsonRole.id, "editRoleWin", 'width=800, height=600, menubar=no, toolbar=no, scrollbars=yes, resizable=yes');
-			}.bind(this, jsonRole));
-		}
+		IS_Event.observe(editImg, "click", this.editRole.bind(this, jsonRole, roleDiv), false, ["_adminPanelTab","_adminPanel"]);
 
 		var deleteTd = document.createElement("td");
-		deleteTd.className = "configTableTd";
+		//deleteTd.className = "panelRoleTd";
 		deleteTd.style.width = "40px";
 		deleteTd.style.textAlign = "center";
 		tr.appendChild(deleteTd);
@@ -1156,12 +1098,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		return roleDiv;
 	}
-	
-	Event.observe(window, 'unload', function(e){
-		if(this.editRoleWin)
-			this.editRoleWin.close();
-	}.bind(this));
-	
+
 	/**
 		Edit permission
 	*/
@@ -1197,11 +1134,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		var dynamicDiv = $("tab_"+this.displayTabId+"_panelDynamicDiv");
 		var tabNameDiv = $("tab_"+this.displayTabId+"_tabNameDiv");
-			
-		// Replace to the permission ID currently displayed
-		this.displayRoleId = jsonRole.id;
-		this.displayRoleOrder = jsonRole.roleOrder;
-		
 		if(jsonRole.tabId == commandBarTabId) {
 			this.buildCommandWidgetsList(jsonRole);
 			this.addSortableEventCommand();
@@ -1212,36 +1144,16 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			this.buildDynamicWidgetsList(jsonRole);
 			if(dynamicDiv) dynamicDiv.style.display = "";
 			if(tabNameDiv) tabNameDiv.style.display = "";
-			
-			var panelUsage = ( jsonRole.disabledDynamicPanel ? (jsonRole.adjustToWindowHeight ? 'useStaticOnly_adjustHeight' : 'useStaticOnly' ) : 'useBothArea');
-			$('panelUsageSelect').value = panelUsage;
-			jsonRole.panelUsage = panelUsage;
-			this.switchPanelDisplay(panelUsage);
-		
+			$("tab_"+this.displayTabId+"_disableCustomizedArea").checked = jsonRole.disabledDynamicPanel;
+			if(jsonRole.disabledDynamicPanel)
+				$("tab_"+this.displayTabId+"_panelDynamicDiv").hide();
 		}
 
+		// Replace to the permission ID currently displayed
+		this.displayRoleId = jsonRole.id;
+		this.displayRoleOrder = jsonRole.roleOrder;
 	}
 
-	this.switchPanelDisplay =function(panelUsage){
-		
-		switch(panelUsage){
-		  case 'useStaticOnly_adjustHeight':
-			self.setNewValue("disabledDynamicPanel", true);
-			self.setNewValue('adjustToWindowHeight', true);
-			$("tab_"+self.displayTabId+"_personalizedAreaFieldSet").hide();
-			break;
-		  case 'useStaticOnly':
-			self.setNewValue("disabledDynamicPanel", true);
-			self.setNewValue('adjustToWindowHeight', false);
-			$("tab_"+self.displayTabId+"_personalizedAreaFieldSet").hide();
-			break;
-		  default:
-			self.setNewValue("disabledDynamicPanel", false);
-			self.setNewValue('adjustToWindowHeight', false);
-			$("tab_"+self.displayTabId+"_personalizedAreaFieldSet").show();
-		}
-	}
-	
 	/**
 		Delete permission
 	*/
@@ -1249,8 +1161,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		// Update public object 
 		delete this.displayRoleJsons[jsonRole.id];
 		// Delete itself
-//		var deleteElement = document.getElementById("tab_"+this.displayTabId+"_role_" + jsonRole.roleOrder);
-		var deleteElement = document.getElementById("tab_"+this.displayTabId+"_role_" + jsonRole.id);
+		var deleteElement = document.getElementById("tab_"+this.displayTabId+"_role_" + jsonRole.roleOrder);
 		if(deleteElement && deleteElement.parentNode)
 			deleteElement.parentNode.removeChild(deleteElement);
 		// Initialize permission ID currently displayed
@@ -1272,7 +1183,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		editAreaDiv.appendChild(editNamesDiv);
 		
 		var editRoleNameDiv = document.createElement("div");
-		editRoleNameDiv.style.padding = "3px";
+		editRoleNameDiv.style.padding = "5px";
 		editRoleNameDiv.appendChild(document.createTextNode(ISA_R.alb_roleNameColon));
 		var editRoleNameInput = document.createElement("input");
 		editRoleNameInput.id = "tab_"+this.displayTabId+"_panelRoleNameText";
@@ -1295,8 +1206,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 								return false;
 							}
 							self.setNewValue("roleName", nowText);
-//							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('td')[1];
-							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleId).getElementsByTagName('td')[1];
+							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('td')[1];
 							roleNameDiv.firstChild.innerHTML = nowText;
 						 },
 						 false,
@@ -1313,7 +1223,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 
 		var editRoleTypeDiv = document.createElement("div");
-		editRoleTypeDiv.style.padding = "3px";
+		editRoleTypeDiv.style.padding = "5px";
 		editRoleTypeDiv.appendChild(document.createTextNode(ISA_R.alb_subjectColon));
 		var selectPrincipal = document.createElement("select");
 		selectPrincipal.className = "panelPrincipalType";
@@ -1331,8 +1241,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 						 'change',
 						 function (e){
 							self.setNewValue("principalType", selectPrincipal.value);
-//							var roleTypeDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('select')[0];
-							var roleTypeDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleId).getElementsByTagName('select')[0];
+							var roleTypeDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('select')[0];
 							roleTypeDiv.value = selectPrincipal.value;
 						 },
 						 false,
@@ -1341,7 +1250,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		editNamesDiv.appendChild(editRoleTypeDiv);
 
 		var editRoleDiv = document.createElement("div");
-		editRoleDiv.style.padding = "3px";
+		editRoleDiv.style.padding = "5px";
 		editRoleDiv.appendChild(document.createTextNode(ISA_R.alb_regularExpressionColon));
 		var editRoleInput = document.createElement("input");
 		editRoleInput.id = "tab_"+this.displayTabId+"_panelRegExpText";
@@ -1364,8 +1273,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 								return false;
 							}
 							self.setNewValue("role", editRoleInput.value);
-//							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('td')[3];
-							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleId).getElementsByTagName('td')[3];
+							var roleNameDiv = $("tab_"+self.displayTabId+"_role_" + self.displayRoleOrder).getElementsByTagName('td')[3];
 							roleNameDiv.firstChild.innerHTML = editRoleInput.value;
 						 },
 						 false,
@@ -1383,7 +1291,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		var editTabNameDiv = document.createElement("div");
 		editTabNameDiv.id = "tab_"+this.displayTabId+"_tabNameDiv";
-		editTabNameDiv.style.padding = "3px";
+		editTabNameDiv.style.padding = "5px";
 		editTabNameDiv.appendChild(document.createTextNode(ISA_R.alb_tabName+":"));
 		var editTabNameInput = document.createElement("input");
 		editTabNameInput.id = "tab_"+this.displayTabId+"_panelTabNameText";
@@ -1420,37 +1328,11 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		editTabNameDiv.appendChild(editTabNameInput);
 		editNamesDiv.appendChild(editTabNameDiv);
 
-		function changePanelUsage(e){
-			var select = Event.element(e);
-			var jsonRole = self.displayRoleJsons[self.displayRoleId];
-			if(jsonRole.panelUsage != select.value){
-				if(!confirm(ISA_R.ams_confirmClearStaticAreaSetting))
-					return false;
-			};
-			
-			jsonRole.panelUsage = select.value;
-			self.switchPanelDisplay(select.value);
-			self.templates.setStaticLayout0(jsonRole,0);
-			self.changeStaticLayout(jsonRole);
-		}
-		
-		if("commandbar" != self.displayTabId){
-			editAreaDiv.appendChild(
-				$.DIV({style:"padding:3px;"},
-					  ISA_R.alb_selectDisplayArea,
-					  $.SELECT({id:'panelUsageSelect',name:'panelUsage',onchange:{handler:changePanelUsage}},
-							   $.OPTION({value: 'useBothArea'},ISA_R.alb_useBothArea),
-							   $.OPTION({value: 'useStaticOnly'},ISA_R.alb_disableCustomizedArea),
-							   $.OPTION({value: 'useStaticOnly_adjustHeight'},ISA_R.alb_adjustToWindowHeight)
-							 )
-						)
-				);
-		}
+		// Fixed area settings
+		editAreaDiv.appendChild(document.createElement("br"));
 
-		var labelSetStaticDiv = document.createElement("div");
-		labelSetStaticDiv.className = "configSet";
-		var labelSetStaticLegend = document.createElement("p");
-		labelSetStaticLegend.className = "configSetHeader";
+		var labelSetStaticDiv = document.createElement("fieldset");
+		var labelSetStaticLegend = document.createElement("legend");
 		labelSetStaticLegend.appendChild(document.createTextNode(ISA_R.alb_fixedArea));
 		labelSetStaticDiv.appendChild(labelSetStaticLegend);
 		editAreaDiv.appendChild(labelSetStaticDiv);
@@ -1465,10 +1347,37 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		if("commandbar" != self.displayTabId){
 			editAreaDiv.appendChild(document.createElement("br"));
 
-			var labelSetDynamicDiv = $.DIV({id:'tab_'+self.displayTabId+'_personalizedAreaFieldSet', className: "modalConfigSet"},
-												$.P({className: "modalConfigSetHeader"},ISA_R.alb_customizedArea));
+			var labelSetDynamicDiv = document.createElement("fieldset");
+			var labelSetDynamicLegend = document.createElement("legend");
+			labelSetDynamicLegend.appendChild(document.createTextNode(ISA_R.alb_customizedArea));
+			labelSetDynamicDiv.appendChild(labelSetDynamicLegend);
 			editAreaDiv.appendChild(labelSetDynamicDiv);
-			
+
+			var disableCustomizedAreaId = "tab_"+this.displayTabId+"_disableCustomizedArea";
+			labelSetDynamicDiv.appendChild(
+				$.DIV(
+					{},
+					$.INPUT(
+						{
+							id: disableCustomizedAreaId,
+							type: "checkbox",
+							onchange: {
+								handler: function(e){
+									var disabledDynamicPanel = $("tab_"+self.displayTabId+"_disableCustomizedArea").checked;
+									if(disabledDynamicPanel)
+										$("tab_"+self.displayTabId+"_panelDynamicDiv").hide();
+									else
+										$("tab_"+self.displayTabId+"_panelDynamicDiv").show();
+									self.setNewValue("disabledDynamicPanel", disabledDynamicPanel);
+								},
+								id: ["_adminPanelTab","_adminPanel"]
+							}
+						}
+					),
+					$.LABEL({"htmlFor": disableCustomizedAreaId}, ISA_R.alb_disableCustomizedArea)
+				)
+			);
+
 			var editDynamicDiv = document.createElement("div");
 			editDynamicDiv.id = "tab_"+this.displayTabId+"_panelDynamicDiv";
 			//editDynamicDiv.appendChild(labelSetDynamicDiv);
@@ -1751,7 +1660,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			if(disabledDiv && disabledDiv.getAttribute("disabledCommand")){
 				checkedCheckBox = false;
 			}
-			var checkBox = ISA_Admin.createBaseCheckBox("", checkedCheckBox, false, document);
+			var checkBox = ISA_Admin.createBaseCheckBox("", checkedCheckBox, false);
 			contentDiv.appendChild(checkBox);
 			var clickCheckHandler = function(e) {
 				if(commandBarItem.togglableConfirm && !commandBarItem.togglableConfirm(checkBox)){
@@ -1936,6 +1845,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 	/**
 		Creating Static widget list
+	*/
 	this.buildStaticWidgetsList = function(layout, staticJson) {
 		if(!this.staticContainer) return;
 
@@ -2057,135 +1967,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			childDivs[i].style.overflow = "hidden";
 		}
 	}
-	*/
-	
-	/**
-		Creating Static widget list
-	*/
-	this.buildStaticWidgetsList = function(layout, staticJson) {
-		if(!this.staticContainer) return;
 
-		while( this.editStaticDiv.firstChild )
-			this.editStaticDiv.removeChild( this.editStaticDiv.firstChild );
-
-		this.editStaticDiv.appendChild( this.staticContainer );
-
-		var buttonDiv = document.createElement("div");
-		buttonDiv.style.clear = "both";
-		this.editStaticDiv.insertBefore(buttonDiv, this.staticContainer);
-		// Selecting layout button
-		var selectButton = document.createElement("input");
-		selectButton.type = "button";
-		selectButton.value = ISA_R.alb_selectLayout;
-		IS_Event.observe(selectButton, 'click', this.selectLayoutModal.init.bind(this), false, ["_adminPanelTab","_adminPanel"]);
-		buttonDiv.appendChild(selectButton);
-		buttonDiv.appendChild(document.createTextNode("　"));
-
-		if('useStaticOnly_adjustHeight' != this.displayRoleJsons[this.displayRoleId].panelUsage){
-			// Editting HTML button
-			var htmlButton = document.createElement("input");
-			htmlButton.type = "button";
-			htmlButton.value = ISA_R.alb_editHTML;
-			IS_Event.observe(htmlButton, 'click', this.editHTMLModal.init.bind(this, layout), false, ["_adminPanelTab","_adminPanel"]);
-			buttonDiv.appendChild(htmlButton);
-		}
-
-		// Remove the item displayed ay last time
-		this.clearStaticContainer();
-
-		this.staticContainer.innerHTML = ISA_Admin.replaceUndefinedValue(layout);
-		var childDivs = this.staticContainer.getElementsByTagName('div');
-		for(var i = 0; i < childDivs.length; i++){
-			if(!childDivs[i].id) continue;
-			childDivs[i].style.border = "solid 1px #000";
-			var json = staticJson[childDivs[i].id];
-			if( !json ) continue;
-
-			var editImgSpan = document.createElement('span');//It does not work if the handler of Control modal is added to img element in IE
-			var editImg = document.createElement("img");
-			editImg.src = imageURL + "edit.gif";
-			editImg.style.cursor = "pointer";
-			editImg.title = ISA_R.alb_editing;
-			editImgSpan.appendChild(editImg);
-			if(!childDivs[i].firstChild) {
-				childDivs[i].appendChild(editImgSpan);
-			} else {
-				childDivs[i].insertBefore(editImgSpan, childDivs[i].firstChild);
-			}
-//			IS_Event.observe(editImg, 'click', this.selectWidgetModal.init.bind(this, json.id, "static"), false, ["_adminPanelTab","_adminPanel"]);
-			var editorFormObj =
-			  new ISA_CommonModals.EditorForm(
-				  editImgSpan,
-				  function(widgetJSON){
-					  var selectType = ISA_CommonModals.EditorForm.getSelectType();
-					  if( widgetJSON.type != selectType )
-						  widgetJSON.properties = {};
-					  
-					  var roleJSON = self.displayRoleJsons[self.displayRoleId];
-					  var oldId = widgetJSON.id;
-					  //var widgetJSON = roleJSON.staticPanel[widgetObj.id];
-					  //var widgetJSON = Object.clone(roleJSON.staticPanel[widgetObj.id]);
-					  widgetJSON.id = "w_"+new Date().getTime();
-					  widgetJSON.type = ISA_CommonModals.EditorForm.getSelectType();
-					  widgetJSON.properties = ISA_CommonModals.EditorForm.getProperty(widgetJSON);
-					  widgetJSON.ignoreHeader = ISA_CommonModals.EditorForm.isIgnoreHeader();
-					  if(!widgetJSON.ignoreHeader) delete widgetJSON.ignoreHeader;
-					  widgetJSON.noBorder = ISA_CommonModals.EditorForm.isNoBorder();
-					  if(!widgetJSON.noBorder) delete widgetJSON.noBorder;
-
-					  widgetJSON.title = ISA_Admin.trim($("formTitle").value);
-					  widgetJSON.href =  $("formHref").value;
-					  var _widgetTitleDiv = $("title_" + oldId);
-					  _widgetTitleDiv.innerHTML = widgetJSON.title;
-
-					  delete roleJSON.staticPanel[oldId];
-					  roleJSON.staticPanel[widgetJSON.id] = widgetJSON;
-					  roleJSON.layout = roleJSON.layout.replace( escapeHTMLEntity( oldId ),widgetJSON.id );
-
-					  self.changeStaticLayout( roleJSON );
-
-					  if( Control.Modal.current ) {
-						  Control.Modal.close();
-					  } else {
-						  Control.Modal.container.hide();
-					  }
-				  },{
-					menuFieldSetLegend:ISA_R.alb_widgetHeaderSettings,
-					setDefaultValue: false,
-					disableMiniBrowserHeight: true,
-					showIgnoreHeaderForm:true,
-					showNoBorderForm:true,
-					displayACLFieldSet:false,
-					disableDisplayRadio:true,
-					omitTypeList:['Ranking','Ticker','MultiRssReader']
-				  });
-			IS_Event.observe(editImgSpan, 'click', function(editorFormObj,json){editorFormObj.showEditorForm(json);}.bind(editImgSpan,editorFormObj,json), false, ["_adminPanelTab","_adminPanel"]);
-
-
-			var widgetTypeDiv = document.createElement("div");
-			widgetTypeDiv.style.paddingTop = '10px';
-			widgetTypeDiv.style.paddingBottom = '20px';
-			widgetTypeDiv.style.paddingLeft = '20px';
-			widgetTypeDiv.style.paddingRight = '20px';
-			widgetTypeDiv.style.textAlign = 'center';
-			var widgetTitleDiv = document.createElement("span");
-			widgetTitleDiv.id = "title_" + json.id;
-
-			var iconDiv = ISA_Admin.buildWidgetTypeIconDiv(json.type);
-			iconDiv.style.cssFloat = iconDiv.style.styleFloat = "left";
-
-			widgetTitleDiv.appendChild(iconDiv);
-			if(json.title && json.title.length > 0){
-				widgetTitleDiv.appendChild(document.createTextNode(json.title));
-			}else{
-				widgetTitleDiv.appendChild(document.createTextNode(ISA_R.alb_noneSetting));
-			}
-			widgetTypeDiv.appendChild(widgetTitleDiv);
-			childDivs[i].appendChild(widgetTypeDiv);
-
-			childDivs[i].style.overflow = "hidden";
-		}
-	}
 	/**
 		Change layout of Static widget
 	*/
@@ -2506,7 +2288,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		var editorFormObj = new ISA_CommonModals.EditorForm(
 			editImgSpan,
 			function( widgetObj ){
-				//var url = adminHostPrefix + "/adminserv/" + ( (widgetObj.instId) ? "updateWidgetInst" : "insertWidgetInst" );
+				//var url = findHostURL() + "/adminserv/" + ( (widgetObj.instId) ? "updateWidgetInst" : "insertWidgetInst" );
 
 				var widgetType = ISA_CommonModals.EditorForm.getSelectType();
 				if(!widgetType || !widgetObj.menuItem){
@@ -2822,7 +2604,6 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			// Turn back to the previous value if empty is entered
 			if(nowText.length == 0) {
 				beforeElement.nodeValue = beforeText;
-				nowText = beforeText;
 			} else {
 				beforeElement.nodeValue = nowText;
 			}
@@ -2900,45 +2681,19 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				displayRole.layout = newValue;
 				break;
 			case "staticpanel":
-				if(typeof newValue == "string"){
-					newValue = eval("(" + newValue + ")");
-				}
 				displayRole.staticPanel = newValue;
 				break;
 			case "dynamicpanel":
-				if(typeof newValue == "string"){
-					newValue = eval("(" + newValue + ")");
-				}
 				displayRole.dynamicPanel = newValue;
 				break;
 			case "disableddynamicpanel":
 				displayRole.disabledDynamicPanel = newValue;
-				break;
-			case "adjusttowindowheight":
-				displayRole.adjustToWindowHeight = newValue;
 				break;
 			default:
 				break;
 		}
 		this.isUpdated = true;
 		ISA_Admin.isUpdated = true;
-		
-//		var rid = "tab_"+this.displayTabId+"_role_" + this.displayRoleOrder;
-		var rid = "tab_"+this.displayTabId+"_role_" + this.displayRoleId;
-		if(!ISA_DefaultPanel.updateRaws.contains(rid) && newValue)
-			ISA_DefaultPanel.updateRaws.push(rid);
-		
-		this.updateRawStyle();
-	}
-
-	this.updateRawStyle = function(){
-		$jq("#tab_" + this.displayTabId+"_roleGroup>div").each(function(idx, div){
-			if(ISA_DefaultPanel.updateRaws.contains(div.id)){
-				$jq(div).addClass("updateRaw");
-			}else{
-				$jq(div).removeClass("updateRaw");
-			}
-		})
 	}
 
 	/**
@@ -2980,9 +2735,8 @@ ISA_DefaultPanel.prototype.classDef = function() {
 				errorMessages.push(error);
 			}
 
-			// It need to cast if it is Number
+			// It need to cast if it is Numeber
 			roleJson.roleOrder = roleOrder++;
-			this.displayRoleJsons[i].roleOrder = roleJson.roleOrder;
 			roleJson.principalType = String( roleJson.principalType ); // null is needed to be entered as characters
 			roleJson.id = String( roleJson.id );
 			roleJson.tabId = String( roleJson.tabId );
@@ -3017,7 +2771,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 
 		//controlModal.open();
 
-		var url = adminHostPrefix + "/services/tabLayout/updateDefaultPanel";
+		var url = findHostURL() + "/services/tabLayout/updateDefaultPanel";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -3052,7 +2806,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		return true;
 	}
 	this.removeDefaultPanel = function(tabId) {
-		var url = adminHostPrefix + "/services/tabLayout/removeDefaultPanel";
+		var url = findHostURL() + "/services/tabLayout/removeDefaultPanel";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -3074,7 +2828,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 	this.build = function() {
 
 		function getWidgetConf() {
-			var url = adminHostPrefix + "/services/widgetConf/getWidgetConfJson";
+			var url = findHostURL() + "/services/widgetConf/getWidgetConfJson";
 			var opt = {
 				method: 'get' ,
 				asynchronous:true,
@@ -3108,7 +2862,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		}
 
 		function getTabIdListJson(){
-			var url = adminHostPrefix + "/services/tabLayout/getTabIdListJson";
+			var url = findHostURL() + "/services/tabLayout/getTabIdListJson";
 			var opt = {
 				method: 'get' ,
 				asynchronous:true,
@@ -3143,7 +2897,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 			AjaxRequest.invoke(url, opt);
 		}
 
-		var url = adminHostPrefix + "/services/tabLayout/getLockingUid";
+		var url = findHostURL() + "/services/tabLayout/getLockingUid";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,
@@ -3181,7 +2935,7 @@ ISA_DefaultPanel.prototype.classDef = function() {
 	};
 
 	this.getDefaultPanelJSONByTabId = function(tabId,callback ){
-		var url = adminHostPrefix + "/services/tabLayout/getDefaultPanelJson";
+		var url = findHostURL() + "/services/tabLayout/getDefaultPanelJson";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -3234,5 +2988,3 @@ ISA_DefaultPanel.prototype.classDef = function() {
 		return $("td_"+commandItemId);
 	}
 };
-
-ISA_DefaultPanel.updateRaws = [];

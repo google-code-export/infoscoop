@@ -83,9 +83,10 @@ public class AuthenticationServlet extends HttpServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 
 		String action = ((HttpServletRequest)request).getPathInfo();
-		String uid = request.getParameter("uid");
-		if (uid != null) {
-			uid = uid.trim();
+		String uidParam = request.getParameter("uid");
+		String uid = null;
+		if (uidParam != null) {
+			uid = uidParam.trim().toLowerCase();
 		}
 		String password = request.getParameter("password");
 		if(password != null){
@@ -96,6 +97,10 @@ public class AuthenticationServlet extends HttpServlet {
 			new_password = new_password.trim();
 		}
 
+		String domainName = request.getParameter("domain_name");
+		if(domainName != null){
+			domainName = domainName.trim();
+		}
 		if(log.isDebugEnabled()){
 			log.debug("uid=" + uid + ",password=" + password);
 		}
@@ -134,9 +139,10 @@ public class AuthenticationServlet extends HttpServlet {
 				((HttpServletResponse)response).sendRedirect(request.getContextPath() +"/login.jsp");
 				return;
 			}else{
-				service.login( uid, password);
+				service.login( uid, password, domainName);
 				
 				request.getSession().setAttribute("Uid",uid );
+				request.getSession().setAttribute("Domain",domainName );
 				//request.getSession().setAttribute(AuthenticationServlet.TMP_LOGINUSER_SUBJECT_ATTR_NAME, loginUser );
 				String authType = PropertiesService.getHandle().getProperty("loginCredentialAuthType");
 				if(authType != null){
@@ -169,15 +175,11 @@ public class AuthenticationServlet extends HttpServlet {
 					}
 				}
 			}
-			String redirectPath = "/index.jsp";
-			Cookie[] cookies = request.getCookies();
-			for(int i = 0; i < cookies.length; i++){
-				if("redirect_path".equals(cookies[i].getName())){
-					redirectPath = cookies[i].getValue();
-					break;
-				}
+			String redirectPath = request.getParameter("url");
+			if (redirectPath == null) {
+				redirectPath = request.getContextPath() + "/index.jsp";
 			}
-			((HttpServletResponse)response).sendRedirect(request.getContextPath() + redirectPath);
+			((HttpServletResponse)response).sendRedirect(redirectPath);
 		}catch (AuthenticationException e){
 			String logMsg = "authentication failed. ";
 			log.error(logMsg, e);

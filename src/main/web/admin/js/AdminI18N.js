@@ -5,8 +5,7 @@ ISA_I18N.i18nLocales = null;//List of local currently used in DB. Update if any 
 ISA_I18N.types = {
 	"menu" : ISA_R.alb_menu,
 	"search" : ISA_R.alb_searchForm,
-	"widget" : ISA_R.alb_widget,
-	"layout" : ISA_R.alb_otherLayout
+	"widget" : ISA_R.alb_widget
 };
 
 var queryString = document.location.search;
@@ -65,17 +64,17 @@ ISA_I18N.prototype.classDef = function() {
 		i18nBody = document.createElement("div");
 		i18nBody.style.clear = "both";
 		
-//		var titleDiv = document.createElement("div");
-//		titleDiv.id = "i18nTitle";
-//		titleDiv.className = "i18nTitle";
-//		titleDiv.appendChild(document.createTextNode(ISA_R.alb_i18n));
-//		i18nBody.appendChild(titleDiv);
+		var titleDiv = document.createElement("div");
+		titleDiv.id = "i18nTitle";
+		titleDiv.className = "i18nTitle";
+		titleDiv.appendChild(document.createTextNode(ISA_R.alb_i18n));
+		i18nBody.appendChild(titleDiv);
 		
-		var i18nField = document.createElement("div");
+		var i18nField = document.createElement("fieldset");
 		i18nField.className = "i18nCategoryField";
 		i18nBody.appendChild( i18nField );
 		
-		var messageTitielDiv = document.createElement("p");
+		var messageTitielDiv = document.createElement("legend");
 		messageTitielDiv.className = "i18nCategoryTitle";
 		messageTitielDiv.appendChild( document.createTextNode(ISA_R.alb_messageSettings));
 		i18nField.appendChild( messageTitielDiv );
@@ -84,11 +83,11 @@ ISA_I18N.prototype.classDef = function() {
 		i18nDiv.className = "i18nCategory";
 		i18nField.appendChild(i18nDiv);
 		
-		var holidayField = document.createElement("div");
+		var holidayField = document.createElement("fieldset");
 		holidayField.className = "i18nCategoryField";
 		i18nBody.appendChild( holidayField );
 		
-		var holidayTitleDiv = document.createElement("p");
+		var holidayTitleDiv = document.createElement("legend");
 		holidayTitleDiv.className = "i18nCategoryTitle";
 		holidayTitleDiv.appendChild( document.createTextNode(ISA_R.alb_holidaySettings));
 		holidayField.appendChild( holidayTitleDiv );
@@ -102,7 +101,7 @@ ISA_I18N.prototype.classDef = function() {
 	};
 	
 	this.build = function() {
-		var url = adminHostPrefix + "/services/i18n/getLocales";
+		var url = findHostURL() + "/services/i18n/getLocales";
 		var opt = {
 			method: 'get',
 			asynchronous:true,
@@ -162,7 +161,6 @@ ISA_I18N.prototype.classDef = function() {
 		}
 		
 		var table = document.createElement("table");
-		//table.className = "configTable";
 		var tbody = document.createElement("tbody");
 		table.appendChild(tbody);
 		
@@ -171,13 +169,10 @@ ISA_I18N.prototype.classDef = function() {
 		for(var type in types) {
 			if(typeof types[type] == "function") continue;
 			var headerTr = document.createElement("tr");
-			//headerTr.className = "configTableHeader";
+			headerTr.id = "proxyConfigHeader";
 			var headerTd = document.createElement("td");
-			headerTd.className = "configTableHeaderTd";
-			headerTd.style.bordeTop = "1px solid #666";
-			headerTd.style.padding = "5px";
 			headerTd.colSpan = 3;
-//			headerTd.style.textAlign = "left";
+			headerTd.style.textAlign = "left";
 			var headerLeft = document.createElement("div");
 			headerLeft.style.cssFloat = "left";
 			headerLeft.style.styleFloat = "left";
@@ -208,12 +203,9 @@ ISA_I18N.prototype.classDef = function() {
 				var country = locales[i].country;
 				var lang = locales[i].lang;
 				var localesTr = document.createElement("tr");
-				//localesTr.className = "proxyConfigList";
+				localesTr.className = "proxyConfigList";
 				var localeTd = document.createElement("td");
-				localeTd.style.padding = "3px";
 				localeTd.style.width = "100px";
-				localeTd.style.height = "20px";
-				
 				//localeTd.style.textAlign = "right";
 				localeTd.appendChild(document.createTextNode(country + "_" + lang));
 				localesTr.appendChild(localeTd);
@@ -221,9 +213,9 @@ ISA_I18N.prototype.classDef = function() {
 				linkTd.className = "i18nLinkTd";
 				var exportLink = buildLink(linkTd, ISA_R.alb_export);
 				if( type != "holiday") {
-					exportLink.href = adminHostPrefix + "/i18nexport?type=" + type + "&country=" + country + "&lang=" + lang;
+					exportLink.href = "i18nexport?type=" + type + "&country=" + country + "&lang=" + lang;
 				} else {
-					exportLink.href = adminHostPrefix + "/services/holidays/downloadHoliday?country=" +country + "&lang=" + lang;
+					exportLink.href = "services/holidays/downloadHoliday?country=" +country + "&lang=" + lang;
 				}
 				
 				buildLink(linkTd, ISA_R.alb_import, self.showCSVImportForm.bind(this, localeModal, type, country, lang));
@@ -232,7 +224,6 @@ ISA_I18N.prototype.classDef = function() {
 				fileForm.type = "file";
 				
 				var deleteTd = document.createElement("td");
-				
 				if (!ISA_I18N.isDefaultLocale(country, lang)) {
 					var deleteImg = document.createElement("img");
 					deleteImg.src = imageURL + "trash.gif";
@@ -250,11 +241,7 @@ ISA_I18N.prototype.classDef = function() {
 				}else{
 					deleteTd.innerHTML ="&nbsp;";
 				}
-				if(i != locales.length-1){
-					localeTd.style.borderBottom = "1px dashed #666";
-					linkTd.style.borderBottom = "1px dashed #666";
-					deleteTd.style.borderBottom = "1px dashed #666";
-				}
+				
 				localesTr.appendChild(linkTd);
 				localesTr.appendChild(deleteTd);
 				
@@ -315,9 +302,9 @@ ISA_I18N.prototype.classDef = function() {
 		}
 		
 		if( type != "holiday") {
-			form.action = adminHostPrefix + "/i18nimport?type=" + type + "&country=" + country + "&lang=" + lang;
+			form.action = "i18nimport?type=" + type + "&country=" + country + "&lang=" + lang;
 		} else {
-			form.action = adminHostPrefix + "/services/holidays/uploadHoliday?country=" + country + "&lang=" + lang;
+			form.action = "services/holidays/uploadHoliday?country=" + country + "&lang=" + lang;
 		}
 		
 		fileForm.style.height = "25px"
@@ -400,7 +387,6 @@ ISA_I18N.prototype.classDef = function() {
 		div.appendChild(closeDiv);
 		
 		var table = document.createElement("table");
-		table.className = "configTableHeader";
 		div.appendChild(table);
 		var caption = document.createElement("caption");
 		caption.innerHTML = ISA_R.alb_addLocale;
@@ -410,17 +396,12 @@ ISA_I18N.prototype.classDef = function() {
 		
 		function createColumn(rows, isHeader){
 			var tr = document.createElement("tr");
-//			if(isHeader)
-//				tr.id = "configTableHeader";
-//			else
-//				tr.className = "proxyConfigList";
+			if(isHeader)
+				tr.id = "proxyConfigHeader";
+			else
+				tr.className = "proxyConfigList";
 			for(var i=0;i<rows.length;i++){
 				var td = document.createElement("td");
-				if(isHeader){
-					td.className = "configTableHeaderTd";
-				}else{
-					td.className = "configTableTd";
-				}
 				if(typeof rows[i] == "string"){
 					td.innerHTML = rows[i];
 				} else {
@@ -435,7 +416,6 @@ ISA_I18N.prototype.classDef = function() {
 		
 		function createSelect(options){
 			var select = document.createElement("select");
-			select.style.margin = "3px";
 			for(var i in options){
 			if(typeof options[i] == "function") continue;
 				var option = document.createElement("option");
@@ -451,7 +431,6 @@ ISA_I18N.prototype.classDef = function() {
 		var button = document.createElement("input");
 		button.type = "button";
 		button.value = ISA_R.alb_add;
-		button.style.margin = "3px";
 		IS_Event.observe(button, "click", function(){
 			var country = selectCountry.value;
 			var lang = selectLang.value;
@@ -489,7 +468,7 @@ ISA_I18N.prototype.classDef = function() {
 		if( type == "holiday")
 			return ISA_Holidays.insertHoliday( lang,country );
 		
-		var url = adminHostPrefix + "/services/i18n/insertI18nLocale";
+		var url = findHostURL() + "/services/i18n/insertI18nLocale";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -518,7 +497,7 @@ ISA_I18N.prototype.classDef = function() {
 		if( type == "holiday")
 			return ISA_Holidays.deleteHoliday( lang,country );
 		
-		var url = adminHostPrefix + "/services/i18n/removeI18nLocale";
+		var url = findHostURL() + "/services/i18n/removeI18nLocale";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -545,7 +524,7 @@ ISA_I18N.prototype.classDef = function() {
 
 ISA_Holidays = Class.create();
 ISA_Holidays.fetchLocales = function( callback ) {
-	var url = adminHostPrefix + "/services/holidays/getHolidayLocalesJSON";
+	var url = findHostURL() + "/services/holidays/getHolidayLocalesJSON";
 	var opt = {
 		method: 'get',
 		asynchronous: true,
@@ -571,7 +550,7 @@ ISA_Holidays.fetchLocales = function( callback ) {
 	AjaxRequest.invoke(url, opt);
 }
 ISA_Holidays.insertHoliday = function( lang,country ) {
-	var url = adminHostPrefix + "/services/holidays/updateHoliday";
+	var url = findHostURL() + "/services/holidays/updateHoliday";
 	var opt = {
 		method: 'post' ,
 		contentType: "application/json",
@@ -597,7 +576,7 @@ ISA_Holidays.insertHoliday = function( lang,country ) {
 	AjaxRequest.invoke(url, opt);
 }
 ISA_Holidays.deleteHoliday = function( lang,country ) {
-	var url = adminHostPrefix + "/services/holidays/deleteHoliday";
+	var url = findHostURL() + "/services/holidays/deleteHoliday";
 	var opt = {
 		method: 'post' ,
 		contentType: "application/json",

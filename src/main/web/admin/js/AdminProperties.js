@@ -44,8 +44,8 @@ ISA_Properties.prototype.classDef = function() {
 		propertiesDiv.style.clear = "both";
 		
 		var refreshAllDiv = document.createElement("div");
-		refreshAllDiv.className = "refreshAll";
-		//refreshAllDiv.style.textAlign = "right";
+		refreshAllDiv.id = "refreshAll";
+		refreshAllDiv.style.textAlign = "right";
 		//refreshAllDiv.style.width = "80%";
 		
 		var commitDiv = ISA_Admin.createIconButton(ISA_R.alb_changeApply, ISA_R.alb_changeApply, "database_save.gif", "right");
@@ -68,8 +68,7 @@ ISA_Properties.prototype.classDef = function() {
 				return;
 			
 			ISA_Admin.isUpdate = false;
-			ISA_Properties.properties = new ISA_Properties();
-			ISA_Properties.properties.build();
+			ISA_Admin.TabBuilders.properties.build();
 		}, false, "_adminProperties");
 		
 		var advancedDiv = ISA_Admin.createIconButton(ISA_R.alb_advancedSettings, ISA_R.alb_advancedSettings, "wrench.gif", "right");
@@ -80,10 +79,10 @@ ISA_Properties.prototype.classDef = function() {
 			});
 		}, false, "_adminProperties");
 		
-//		var titleDiv = document.createElement("div");
-//		titleDiv.id = "propertiesTitle";
-//		titleDiv.className = "propertiesTitle";
-//		titleDiv.appendChild(document.createTextNode(ISA_R.alb_propertiesList));
+		var titleDiv = document.createElement("div");
+		titleDiv.id = "propertiesTitle";
+		titleDiv.className = "propertiesTitle";
+		titleDiv.appendChild(document.createTextNode(ISA_R.alb_propertiesList));
 		
 		var advancedMsg = document.createElement("div");
 		advancedMsg.className = "advancedProperty";
@@ -91,7 +90,7 @@ ISA_Properties.prototype.classDef = function() {
 		advancedMsg.innerHTML = ISA_R.alb_advancedSettingsMessage;
 		
 		propertiesDiv.appendChild(refreshAllDiv);
-//		propertiesDiv.appendChild(titleDiv);
+		propertiesDiv.appendChild(titleDiv);
 		propertiesDiv.appendChild(advancedMsg);
 		propertiesDiv.appendChild(self.buildProperties());
 		
@@ -101,28 +100,22 @@ ISA_Properties.prototype.classDef = function() {
 	this.buildProperties = function() {
 		var propertiesDiv = document.createElement("div");
 		propertiesDiv.id = "properties";
-//		propertiesDiv.style.width = "90%";
+		//propertiesDiv.style.width = "80%";
 		
 		var categoryTables = {};
 		// PropertiesList build
 		CATEGORY_LIST.each(function(category){
-//			var categoryElm = document.createElement("fieldSet");
-//			categoryElm.style.width = "100%";
-//			var categoryLabel = document.createElement("legend");
-			var categoryElm = document.createElement("div");
-//			categoryElm.className = "configSet";
-//			categoryElm.style.width = "100%";
-			var categoryLabel = document.createElement("p");
-			categoryLabel.className = "homeTitle";
+			var categoryElm = document.createElement("fieldSet");
+			var categoryLabel = document.createElement("legend");
 			categoryLabel.appendChild(document.createTextNode(category.value));
 			categoryElm.appendChild(categoryLabel);
 
 			var propertiesTable = document.createElement("table");
 			propertiesTable.border = "1";
-			propertiesTable.cellSpacing = "0";
-			propertiesTable.cellPadding = "0";
+			propertiesTable.cellSpacing = "1";
+			propertiesTable.cellPadding = "1";
 			propertiesTable.className = "propertiesGroup";
-//			propertiesTable.style.width = "98%";
+			propertiesTable.style.width = "100%";
 
 			var propertiesTbody = document.createElement("tbody");
 			propertiesTbody.id = "propertiesTbody";
@@ -136,7 +129,6 @@ ISA_Properties.prototype.classDef = function() {
 			propertiesTd.className = "headerProperties";
 			propertiesTd.style.whiteSpace = "nowrap";
 			propertiesTd.style.width = "30%";
-			propertiesTd.style.padding = "5px";
 			propertiesTd.appendChild(document.createTextNode(ISA_R.alb_porpety));
 			propertiesTr.appendChild(propertiesTd);
 
@@ -144,7 +136,6 @@ ISA_Properties.prototype.classDef = function() {
 			propertiesTd.className = "headerProperties";
 			propertiesTd.style.whiteSpace = "nowrap";
 			propertiesTd.style.width = "30%";
-			propertiesTd.style.padding = "5px";
 			propertiesTd.appendChild(document.createTextNode(ISA_R.alb_value));
 			propertiesTr.appendChild(propertiesTd);
 
@@ -152,7 +143,6 @@ ISA_Properties.prototype.classDef = function() {
 			propertiesTd.className = "headerProperties";
 			propertiesTd.style.whiteSpace = "nowrap";
 			propertiesTd.style.width = "40%";
-			propertiesTd.style.padding = "5px";
 			propertiesTd.appendChild(document.createTextNode(ISA_R.alb_description));
 			propertiesTr.appendChild(propertiesTd);
 
@@ -187,14 +177,14 @@ ISA_Properties.prototype.classDef = function() {
 		var td;
 		td = document.createElement("td");
 		td.style.whiteSpace = "nowrap";
-		td.style.padding = "3px";
+		td.style.paddingLeft = "5px";
 		
 		td.appendChild(document.createTextNode(ISA_Admin.replaceUndefinedValue(property.id)));
 		tr.appendChild(td);
 		
 		td = document.createElement("td");
 		td.style.whiteSpace = "nowrap";
-		td.style.padding = "3px";
+		td.style.paddingLeft = "5px";
 		
 		var prefConf = property;
 		prefConf.name = property.id;
@@ -218,9 +208,9 @@ ISA_Properties.prototype.classDef = function() {
 		
 		td = document.createElement("td");
 		//td.style.whiteSpace = "nowrap";
-		td.style.padding = "3px";
+		td.style.paddingLeft = "5px";
 		td.style.fontSize = "90%";
-		td.appendChild(document.createTextNode(ISA_R["alb_desc_"+property.id]+ "　"));
+		td.appendChild(document.createTextNode(ISA_R["property_desc_"+property.id]+ "　"));
 		tr.appendChild(td);
 		
 		return tr;
@@ -242,6 +232,10 @@ ISA_Properties.prototype.classDef = function() {
 			var errorMsg = [];
 			var propertyInput = $('input_'+property.id);
 			if (property.regex || property.required || property.maxLength || property.maxBytes) {
+				if(!property.isTranslatedRegexMsg){
+					property.regexMsg = ISA_R["property_regex_"+property.regexMsg];
+					property.isTranslatedRegexMsg = true;
+				}
 				var error = IS_Validator.validate(inputValue, property);
 				if(error){
 					propertyInput.style.borderColor = "red";
@@ -269,7 +263,7 @@ ISA_Properties.prototype.classDef = function() {
 	this.updateProperties = function(modal) {
 		modal.open();
 		
-		var url = adminHostPrefix + "/services/properties/updateProperties";
+		var url = findHostURL() + "/services/properties/updateProperties";
 		var properties = {};
 		for(var id in ISA_Properties.propertiesList) {
 			if( (ISA_Properties.propertiesList[id] instanceof Function) )
@@ -312,7 +306,7 @@ ISA_Properties.prototype.classDef = function() {
 	}
 	
 	this.build = function() {
-		var url = adminHostPrefix + "/services/properties/getPropertiesJson";
+		var url = findHostURL() + "/services/properties/getPropertiesJson";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,

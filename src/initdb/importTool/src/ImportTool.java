@@ -1,59 +1,24 @@
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.hibernate.Criteria;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.criterion.Expression;
-import org.infoscoop.dao.model.Account;
-import org.infoscoop.dao.model.Adminrole;
-import org.infoscoop.dao.model.Forbiddenurls;
-import org.infoscoop.dao.model.Gadget;
-import org.infoscoop.dao.model.GadgetIcon;
-import org.infoscoop.dao.model.HOLIDAYSPK;
-import org.infoscoop.dao.model.Holidays;
-import org.infoscoop.dao.model.I18NPK;
-import org.infoscoop.dao.model.I18n;
-import org.infoscoop.dao.model.I18nlocale;
-import org.infoscoop.dao.model.OAuthCertificate;
-import org.infoscoop.dao.model.Portaladmins;
-import org.infoscoop.dao.model.Portallayout;
-import org.infoscoop.dao.model.Properties;
-import org.infoscoop.dao.model.Proxyconf;
-import org.infoscoop.dao.model.Searchengine;
-import org.infoscoop.dao.model.Siteaggregationmenu;
-import org.infoscoop.dao.model.TABLAYOUTPK;
-import org.infoscoop.dao.model.TabLayout;
-import org.infoscoop.dao.model.WidgetConf;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.*;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import au.com.bytecode.opencsv.CSVReader;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.infoscoop.dao.model.*;
+import org.infoscoop.dao.model.Properties;
 
 public class ImportTool {
 	public static enum TABLES {
@@ -64,10 +29,6 @@ public class ImportTool {
 		PORTALLAYOUT( new PortalLayoutFactory()),
 		PROPERTIES( new PropertiesFactory()),
 		PROXYCONF( new ProxyConfFactory()),
-		SEARCHENGINE( new SearchEngineFactory()),
-		SITEAGGREGATIONMENU( new SiteAggregationMenuFactory()),
-		TABLAYOUT( new TabLayoutFactory()),
-		WIDGETCONF( new WidgetConfFactory()),
 		HOLIDAYS( new HolidaysFactory()),
 		FORBIDDENURLS( new ForbiddenUrlsFactory()),
 		GADGET( new GadgetFactory()),
@@ -84,7 +45,6 @@ public class ImportTool {
 			for( TABLES table : TABLES.values() )
 				DIRECTORY_MAP.put( table,basedir+table.name().toLowerCase());
 			DIRECTORY_MAP.put( TABLES.PROXYCONF,basedir+"proxyconfig");
-			DIRECTORY_MAP.put( TABLES.WIDGETCONF,basedir+"widgetconfig");
 			DIRECTORY_MAP.put( TABLES.I18NLOCALE,basedir+"i18nLocale");
 			DIRECTORY_MAP.put( TABLES.ACCOUNT,basedir+"accounts");
 		}
@@ -97,19 +57,6 @@ public class ImportTool {
 
 		public Object newBean( CSVField[] values ) {
 			return factory.newBean( values );
-		}
-		
-		public boolean isPKAutoIncrement(){
-			return factory.isPKAutoIncrement();
-		}
-				
-		public Object getUpdateObject(Session session, Object bean) {
-			Criteria c = factory.createUniqueCriteria(session, bean);
-			Object obj = c.uniqueResult();
-			if(obj == null)
-				return null;
-			factory.setData(obj, bean);
-			return obj;
 		}
 	}
 
@@ -196,16 +143,7 @@ public class ImportTool {
 
 			int n = 0;
 			for( Object bean : beans ) {
-				if(!table.isPKAutoIncrement())
-					session.saveOrUpdate( bean );
-				else{
-					Object o = table.getUpdateObject(session, bean);
-					if(o !=null)
-						session.update(o);
-					else{
-						session.save(bean);
-					}
-				}
+				session.saveOrUpdate( bean );
 				n++;
 			}
 
@@ -366,21 +304,12 @@ class CSVField {
 	}
 }
 
-abstract class CSVBeanFactory<T> {
-	abstract public T newBean( CSVField[] values );
-	public void setData(Object obj, Object bean) {		
-	}
-	
-	public boolean isPKAutoIncrement() {
-		return false;
-	}
-	public Criteria createUniqueCriteria(org.hibernate.Session session, Object obj){
-		return null;
-	}
+interface CSVBeanFactory<T> {
+	public T newBean( CSVField[] values );
 }
 
 // type,id,country,lang,message
-class I18nFactory extends CSVBeanFactory<I18n>{
+class I18nFactory implements CSVBeanFactory<I18n>{
 	public I18n newBean( CSVField[] values ) {
 		I18NPK pk = new I18NPK();
 		pk.setType( values[0].toString() );
@@ -398,7 +327,7 @@ class I18nFactory extends CSVBeanFactory<I18n>{
 }
 
 // type,country,lang
-class I18nLocaleFactory extends CSVBeanFactory<I18nlocale> {
+class I18nLocaleFactory implements CSVBeanFactory<I18nlocale> {
 	public I18nlocale newBean( CSVField[] values ) {
 		I18nlocale i18nLocale = new I18nlocale();
 		i18nLocale.setType( values[1].toString() );
@@ -407,37 +336,9 @@ class I18nLocaleFactory extends CSVBeanFactory<I18nlocale> {
 
 		return i18nLocale;
 	}
-
-	@Override
-	public Criteria createUniqueCriteria(Session session, Object obj) {
-		I18nlocale i18nlocale = (I18nlocale)obj;
-		Criteria c = session.createCriteria(I18nlocale.class);
-		c.add(Expression.conjunction()
-		    	.add( Expression.eq(I18nlocale.PROP_TYPE, i18nlocale.getType() ) )
-		    	.add( Expression.eq(I18nlocale.PROP_COUNTRY, i18nlocale.getCountry() ) )
-		    	.add( Expression.eq(I18nlocale.PROP_LANG, i18nlocale.getLang() ) )
-		    	);
-
-		return c;
-	}
-
-	@Override
-	public boolean isPKAutoIncrement() {
-		return true;
-	}
-
-	@Override
-	public void setData(Object obj, Object bean) {
-		I18nlocale _obj = (I18nlocale)obj;
-		I18nlocale _bean = (I18nlocale)bean;
-		_obj.setType(_bean.getType());
-		_obj.setLang(_bean.getLang());
-		_obj.setCountry(_bean.getCountry());
-	}
-	
 }
 
-class AdminroleFactory extends CSVBeanFactory<Adminrole> {
+class AdminroleFactory implements CSVBeanFactory<Adminrole> {
 	public Adminrole newBean( CSVField[] values ) {
 		Adminrole adminrole = new Adminrole();
 		adminrole.setRoleid( values[1].toString() );
@@ -447,30 +348,10 @@ class AdminroleFactory extends CSVBeanFactory<Adminrole> {
 
 		return adminrole;
 	}
-	
-	public void setData(Object obj, Object bean) {
-		Adminrole _obj = (Adminrole)obj;
-		Adminrole _bean = (Adminrole)obj;
-		_obj.setRoleid(_bean.getRoleid());
-		_obj.setName(_bean.getName());
-		_obj.setPermission(_bean.getPermission());
-		_obj.setAllowdelete(_bean.getAllowdelete());
-	}
-	
-	public boolean isPKAutoIncrement() {
-		return true;
-	}
-	public Criteria createUniqueCriteria(org.hibernate.Session session, Object obj){
-		Adminrole adminrole = (Adminrole)obj;
-		Criteria c = session.createCriteria(Adminrole.class);
-		c.add(Expression.eq(Adminrole.PROP_ROLEID,  adminrole.getRoleid()));
-
-		return c;
-	}
 }
 
 // uid
-class PortalAdminsFactory extends CSVBeanFactory<Portaladmins> {
+class PortalAdminsFactory implements CSVBeanFactory<Portaladmins> {
 	public Portaladmins newBean( CSVField[] values ) {
 		Portaladmins portalAdmin = new Portaladmins();
 		portalAdmin.setUid(values[1].toString());
@@ -478,32 +359,13 @@ class PortalAdminsFactory extends CSVBeanFactory<Portaladmins> {
 
 		return portalAdmin;
 	}
-
-	public void setData(Object obj, Object bean) {
-		Portaladmins _obj = (Portaladmins)obj;
-		Portaladmins _bean = (Portaladmins)obj;
-		_obj.setRoleid(_bean.getRoleid());
-		_obj.setUid(_bean.getUid());
-		_obj.setRoleid(_bean.getRoleid());
-	}
-	
-	public boolean isPKAutoIncrement() {
-		return true;
-	}
-	public Criteria createUniqueCriteria(org.hibernate.Session session, Object obj){
-		Portaladmins portaladmins = (Portaladmins)obj;
-		Criteria c = session.createCriteria(Portaladmins.class);
-		c.add(Expression.eq(Portaladmins.PROP_UID,  portaladmins.getUid()));
-
-		return c;
-	}
 }
 
 // name,layout
-class PortalLayoutFactory extends CSVBeanFactory<Portallayout> {
+class PortalLayoutFactory implements CSVBeanFactory<Portallayout> {
 	public Portallayout newBean( CSVField[] values ) {
 		Portallayout portalLayout = new Portallayout();
-		portalLayout.setName( values[0].toString() );
+		//portalLayout.setName( values[0].toString() );
 		portalLayout.setLayout( values[1].toString() );
 
 		return portalLayout;
@@ -511,7 +373,7 @@ class PortalLayoutFactory extends CSVBeanFactory<Portallayout> {
 }
 
 // id,value,description
-class PropertiesFactory extends CSVBeanFactory<Properties> {
+class PropertiesFactory implements CSVBeanFactory<Properties> {
 	private RSAPrivateKey privateKey;
 
 	public PropertiesFactory() {
@@ -550,7 +412,7 @@ class PropertiesFactory extends CSVBeanFactory<Properties> {
 
 // temp,data,lastmodified
 
-class ProxyConfFactory extends CSVBeanFactory<Proxyconf> {
+class ProxyConfFactory implements CSVBeanFactory<Proxyconf> {
 	public Proxyconf newBean( CSVField[] values ) {
 		Proxyconf proxyConf = new Proxyconf();
 		proxyConf.setTemp( values[0].toInt() );
@@ -567,70 +429,7 @@ class ProxyConfFactory extends CSVBeanFactory<Proxyconf> {
 	}
 }
 
-// temp,data
-
-class SearchEngineFactory extends CSVBeanFactory<Searchengine> {
-	public Searchengine newBean( CSVField[] values ) {
-		Searchengine searchEngine = new Searchengine();
-		searchEngine.setTemp( values[0].toInt() );
-		searchEngine.setData( values[1].toString() );
-
-		return searchEngine;
-	}
-}
-
-// type,temp,data
-
-class SiteAggregationMenuFactory extends CSVBeanFactory<Siteaggregationmenu> {
-	public Siteaggregationmenu newBean( CSVField[] values ) {
-		Siteaggregationmenu siteAggregationMenu = new Siteaggregationmenu( values[0].toString() );
-		siteAggregationMenu.setData( values[1].toString() );
-
-		return siteAggregationMenu;
-	}
-}
-
-// tabId,roleOrder,role,rolename,principalType,defaultUid,widgets,layout,widgetsLastmodified,tabNumber,deleteFlag
-
-class TabLayoutFactory extends CSVBeanFactory<TabLayout> {
-	public TabLayout newBean( CSVField[] values ) {
-		TABLAYOUTPK pk = new TABLAYOUTPK();
-		pk.setTabid( values[0].toString() );
-		pk.setRoleorder( values[1].toInt() );
-		pk.setTemp( values[11].toInt() );
-
-		TabLayout tabLayout = new TabLayout( pk );
-		tabLayout.setRole( values[2].toString() );
-		tabLayout.setRolename( values[3].toString() );
-		tabLayout.setPrincipaltype( values[4].toString() );
-		tabLayout.setDefaultuid( values[5].toString() );
-		tabLayout.setWidgets( values[6].toString() );
-		tabLayout.setLayout( values[7].toString() );
-		if( "".equals( values[8].toString() ) )
-			values[8] = new CSVField("-");
-
-		tabLayout.setWidgetslastmodified( values[8].toString() );
-		tabLayout.setTabnumber( values[9].toInt() );
-		tabLayout.setDeleteflag( values[10].toInt() );
-//		tabLayout.setWorkinguid( values[12].toString() );
-
-		return tabLayout;
-	}
-}
-
-// type,data
-
-class WidgetConfFactory extends CSVBeanFactory<WidgetConf> {
-	public WidgetConf newBean( CSVField[] values ) {
-		WidgetConf widgetConf = new WidgetConf();
-		widgetConf.setType( values[0].toString() );
-		widgetConf.setData( values[1].toString() );
-
-		return widgetConf;
-	}
-}
-
-class HolidaysFactory extends CSVBeanFactory<Holidays> {
+class HolidaysFactory implements CSVBeanFactory<Holidays> {
 	public Holidays newBean( CSVField[] values ) {
 		HOLIDAYSPK key = new HOLIDAYSPK( values[0].toString(),values[1].toString() );
 		Holidays holiday = new Holidays( key );
@@ -639,7 +438,7 @@ class HolidaysFactory extends CSVBeanFactory<Holidays> {
 		return holiday;
 	}
 }
-class ForbiddenUrlsFactory extends CSVBeanFactory<Forbiddenurls> {
+class ForbiddenUrlsFactory implements CSVBeanFactory<Forbiddenurls> {
 	public Forbiddenurls newBean( CSVField[] values ) {
 		Forbiddenurls forbiddenUrl = new Forbiddenurls();
 		forbiddenUrl.setUrl( values[1].toString() );
@@ -648,7 +447,7 @@ class ForbiddenUrlsFactory extends CSVBeanFactory<Forbiddenurls> {
 	}
 }
 
-class GadgetFactory extends CSVBeanFactory<Gadget> {
+class GadgetFactory implements CSVBeanFactory<Gadget> {
 	public Gadget newBean( CSVField[] values ) {
 		Gadget gadget = new Gadget();
 		gadget.setType( values[1].toString());
@@ -659,41 +458,12 @@ class GadgetFactory extends CSVBeanFactory<Gadget> {
 
 		return gadget;
 	}
-	
-	@Override
-	public boolean isPKAutoIncrement() {
-		return true;
-	}
-
-	public Criteria createUniqueCriteria(org.hibernate.Session session, Object obj){
-		Gadget gadget = (Gadget)obj;
-		Criteria c = session.createCriteria(Gadget.class);
-		c.add(Expression.conjunction()
-		    	.add( Expression.eq(Gadget.PROP_TYPE, gadget.getType() ) )
-		    	.add( Expression.eq(Gadget.PROP_PATH, gadget.getPath() ) )
-		    	.add( Expression.eq(Gadget.PROP_NAME, gadget.getName() ) )
-		    	);
-
-		return c;
-		
-	}
-	
-	@Override
-	public void setData(Object obj, Object bean) {
-		Gadget _obj = (Gadget)obj;
-		Gadget _bean = (Gadget)bean;
-		_obj.setName(_bean.getName());
-		_obj.setType(_bean.getType());
-		_obj.setPath(_bean.getPath());
-		_obj.setData(_bean.getData());
-		_obj.setLastmodified(new Date() );
-	}
 }
 
-class AccountFactory extends CSVBeanFactory<Account> {
+class AccountFactory implements CSVBeanFactory<Account> {
 	public Account newBean( CSVField[] values ) {
 		Account account = new Account();
-		account.setUid( values[0].toString() );
+		account.setId(new ACCOUNTPK(1, values[0].toString()));
 		account.setName( values[1].toString() );
 		account.setPasswordPlainText( values[2].toString() );
 
@@ -701,7 +471,7 @@ class AccountFactory extends CSVBeanFactory<Account> {
 	}
 }
 
-class GadgetIconFactory extends CSVBeanFactory<GadgetIcon> {
+class GadgetIconFactory implements CSVBeanFactory<GadgetIcon> {
 	public GadgetIcon newBean( CSVField[] values ) {
 		GadgetIcon gadgetIcon = new GadgetIcon();
 		gadgetIcon.setType( values[0].toString() );
@@ -711,7 +481,7 @@ class GadgetIconFactory extends CSVBeanFactory<GadgetIcon> {
 	}
 }
 
-class OAuthCertificateFactory extends CSVBeanFactory<OAuthCertificate> {
+class OAuthCertificateFactory implements CSVBeanFactory<OAuthCertificate> {
 	public OAuthCertificate newBean( CSVField[] values ) {
 		OAuthCertificate certificate = new OAuthCertificate();
 		certificate.setConsumerKey(values[0].toString());

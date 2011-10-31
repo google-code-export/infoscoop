@@ -72,7 +72,6 @@ ISA_SiteAggregationMenu.mergeMenu = function(menuItems, mapJson){
 }
 
 ISA_SiteAggregationMenu.forceUpdatePrefMap = {};
-ISA_SiteAggregationMenu.forceDeleteList = [];
 
 ISA_SiteAggregationMenu.setWidgetConf = function(_widgetConfList, isAddMulti) {
 	ISA_SiteAggregationMenu.widgetConfs = _widgetConfList;
@@ -104,7 +103,7 @@ ISA_SiteAggregationMenu.setWidgetConf = function(_widgetConfList, isAddMulti) {
 		}
 	}
 	
-	var url = adminHostPrefix + "/services/gadget/getGadgetJson";
+	var url = findHostURL() + "/services/gadget/getGadgetJson";
 	var opt = {
 	  method: 'get' ,
 	  asynchronous:true,
@@ -128,11 +127,6 @@ ISA_SiteAggregationMenu.setWidgetConf = function(_widgetConfList, isAddMulti) {
 	};
 	AjaxRequest.invoke(url, opt);
 }
-
-//Holiday information
-IS_Holiday = new IS_Widget.Calendar.iCalendar(hostPrefix + "/holidaysrv");
-IS_Holiday.noProxy = true;
-IS_Holiday.load(false);
 
 ISA_SiteAggregationMenu.prototype.classDef = function() {
 	var self = this;
@@ -200,33 +194,35 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 		refreshAllDiv.id = "refreshAll";
 		$(refreshAllDiv).setStyle({clear:"both", width:"98%", whiteSpace:"nowrap"});
 		
-		var topmenuA = $.A({id:"menu_topmenu", href:"#", className:"sideBarTab-ui" + (this.menuType == "topmenu"? " active" : ""), title:"topmenu"},
-				$.SPAN({className:"title", id:"topmenu_title"},ISA_R.alb_topmenu));
-		var sidemenuA = $.A({id:"menu_sidemenu", href:"#", className:"sideBarTab-ui" + (this.menuType == "sidemenu"? " active" : ""), title:"sidemenu"},
-						$.SPAN({className:"title", id:"sidemenu_title"},ISA_R.alb_sideMenu));
+		var changeMenuDiv = document.createElement("div");
+		changeMenuDiv.id = "changeMenu";
+		$(changeMenuDiv).setStyle({'textAlign':'left', 'float':'left'});
+		var menuSelect = document.createElement('select');
+		var topmenuOption = document.createElement('option');
+		topmenuOption.value = "topmenu";
+		topmenuOption.appendChild(document.createTextNode(ISA_R.alb_topmenu));
+		menuSelect.appendChild(topmenuOption);
+		var sidemenuOption = document.createElement('option');
+		sidemenuOption.value = "sidemenu";
+		sidemenuOption.appendChild(document.createTextNode(ISA_R.alb_sideMenu));
+		menuSelect.appendChild(sidemenuOption);
 		
-		var changeMenuDiv =	$.DIV({id:"menu-side", className:"side-bar"},
-							$.UL({id:"menu-tree-tabs"},
-							$.LI({},topmenuA)),
-							$.LI({}, sidemenuA));
-		
-		var changeDiplayMenu = function(menuType){
+		if(this.menuType == "topmenu"){
+			topmenuOption.selected = true;
+		}else{
+			sidemenuOption.selected = true;
+		}
+		IS_Event.observe(menuSelect, 'change', function(){
 			if(!self.checkUpdated()) return;
-			
+
 			ISA_Admin.clearAdminCache();
             //TODO:unnecessary to make yourself new from the first
-			ISA_SiteAggregationMenu.treeMenu = new ISA_SiteAggregationMenu(menuType, ISA_SiteAggregationMenu.isTreeAdminUser);
+			ISA_SiteAggregationMenu.treeMenu = new ISA_SiteAggregationMenu(menuSelect.value, ISA_SiteAggregationMenu.isTreeAdminUser);
 			ISA_SiteAggregationMenu.treeMenu.build();
-		};
-		
-		IS_Event.observe(topmenuA, 'click', changeDiplayMenu.bind(this, "topmenu"), false, "_adminPanel");
-		IS_Event.observe(sidemenuA, 'click', changeDiplayMenu.bind(this, "sidemenu"), false, "_adminPanel");
-
-		var menuSideBar = document.getElementById('menu-side-bar');
-		if(menuSideBar.hasChildNodes()){
-			menuSideBar.removeChild(menuSideBar.firstChild);
-		}
-		menuSideBar.appendChild(changeMenuDiv);
+			
+		}, false, "_adminPanel");
+		changeMenuDiv.appendChild(menuSelect);
+		refreshAllDiv.appendChild(changeMenuDiv);
 		
 		// Preview the whole
 		var previewDiv = ISA_Admin.createIconButton(ISA_R.alb_previewTop, ISA_R.alb_previewTop, "minibrowser.gif", "right");
@@ -261,16 +257,9 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 			ISA_Admin.isUpdated = false;
 			self.isUpdated = false;
 			
-			ISA_Admin.clearAdminCache();
-			
 			this.editSitetopIdList = [];
 			ISA_SiteAggregationMenu.removeTemp();
-			var buildMenu = function(){
-				ISA_SiteAggregationMenu.treeMenu = new ISA_SiteAggregationMenu(
-					this.menuType, ISA_SiteAggregationMenu.isTreeAdminUser);
-				ISA_SiteAggregationMenu.treeMenu.build();
-			}.bind(this);
-			ISA_loadProperties(buildMenu);
+			ISA_Admin.TabBuilders.menu.build(this.menuType, ISA_SiteAggregationMenu.isTreeAdminUser);
 		}.bind(this);
 		IS_Event.observe(refreshDiv, 'click', refreshAClick.bind(this), false, "_adminMenu");
 		
@@ -356,7 +345,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 	
 	this.changeOrderEditMode = function(isForce){
 		// Request
-		var url = adminHostPrefix + "/services/menu/orderLock";
+		var url = findHostURL() + "/services/menu/orderLock";
 		var opt = {
 			method: 'post',
 			contentType: "application/json",
@@ -426,7 +415,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 		treeMenuDiv.id = 'siteaggregationmenu_treeMenu';
 		if(this.disableMenu) treeMenuDiv.className = "menu_disable";
 		
-		var menuHeader = $.DIV({className: "homeTitle"},(this.menuType == "topmenu")? ISA_R.alb_topmenu : ISA_R.alb_sideMenu);
+		var menuHeader = ISA_Admin.buildTableHeader([ISA_R.alb_title, ISA_R.alb_link], ['400px', '500px']);
 		treeMenuDiv.appendChild(menuHeader);
 
 		var menuTop = document.createElement('div');
@@ -450,7 +439,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 			new ISA_CommonModals.EditorForm(
 				addSiteTop,
 				function(menuItem){
-					var url = adminHostPrefix + "/services/menu/addTopMenuItem";
+					var url = findHostURL() + "/services/menu/addTopMenuItem";
 					var newMenuItem = ISA_SiteAggregationMenu.getUpdMenuItem(menuItem, self.menuType);
 					newMenuItem.add = true;
 					var allertSetting = $F('allertSetting');
@@ -654,7 +643,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 		createNavigator(menuItem, menuItemTr, this);
 		
 		itemTd.appendChild(divMenuItem);
-		/*
+
 		var mdiv = document.createElement('div');
 		mdiv.id = "ml_" + menuItem.id;
 		mdiv.className = 'menuItemLink';
@@ -667,8 +656,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 			mdiv.appendChild(aTag);
 		}
 		menuDiv.appendChild(mdiv);
-		*/
-		
+		   
 		return menuDiv;
 	}
 
@@ -686,14 +674,11 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 		var currentTopUrl = ISA_Properties.propertiesList["displayTopMenu"].value;
 		var currentSideUrl = ISA_Properties.propertiesList["displaySideMenu"].value;
 
-		var url = adminHostPrefix + "/services/menu/commitMenu";
+		var url = findHostURL() + "/services/menu/commitMenu";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/x-www-form-urlencoded",
-			postBody: 'menuType=' + this.menuType
-			  + '&forceUpdateMap=' + Object.toJSON(ISA_SiteAggregationMenu.forceUpdatePrefMap)
-				+ '&forceDeleteList=' + Object.toJSON(ISA_SiteAggregationMenu.forceDeleteList)
-				+ '&editSitetopIdList=' + Object.toJSON(this.editSitetopIdList),
+			postBody: 'menuType=' + this.menuType + '&forceUpdateMap=' + Object.toJSON(ISA_SiteAggregationMenu.forceUpdatePrefMap) + '&editSitetopIdList=' + Object.toJSON(this.editSitetopIdList),
 			asynchronous:true,
 			onSuccess: function(response){
 				ISA_TempGadgetsConfs = [];
@@ -921,7 +906,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 	}
 	
 	this.build = function() {
-		var url = adminHostPrefix + "/services/menu/getMenuTree";
+		var url = findHostURL() + "/services/menu/getMenuTree";
 		var opt = {
 			method: 'post' ,
 			contentType: "application/json",
@@ -979,7 +964,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 	
 	function getTreeAdminUsers(){
 		ISA_SiteAggregationMenu.menuTreeAdminUsers = [];
-		var url = adminHostPrefix + "/services/menu/getMenuTreeAdminUsers";
+		var url = findHostURL() + "/services/menu/getMenuTreeAdminUsers";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,
@@ -1012,7 +997,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 	}
 	
 	function getWidgetConf() {
-		var url = adminHostPrefix + "/services/widgetConf/getWidgetConfJson";
+		var url = findHostURL() + "/services/widgetConf/getWidgetConfJson";
 		var opt = {
 			method: 'get' ,
 			asynchronous:true,
@@ -1044,7 +1029,7 @@ ISA_SiteAggregationMenu.prototype.classDef = function() {
 };
 
 ISA_SiteAggregationMenu.removeTemp = function(){
-	var url = adminHostPrefix + "/services/menu/removeTempMenu";
+	var url = findHostURL() + "/services/menu/removeTempMenu";
 	var opt = {
 		method: 'delete' ,
 		asynchronous: false,
@@ -1094,6 +1079,7 @@ ISA_SiteAggregationMenu.getUpdMenuItem = function(menuItem, menuType){
 		if(formServiceAuthType) menuItem.serviceAuthType = formServiceAuthType.value;
 		var formServiceAuthParamName = $('formServiceAuthParamName');
 		if(formServiceAuthParamName && formServiceAuthParamName.value) menuItem.serviceAuthType += ' ' + encodeURIComponent(formServiceAuthParamName.value);
+		console.log(menuItem.serviceAuthType);
 	}
 	
 	var formHeaderOnly = $("formHeaderOnly");
@@ -1209,7 +1195,6 @@ ISA_SiteAggregationMenu.addMenuTree = function(menuObj, newMenuItem, menuItem){
 ISA_SiteAggregationMenu.updateMenuTree = function(newMenuItem, menuItem){
 	newMenuItem.depth = menuItem.depth;
 	$('t_' + menuItem.id).innerHTML = escapeHTMLEntity(newMenuItem.directoryTitle || newMenuItem.title);
-	/*
 	var hrefTag = $('tl_' + menuItem.id);
 	if(!hrefTag){
 		hrefTag = document.createElement('a');
@@ -1219,7 +1204,6 @@ ISA_SiteAggregationMenu.updateMenuTree = function(newMenuItem, menuItem){
 	}
 	hrefTag.href = newMenuItem.href;
 	hrefTag.innerHTML = newMenuItem.href;
-	*/
 	
 	//Disapprove of changing types
 	//Likely to be changed to a state where you can drop sevral
@@ -1391,7 +1375,8 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 		var typeList = new Array("Information","Information2","Ranking","Ticker");
 		
 		this.titleEditBox = document.createElement("div");
-		this.titleEditBox.className = "floatMenu";
+//		this.titleEditBox.className = (widget.parent)? "subWidgetTitleEditor" : "widgetTitleEditor";
+		this.titleEditBox.style.position = "absolute";
 		this.titleEditBox.style.display = "none";
 
 		var editTitleTable = document.createElement("table");
@@ -1419,7 +1404,7 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 			editTitleTd.appendChild(editDiv);
 			
 			var editorFormObj = new ISA_CommonModals.EditorForm(editDiv, function(menuItem){
-				var url = adminHostPrefix + "/services/menu/updateMenuItem";
+				var url = findHostURL() + "/services/menu/updateMenuItem";
 				var newMenuItem = ISA_SiteAggregationMenu.getUpdMenuItem(menuItem, menuObj.menuType);
 				if (menuItem.serviceURL && !newMenuItem.serviceURL) {
 					alert(ISA_R.ams_externalServiceDataNotDelete);
@@ -1497,7 +1482,7 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 				
 				var deleteEditorFormObj = new ISA_CommonModals.EditorForm(editDiv, function(menuItem){
 					
-					var url = adminHostPrefix + "/services/menu/"
+					var url = findHostURL() + "/services/menu/"
 						+ ((menuItem.parentId)? "removeMenuItem" : "removeTopMenuItem");
 					var opt = {
 						method: 'post',
@@ -1506,8 +1491,6 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 						asynchronous: true,
 						onSuccess: function(response){
 							binder.isUpdated = true;
-							if(menuItem.forceDelete)
-							  ISA_SiteAggregationMenu.forceDeleteList = ISA_SiteAggregationMenu.forceDeleteList.concat(eval(response.responseText));
 							ISA_SiteAggregationMenu.removeMenuTree(menuItem);
 						},
 						onFailure: function(t){
@@ -1547,7 +1530,7 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 			
 			var parentMenuItem = menuItem;
 			var addEditorFormObj = new ISA_CommonModals.EditorForm(editDiv, function(menuItem){
-				var url = adminHostPrefix + "/services/menu/addMenuItem";
+				var url = findHostURL() + "/services/menu/addMenuItem";
 				var newMenuItem = ISA_SiteAggregationMenu.getUpdMenuItem(menuItem, menuObj.menuType);
 				newMenuItem.add = true;
 				
@@ -1653,7 +1636,7 @@ ISA_SiteAggregationMenu.Navigator.prototype.classDef = function() {
 		oldSiteTop.parentNode.replaceChild(loadingDiv, oldSiteTop);
 		
 		// Request
-		var url = adminHostPrefix + "/services/menu/menuLock";
+		var url = findHostURL() + "/services/menu/menuLock";
 		var opt = {
 			method: 'post',
 			contentType: "application/json",

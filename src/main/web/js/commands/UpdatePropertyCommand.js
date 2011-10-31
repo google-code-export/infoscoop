@@ -288,7 +288,7 @@ IS_Commands.RemoveTabCommand.prototype.parseResponse = function(docEl){
 /**
  * AddWidgetCommand
  */
-IS_Commands.AddWidgetCommand = function(tabId, owner, targetColumn, sibling, widgetConf, parentId, menuId){
+IS_Commands.AddWidgetCommand = function(tabId, owner, targetColumn, sibling, widgetConf, parentId, menuId, ginstid){
 	this.obj = owner;
 	this.type = "AddWidget";
 	this.tabId = tabId;
@@ -296,6 +296,7 @@ IS_Commands.AddWidgetCommand = function(tabId, owner, targetColumn, sibling, wid
 	this.targetColumn = targetColumn;
 	this.sibling = sibling;
 	this.menuId = menuId || "";
+	if(ginstid)this.ginstid  = ginstid;
 	
 	this.widgetId = IS_Portal.getTrueId(owner.id);
 	this.widgetConf = widgetConf;
@@ -310,6 +311,7 @@ IS_Commands.AddWidgetCommand.prototype.toRequestString = function(){
 		id:this.id,
 		parent:this.parentId,
 		menuId:this.menuId,
+		ginstid:this.ginstid,
 		tabId:this.tabId,
 		widgetId:this.widgetId,
 		targetColumn:this.targetColumn,
@@ -513,38 +515,6 @@ IS_Commands.EmptyAllWidgetCommand.prototype.toRequestString = function(){
 };
 
 /**
- * AddLogCommand
- */
-IS_Commands.AddLogCommand = function(logType,url,rssUrl){
-	this.type = "AddLog";
-	this.logType = logType;
-	this.url = url;
-	this.rssUrl = rssUrl;
-	
-//	this.id = this.type + "_" + this.logType + "_" + this.url;
-	this.id = this.type + "_" + this.logType + "_" + this.url + "_" + this.rssUrl;
-};
-
-IS_Commands.AddLogCommand.prototype.parseResponse = function(docEl){
-	var attrs=docEl.attributes;
-	var status=attrs.getNamedItem("status").value;
-	if(status != "ok"){
-		var reason = attrs.getNamedItem("message").value;
-		msg.error("add log "+ this.id +" is failed.\n\n" + reason);
-	}
-};
-
-IS_Commands.AddLogCommand.prototype.toRequestString = function(){
-	return is_simpleXmlify({
-		type:this.type,
-		id:this.id,
-		logType:this.logType,
-		url:this.url,
-		rssUrl:this.rssUrl
-	}, "command");
-};
-
-/**
  * UpdatePreferenceCommand
  */
 IS_Commands.UpdatePreferenceCommand = function(field, value){
@@ -625,136 +595,6 @@ IS_Commands.ExecLogoffProcessCommand.prototype.toRequestString = function(){
 		type:this.type,
 		id:this.id,
 		field:this.field
-	}, "command");
-};
-
-/**
- * UpdateRssMetaCommand
- */
-IS_Commands.UpdateRssMetaCommand = function(contentType, url, rssUrl, title, pubDate){
-	/*
-	this.type = "UpdateRssMeta";
-	this.contentType = contentType;
-	this.url = url;
-	this.rssUrl = rssUrl;
-	this.title = title;
-	this.pubDate = pubDate;
-	*/
-//	this.id = this.type + "_" + this.url + "_" + this.rssUrl;
-};
-
-IS_Commands.UpdateRssMetaCommand.prototype.parseResponse = function(docEl){
-	var attrs=docEl.attributes;
-	var status=attrs.getNamedItem("status").value;
-	if(status != "ok"){
-		var reason = attrs.getNamedItem("message").value;
-		msg.error("update rssmeta "+ this.id +" is failed.\n\n" + reason);
-	}
-};
-
-IS_Commands.UpdateRssMetaCommand.prototype.toRequestString = function(){
-	return is_simpleXmlify({
-		type:this.type,
-		id:this.id,
-		contentType:this.contentType,
-		url:this.url,
-		rssUrl:this.rssUrl,
-		title:this.title,
-		pubDate:this.pubDate
-	}, "command");
-};
-
-/**
- * UpdateRssMetaRefreshCommand
- */
-IS_Commands.UpdateRssMetaRefreshCommand = function(contentType, url, title){
-	/*
-	this.type = "UpdateRssMetaRefresh";
-	this.contentType = contentType;
-	this.url = url;
-	this.title = title;
-	this.count = IS_Portal.autoRefCountList[this.url];
-	*/
-//	this.id = this.type + "_" + this.url;
-};
-
-IS_Commands.UpdateRssMetaRefreshCommand.prototype.parseResponse = function(docEl){
-	var attrs=docEl.attributes;
-	var status=attrs.getNamedItem("status").value;
-	if(status != "ok"){
-		var reason = attrs.getNamedItem("message").value;
-		msg.error("update rssmetaRefresh "+ this.id +" is failed.\n\n" + reason);
-	}
-};
-
-IS_Commands.UpdateRssMetaRefreshCommand.prototype.toRequestString = function(){
-	IS_Portal.autoRefCountList[this.url] = 0;
-	
-	return is_simpleXmlify({
-		type:this.type,
-		id:this.id,
-		contentType:this.contentType,
-		url:this.url,
-		title:this.title,
-		count:this.count
-	}, "command");
-};
-
-/**
- * AddKeywordCommand
- */
-
-IS_Commands.AddKeywordCommand = function(keyword){
-	var keywordSep = [];
-
-/*
-	for (var i=0; i<keyword.length; i++) {
-		keyword = keyword.replace("　", " ");
-	}
-	
-	var tempArray = keyword.split(" ");
-
-	for(var i = 0; i < tempArray.length; i++){
-		if(tempArray[i].length > 0 && tempArray[i]!=" ") {keywordSep.push(tempArray[i]);}
-	}
-*/
-	
-	for (var i=0; i<keyword.length; i++) {
-		keyword = keyword.replace(/　/g, " ");
-	}
-	var tempArray = keyword.split(" ");
-	for(var i = 0; i < tempArray.length; i++){
-		if(tempArray[i].length > 0) {keywordSep.push(tempArray[i]);}
-	}
-	
-	
-
-	keywordSep.sort();
-	var keywords = "";
-	for (var i=0; i<keywordSep.length; i++) {
-		if (i==0) keywords = keywordSep[i];
-		else keywords = keywords + " " + keywordSep[i];
-	}
-	
-	this.type = "AddKeyword";
-	this.keyword = keywords;
-	this.id = keywords;
-};
-
-IS_Commands.AddKeywordCommand.prototype.parseResponse = function(docEl){
-	var attrs=docEl.attributes;
-	var status=attrs.getNamedItem("status").value;
-	if(status != "ok"){
-		var reason = attrs.getNamedItem("message").value;
-		msg.error("add keyword "+ this.id +" is failed.\n\n" + reason);
-	}
-};
-
-IS_Commands.AddKeywordCommand.prototype.toRequestString = function(){
-	return is_simpleXmlify({
-		type:this.type,
-		keyword:this.keyword,
-		id:this.id
 	}, "command");
 };
 

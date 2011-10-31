@@ -17,6 +17,7 @@
 
 
 .infoScoop #portal-command{
+	display:none;
 }
 
 .infoScoop #portal-command .command,
@@ -227,7 +228,7 @@
 .infoScoop .authCredentialInfoList{
 	width:100%;
 }
-.infoScoop .authCredentialInfoList .authCredentialInfoTable{
+.infoScoop .authCredentialInfoList .authCredentialInfoList table{
 	width:100%;
 }
 .infoScoop .authCredentialInfoList .authCredentialInfoTable th{
@@ -240,20 +241,6 @@
 	color:gray;
 }
 
-.infoScoop .authCredentialInfoList .authCredentialDelete{
-	float:right;
-	padding:2px;
-	cursor:pointer;
-}
-
-.infoScoop .authCredentialInfoList .authCredentialDelete span{
-	position:relative;
-	top:-2px;
-	font-size :80%;
-	color:#000;
-	font-weight:normal;
-}
-
 .infoScoop .authCredentialInfoList .authCredentialListTable{
 	width:100%;
 }
@@ -262,4 +249,7 @@
 	font-size:80%;
 	text-align:right;
 	vertical-align:top;
+}
+.infoScoop #messageIcon{
+	display:none;
 }

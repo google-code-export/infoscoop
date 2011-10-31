@@ -68,11 +68,8 @@ public class OpenIDFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
         HttpSession session = request.getSession();
         
-        String reqUri = request.getRequestURI();
-        String srvPath = request.getServletPath();
-        String actionName = reqUri.substring(reqUri.lastIndexOf("/"), reqUri.length());
+        String actionName = request.getServletPath();
         String uid = (String) session.getAttribute("Uid");
-        
         if (uid == null){
 
         	uid = (String) session.getAttribute("openid");

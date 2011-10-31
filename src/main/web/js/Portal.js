@@ -36,8 +36,6 @@ var defaultTheme = is_getPropertyString(defaultTheme, false);
 var hostPrefix = (isTabView)? findHostURL(false).replace(/\/tab.*/, "") : findHostURL(false);
 var proxyServerURL = hostPrefix + "/proxy";
 
-var searchEngineURL = searchEngineURL ? is_getProxyUrl( searchEngineURL, "NoOperation") : hostPrefix+"/schsrv";
-
 IS_Customization = false;
 IS_WidgetConfiguration = [];
 IS_Portal.logoffDateTime = -1;
@@ -49,26 +47,23 @@ IS_Portal.freshDays = freshDays;
 IS_Portal.buildVersion = "";
 IS_Portal.lastSaveFailed = false;
 
-IS_Portal.autoRefCountList = [];
 IS_Request.CommandQueue = new IS_Request.Queue("/comsrv", commandQueueWait, !is_userId);
 IS_Request.LogCommandQueue = new IS_Request.Queue("/logsrv", logCommandQueueWait, false, true);
 IS_Portal.imageController = {};//For image thumbnail. Refer to RssItemRender.js
-IS_Portal.iframeToolBarIconsTable;
 var IS_User = new Object();
+IS_R.getResource = function(message, array){
+	if(message && array){
+		for(var i=0;i<array.length;i++){
+			message = message.replace("{" + i + "}", array[i]);
+		}
+	}
+	return message;
+}
 
 IS_Portal.defaultFontSize = "100%";
 
 IS_Portal.start = function() {
 	var self = this;
-
-	if(defaultTheme){
-		try{
-			IS_Portal.theme.defaultTheme = eval( '(' + defaultTheme + ')' );
-		}catch(e){
-			msg.error('The defaultTheme property is invalid, please contact to administrator:' + e);
-		}
-	}
-	IS_Portal.theme.setTheme(IS_Portal.theme.currentTheme);
 	
 	IS_Portal.startIndicator();
 	
@@ -95,13 +90,7 @@ IS_Portal.start = function() {
 
 	var header = document.getElementById("portal-header");
 	header.innerHTML = IS_Customization.header;
-	if(IS_Customization.header.length == 0)
-		header.style.display = "none";
 	
-	IS_Portal.SearchEngines.init();
-
-	var command = document.getElementById("portal-command");
-	command.innerHTML = IS_Customization.commandbar;
 	IS_Portal.buildFontSelectDiv();
 	IS_Portal.buildGlobalSettingModal();
 	IS_Portal.Trash.initialize();
@@ -110,6 +99,13 @@ IS_Portal.start = function() {
 	IS_Portal.buildLogout();
 	
 	IS_Portal.buildTabs();
+	
+	//Holiday information
+	IS_Holiday = new IS_Widget.Calendar.iCalendar(localhostPrefix + "/holidaysrv");
+	IS_Holiday.load(false);
+	freshDays = IS_Portal.getFreshDays(IS_Portal.freshDays);
+	//IS_Portal.freshDays = freshDays;
+
 	new IS_WidgetsContainer();
 	new IS_SiteAggregationMenu();
 	IS_Portal.sidePanel = new IS_SidePanel();
@@ -127,6 +123,7 @@ IS_Portal.start = function() {
 	Event.observe(window, 'resize', IS_Portal.adjustStaticWidgetHeight, false);
 	IS_EventDispatcher.addListener("adjustedMessageBar","",IS_Portal.adjustStaticWidgetHeight);
 
+
 	var messageBarDiv = $('message-bar-controles');
 	var messageMoreBtn = document.createElement('input');
 	messageMoreBtn.id = 'message-list-more-btn';
@@ -143,8 +140,6 @@ IS_Portal.start = function() {
 
 	IS_Portal.behindIframe.init();
 	
-	Event.observe($("ifrm"), "load", IS_Portal.iFrameOnLoad, false);
-		
 	Event.observe( document.body, 'mousedown', IS_Widget.RssReader.RssItemRender.checkHideRssDesc, false );
 	
 	var panelBody = document.body;
@@ -306,8 +301,6 @@ IS_Portal.start = function() {
 			
 			// subWidget in the same tab is always built
 			var currentTabId = IS_Portal.currentTabId;
-			if( Browser.isSafari1 && targetWidget.content.isTimeDisplayMode())
-				IS_Portal.currentTabId = "temp";
 			
 			widgetConf.parentId = "p_" + menuItem.parentId;
 			widget = IS_WidgetsContainer.addWidget( currentTabId, widgetConf , true, function(w){
@@ -316,9 +309,6 @@ IS_Portal.start = function() {
 			});//TODO: The way of passing sub widget.
 			
 			IS_Portal.widgetDropped( widget );
-			
-			if( Browser.isSafari1 && targetWidget.content.isTimeDisplayMode())
-				IS_Portal.currentTabId = currentTabId;
 			
 			//Send to Server
 			//IS_Widget.addWidgetCommand(widget);
@@ -477,8 +467,7 @@ IS_Portal.start = function() {
 					for(var i = 0; i < rssReaders.length; i++){
 						//if(widget.content.isDisplay(rssReaders[i])){
 							menuId = IS_Portal.getTrueId(rssReaders[i].id, rssReaders[i].widgetType).substring(2);
-							if(!IS_Portal.isChecked(menuId))
-								IS_Portal.widgetDropped( rssReaders[i] );
+							IS_Portal.widgetDropped( rssReaders[i] );
 						//}
 					}
 				}else{
@@ -551,9 +540,6 @@ IS_Portal.start = function() {
 		}
 	);
 	//IS_Portal.startDetectFontResized();
-	
-	if(is_userId)
-		IS_Portal.checkSystemMsg();
 }
 
 IS_Portal.getFreshDays = function(_freshDays){
@@ -581,7 +567,7 @@ IS_Portal.getFreshDays = function(_freshDays){
 }
 
 IS_Portal.closeIFrame = function () {
-	if(!(Element.visible('portal-iframe') || Element.visible('search-iframe')))return;
+	if(!Element.visible('portal-iframe'))return;
 	
 	var iframeTag = $("ifrm");
 	if(iframeTag) iframeTag.src = "";
@@ -590,36 +576,18 @@ IS_Portal.closeIFrame = function () {
 		divIFrame.style.display = "none";
 	}
 	
-	var divIFrame = $("search-iframe");
-	if ( divIFrame ) {
-		divIFrame.style.display = "none";
-	}
-	
-	var ifrmURL = $("portal-iframe-url");
-	ifrmURL.style.display = "none";
-	
 	var divIS_PortalWidgets = document.getElementById("panels");
 	if ( divIS_PortalWidgets) {
 		divIS_PortalWidgets.style.display="";
 	}
-	var iframeToolBar = document.getElementById("iframe-tool-bar");
-	iframeToolBar.style.display = "none";
-	
-	IS_Event.unloadCache("_search");
-	
-	//Clear iframe in IS_Portal.searchEngines
-	IS_Portal.SearchEngines.clearIFrames();
 	
 //	IS_WidgetsContainer.adjustColumnWidth();
 	IS_Widget.adjustDescWidth();
-	IS_Widget.Information2.adjustDescWidth();
 	//Display ifame at link icon in only IE and layout is broke up if go back.
 	//TODO Should be removed
 	IS_Widget.Maximize.adjustMaximizeWidth();
 	IS_Widget.WidgetHeader.adjustHeaderWidth();
 	IS_Portal.adjustPanelHeight(null);
-	
-	IS_Portal.SearchEngines.clearTemp();
 	
 	//Refresh immidiately if auto refresh is worked while iframe is displayed
 	IS_Portal.refresh.resume();
@@ -628,29 +596,13 @@ IS_Portal.closeIFrame = function () {
 	IS_Portal.adjustIS_PortalStyle();
 };
 
-if( Browser.isSafari1 ) {
-	IS_Portal.closeIFrame = ( function() {
-		var closeIFrame = IS_Portal.closeIFrame;
-		
-		return function() {
-			if( IS_Portal.currentTabId.indexOf("_") != 0 || IS_Widget.MaximizeWidget )
-				return;
-			
-			IS_Portal.currentTabId = IS_Portal.currentTabId.substring(1);
-			closeIFrame.apply( this,$A( arguments ));
-			
-			IS_Portal.enableCommandBar();
-			IS_Portal.adjustCurrentTabSize();
-		}
-	})();
-}
-
 IS_Portal.goHome = function(){
 	IS_Portal.closeIFrame();
 	IS_Portal.CommandBar.changeDefaultView();
 }
 
 //TODO:This code depend to MultiRssReader.
+/*
 IS_Portal.isChecked = function(menuItem){
 	isChecked = false;
 	
@@ -682,6 +634,7 @@ IS_Portal.isChecked = function(menuItem){
 	}
 	return isChecked;
 }
+*/
 
 /**
  * Search and return Widget existing in portal by MenuID(no w_)
@@ -754,33 +707,15 @@ IS_Portal.adjustSiteMenuHeight = function(e, siteManuObj) {
 IS_Portal.adjustIframeHeight = function(e, iframeObj) {
 	var iframe = iframeObj;
 	if(!iframe){
-		var searchResult = document.getElementById("search-result");
-		if(searchResult){
-			var searchIframes = searchResult.getElementsByTagName("iframe");
-			for ( i = 0; i < searchIframes.length; i++) {
-				var disp = getDisplay(searchIframes[i]);
-				if(disp) {
-					iframe = searchIframes[i];
-					break;
-				}
-			}
-		}
-		
-		if(!iframe){
-			var contentIframe = document.getElementById("ifrm");
-			if(contentIframe && getDisplay(contentIframe)){
-				iframe = contentIframe;
-			}
+		var contentIframe = document.getElementById("ifrm");
+		if(contentIframe && getDisplay(contentIframe)){
+			iframe = contentIframe;
 		}
 	}
 	
 	if(iframe && iframe.id) {
 		try{
-//			var adjustHeight = getWindowSize(false) - findPosY(iframe) - 10;
-			var iframeToolBar = document.getElementById("iframe-tool-bar");
-			var offset = ( iframeToolBar && iframeToolBar.style.display != "none") ? iframeToolBar.offsetHeight : 0;
-			var adjustHeight = getWindowSize(false) - findPosY(iframe) - offset - 10 -(Browser.isFirefox ? 10:0);
-
+			var adjustHeight = getWindowSize(false) - findPosY(iframe) - 10 -(Browser.isFirefox ? 10:0);
 			iframe.style.height = adjustHeight + "px";
 		}catch(e){
 			msg.warn(IS_R.getResource(IS_R.ms_errorOnWindowResize,[e]));
@@ -803,7 +738,6 @@ IS_Portal.deleteCache = function() {
 		method: 'get' ,
 		asynchronous:false,
 		onSuccess: function(req){},
-		on1223: function(req){},
 		onFailure: function(t) {
 			msg.warn(IS_R.getResource(IS_R.ms_cacheDeleteFailure,[t.status,t.statusText]));
 		}
@@ -817,7 +751,6 @@ IS_Portal.deleteCacheByUrl = function(url) {
 		postBody: "delete=&url=" + encodeURIComponent(url),
 		asynchronous:true,
 		onSuccess: function(req){},
-		on1223: function(req){},
 		onFailure: function(t) {
 			msg.warn(IS_R.getResource(IS_R.ms_cacheDeleteFailure,[t.status,t.statusText]));
 		}
@@ -843,9 +776,6 @@ if(!isTabView){
 		}else{
 			IS_Portal.start();
 		}
-		
-		if( Browser.isSafari1 )
-		  IS_Portal.deleteCache();//TODO:Should be delted at calling index.jsp
 	});
 }
 
@@ -853,13 +783,6 @@ Event.observe(window, 'beforeunload',  windowBeforeUnload );
 
 function windowBeforeUnload() {
 	IS_Request.asynchronous = false;
-
-	try{
-		IS_Portal.processLogoff();
-	}catch(e){
-		alert(IS_R.getResource(IS_R.ms_logofftimeSavingfailure,[getText(e)]));
-	}
-
 	try{
 		IS_Request.LogCommandQueue.fireRequest();
 	}catch(e){}
@@ -878,18 +801,11 @@ function windowUnload() {
 	IS_Request.asynchronous = false;
 
 	//Send to Server
-	/*
 	try{
 		IS_Portal.processLogoff();
 	}catch(e){
 		alert(IS_R.getResource(IS_R.ms_logofftimeSavingfailure,[getText(e)]));
 	}
-	*/
-	
-	//Event.unloadCache();
-	// Cache is deleted on loading
-	if( !Browser.isSafari1 )
-		IS_Portal.deleteCache();
 	
 	for ( var id in IS_Portal.widgetLists){
 		for ( var i in IS_Portal.widgetLists[id] ) {
@@ -905,95 +821,6 @@ function windowUnload() {
 	}
 }
 
-IS_Portal.currentLink = {};
-IS_Portal.iFrameOnLoad = function() {
-	var divUrl = document.getElementById("iframeUrl");
-	window.scroll(0,0);
-	try{
-		var url = window.ifrm.location.href;
-		if(url == "about:blank") return;
-		
-		divUrl.value = url;
-		if(IS_Portal.currentLink.url) {
-			try{
-				var nodeName = IS_Portal.currentLink.element.nodeName.toLowerCase();
-				if(nodeName == "a")
-					IS_Portal.currentLink.element.href = IS_Portal.currentLink.url;
-				else if(nodeName == "form")
-					IS_Portal.currentLink.element.action = IS_Portal.currentLink.url;
-			}catch(e){
-			}
-		}
-		IS_Portal.currentLink.element = null;
-		
-		if($("iframe-tool-bar").style.display == "none"){
-			$("iframe-tool-bar").style.display = "block";
-			IS_Portal.adjustIframeHeight();
-		}
-		
-		try{
-			if(IS_User.IframeOnload) IS_User.IframeOnload(divUrl.value);
-		}catch(e){}
-	}catch(e){
-//		divUrl.className = "iframeUrlError";
-		var ifrmToolBar = document.getElementById("iframe-tool-bar");
-		ifrmToolBar.style.display = "none";
-		IS_Portal.currentLink = {};
-		IS_Portal.adjustIframeHeight();
-	}
-}
-
-
-/**
- * iframeToolBar
- */
-IS_Portal.buildIframeToolBar = function() {
-	var iframeToolBar = document.getElementById("iframe-tool-bar");
-	iframeToolBar.style.display = "none";
-	
-	if( IS_Portal.iframeToolBar )
-		return;
-	
-	iframeToolBar.style.backgroundColor = "#EEEEEE";
-	
-	IS_Portal.iframeToolBar = new IS_Portal.ContentFooter({
-		id: "iframe-tool-bar",
-		isDisplay: function() {
-			return true; // ?
-		},
-		getTitle: function() {
-			try {
-				return window.ifrm.document.title;
-			} catch( ex ) {
-				msg.warn( ex );
-			}
-			
-			return "";
-		},
-		getUrl: function() {
-			try {
-				return document.getElementById("iframeUrl").value;
-			} catch( ex ) {
-				msg.warn( ex );
-			}
-			
-			return "";
-		},icons: [
-			{
-				html: '<table width="100%"><tr><td><input readOnly="readOnly" id="iframeUrl"></td></tr></table>'
-			}
-		]
-	});
-	
-	IS_Portal.iframeToolBar.displayContents();
-	
-	IS_Portal.iframeToolBar.elm_toolBar.style.width = "100%";
-	
-	iframeToolBar.appendChild( IS_Portal.iframeToolBar.elm_toolBar );
-	
-	$("iframeUrl").parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = "100%";
-}
-
 IS_Portal.isInlineUrl = function(url){
 	if(!url || !displayInlineHost) return false;
 	if(!url.match(/\w+:[\/]+([^\/]*)/)) return false;
@@ -1007,16 +834,7 @@ IS_Portal.isInlineUrl = function(url){
 }
 
 IS_Portal.showIframe = function(url){
-	var iframeToolBar = $("iframe-tool-bar");
-	if(iframeToolBar.innerHTML == "")
-		IS_Portal.buildIframeToolBar();
-	
 	IS_Portal.CommandBar.changeIframeView();
-	
-	var divIFrame = $("search-iframe");
-	if ( divIFrame ) {
-		divIFrame.style.display = "none";
-	}
 	
 	var divIFrame = $("portal-iframe");
 
@@ -1058,42 +876,9 @@ IS_Portal.buildIFrame = function (aTag) {
 			return;
 		}
 	}
-	if(Browser.isSafari1 && IS_Portal.isTabLoading())
-		return;
 	
-	if(aTag && aTag.nodeName) {
-		IS_Portal.currentLink = {element:aTag};
-		
-		var nodeName = aTag.nodeName.toLowerCase();
-		if(nodeName == "a") {
-			IS_Portal.currentLink.url = aTag.href;
-//			aTag.href = proxyServerURL + "URLReplace/" + aTag.href;
-		} else if(nodeName == "form"){
-			IS_Portal.currentLink.url = aTag.action;
-//			aTag.action = proxyServerURL + "URLReplace/" + aTag.action;
-		}
-	}
-			
 	IS_Portal.showIframe();
 };
-
-if( Browser.isSafari1 ){
-	IS_Portal.buildIFrame = ( function() {
-		var buildIFrame = IS_Portal.buildIFrame;
-		
-		return function( aTag ) {
-			if( IS_Widget.MaximizeWidget )
-				IS_Widget.MaximizeWidget.turnbackMaximize();
-			
-			buildIFrame.apply( this,[aTag]);
-			if( aTag.target != "ifrm")
-				return;
-			
-			IS_Portal.disableCommandBar();
-			IS_Portal.currentTabId = "_"+IS_Portal.currentTabId;
-		}
-	})();
-}
 
 //Trash start
 //TODO: The tarsh handling Safari should be considered as it is hard to maintain.
@@ -1259,12 +1044,8 @@ IS_Portal.Trash = new function() {
 	function emptyAllWidget(){
 		self.widgets = [];
 		
-		//FIXME
-		if( Browser.isSafari1 ) {
-			setTimeout( self.displayModal.bind( self ),100 );
-		} else {
-			self.displayModal();
-		}
+		self.displayModal();
+		
 		var cmd = new IS_Commands.EmptyAllWidgetCommand();
 		IS_Request.CommandQueue.addCommand(cmd);
 	}
@@ -1392,9 +1173,6 @@ IS_Portal.Trash = new function() {
 		if(!this.widgets)
 			this.loadTrashWidgets();
 		
-		if( Browser.isSafari1 )
-			var iframe = document.createElement("iframe");
-		
 		var widgets = this.widgets;
 		for(var i = 0; i < widgets.length; i++){
 			if(existParent(widgets[i])) continue;
@@ -1406,23 +1184,6 @@ IS_Portal.Trash = new function() {
 			var titleTd = createElm("td",[icon, widgets[i].title]);
 			
 			var contextmenuHandler = showContextMenu(widgets[i], titleTd);
-			if( Browser.isSafari1 ) {
-				
-				contextmenuHandler = ( function() {
-					var handler = contextmenuHandler;
-					
-					return function(e) {
-						IS_Event.stop(e);
-						
-						var eventObj = Object.extend( Object.extend({},e),{
-							pageX: e.pageX +findPosX( iframe ),
-							pageY: e.pageY +findPosY( iframe )
-						});
-						
-						handler.apply( this,[eventObj]);
-					}
-				})();
-			}
 			IS_Event.observe(titleTd, "contextmenu",contextmenuHandler, false, "_trash");
 			
 			tr.appendChild(titleTd);
@@ -1444,24 +1205,6 @@ IS_Portal.Trash = new function() {
 		trashBody.appendChild(createElm("tr",listTd));
 		IS_Event.observe(trashTable, "mousedown", hideContextMenu, false, "_trash");
 		//this.modal.update(trashTable);
-		if( Browser.isSafari1 ) {
-			iframe.frameborder = 0;
-			iframe.style.width = iframe.style.height = "100%";
-			
-			var content = document.createElement("div");
-			content.style.height = "100%";
-			content.appendChild( trashTable )
-			IS_Event.observe( iframe,"load",function() {
-				var doc = iframe.document || iframe.contentWindow.document;
-				
-				doc.body.innerHTML = "";
-				doc.body.appendChild( content );
-			} );
-			//FIXME blank.html may help...
-			iframe.src = "./iframe.jsp"
-			
-			trashTable = iframe;
-		}
 		
 		this.modal.setContent(trashTable);
 		
@@ -1562,9 +1305,6 @@ IS_Portal.buildFontSelectDiv = function(){
 		fontChangeDiv.appendChild(fontChangeDivSta);
 		fontChangeDiv.appendChild(fontChangeDivAdd);
 		
-		if( Browser.isSafari1 )
-			return;
-		
 		setButtonActionEvent(fontChangeDivAdd, "mouseover", "outset");
 		setButtonActionEvent(fontChangeDivSta, "mouseover", "outset");
 		setButtonActionEvent(fontChangeDivDel, "mouseover", "outset");
@@ -1647,7 +1387,6 @@ IS_Portal.setFontSize = function(e, isInitialize) {
 	
 	if(!isInitialize){
 		IS_Widget.Maximize.adjustMaximizeWidth();
-		IS_Widget.Information2.adjustDescWidth();
 		IS_Portal.adjustIframeHeight();
 		IS_Portal.adjustSiteMenuHeight();
 		IS_Widget.Ticker.adjustTickerWidth();
@@ -1697,19 +1436,6 @@ IS_Portal.onFontResized = function(){
 	IS_Portal.widgetDisplayUpdated();
 }
 
-IS_Portal.rssSearchBoxList = new Object();
-/**
- * Hiding all of search boxes.
- */
-/*
-IS_Portal.hideRssSearchBox = function(){
-	for(var id in IS_Portal.rssSearchBoxList){
-		if(!(IS_Portal.rssSearchBoxList[id] instanceof Function)){
-			IS_Portal.rssSearchBoxList[id].style.display = "none";
-		}
-	}
-}
-*/
 
 /**
  * Processing at changing display position or size of widget
@@ -1718,19 +1444,6 @@ IS_Portal.widgetDisplayUpdated = function(){
 //	IS_Widget.adjustDescWidth();
 	IS_Widget.processAdjustRssDesc();
 	IS_Widget.adjustEditPanelsTextWidth();
-//	IS_Portal.hideRssSearchBox();
-}
-
-if( Browser.isSafari1 ) {
-	IS_Portal.adjustCurrentTabSize =  function() {
-		IS_Widget.processAdjustRssDesc();
-		IS_Widget.RssReader.RssItemRender.adjustRssDesc();
-		IS_Widget.Information2.adjustDescWidth();
-		
-		IS_Portal.adjustSiteMenuHeight();
-		IS_Portal.adjustIframeHeight();
-		IS_Portal.adjustGadgetHeight();
-	}
 }
 
 IS_Portal.windowOverlay = function(id, tag){
@@ -1815,6 +1528,28 @@ IS_Portal._adjustGadgetHeight = function( gadget,swap ){
 			return gadget.loadContents();
 		} catch( ex ) { console.log( ex )}
 	});
+}
+
+IS_Portal.addMsg = function(msg){
+	var msgListDiv = $('message-list');
+	msgListDiv.appendChild(
+		$.DIV(
+			{id:'message-newmsg'},
+			$.IMG(
+				{
+					style:'position:relative;top:2px;paddingRight:2px',
+					src:imageURL+"information.gif"
+				}
+			),
+			msg
+		)
+	);
+}
+IS_Portal.showMsgBar = function(){
+	$('message-bar').style.display = "";
+}
+IS_Portal.adjustMsgBar = function(){
+	IS_EventDispatcher.newEvent("adjustedMessageBar");
 }
 
 IS_Portal.moreMsgBar = function() {
@@ -2053,16 +1788,6 @@ IS_Portal.buildLogout = function() {
 		logout.parentNode.style.width = logout.offsetWidth +"px";
 }
 
-// Log at dropping and drop processing
-/*IS_Portal.menuDropped = function( id, rssUrl, title ){
-	IS_EventDispatcher.newEvent('dropWidget', id, null);
-	
-	if(rssUrl && rssUrl.length != 0){
-		var cmd = new IS_Commands.UpdateRssMetaCommand("1", rssUrl, rssUrl, title, "");
-		IS_Request.LogCommandQueue.addCommand(cmd);
-	}
-}*/
-
 IS_Portal.widgetDropped = function( widget ) {
 	if( IS_TreeMenu.isMenuItem( widget.id ) )
 		IS_EventDispatcher.newEvent( IS_Widget.DROP_WIDGET, IS_TreeMenu.getMenuId( widget.id ) );
@@ -2225,58 +1950,6 @@ IS_Portal.CommandBar = {
 		return (this.commandbarWidgets[itemId])? true : false;
 	}
 };
-
-IS_Portal.checkSystemMsg = function(){
-	var opt = {
-	  method:'get',
-	  asynchronous:true,
-	  onSuccess:function(req){
-		  var results = req.responseText.evalJSON();
-		  if(!results || results.length == 0) return;
-		  var systemMessageVar = $('system-message-var');
-		  
-		  if(!systemMessageVar){
-			  var msgListDiv = $('message-list');
-			  systemMessageVar = $.DIV(
-				  {
-					id:'message-newmsg'
-				  });
-			  msgListDiv.appendChild(systemMessageVar);
-		  }else{
-			  systemMessageVar.innerHTML = "";
-		  }
-		  results.each(function(msg){
-			  if(msg.resourceId){
-
-				  systemMessageVar.appendChild(
-					  $.DIV(
-						  {},
-						  $.IMG(
-							  {
-								style:'position:relative;top:2px;paddingRight:2px',
-								src:imageURL+"information.gif"
-							  }
-							  ),
-						  IS_R.getResource(IS_R[msg.resourceId], msg.replaceValues)
-						  )
-					  );
-
-			  }else{
-				  console.log("non implementation");
-			  }
-		  });
-		  $('message-bar').style.display = "";
-		  IS_EventDispatcher.newEvent("adjustedMessageBar");
-	  },
-	  onFailure: function(t) {
-		  msg.error(IS_R.getResource( IS_R.lb_getSystemMessageFailure +'{0} -- {1}',[t.status, t.statusText]));
-	  },
-	  onException: function(r, t){
-		  msg.error(IS_R.getResource( IS_R.lb_getSystemMessageFailure +'{0}',[getErrorMessage(t)]));
-	  }
-	};
-	AjaxRequest.invoke(hostPrefix + '/sysmsg', opt);
-}
 
 IS_Portal.getPortalOverlay = function() {
 	if(!IS_Portal.portalOverlay)

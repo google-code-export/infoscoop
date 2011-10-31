@@ -159,7 +159,7 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 				IS_Portal.removeWidget(draggedWidget.id, draggedWidget.tabId);
 			}else{//widget or subWidget or Menu
 				var nextSiblingId = (widgetGhost.nextSibling) ? widgetGhost.nextSibling.id : "";
-				if( !Browser.isSafari1 ||( widgetGhost && widgetGhost.style.display != "none") ) {
+				if( widgetGhost && widgetGhost.style.display != "none" ) {
 					widgetGhost.parentNode.replaceChild(draggedWidget.elm_widget, widgetGhost);
 				} else {
 				    widgetGhost.parentNode.removeChild( widgetGhost );
@@ -369,15 +369,12 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 				onSuccess : function() {
 					this.handleMergeSuccess.apply( this,$A( arguments ))
 					
-					if( this.isSuccess ) {
-						this.updateMergeLog();
-					} else {
+					if( !this.isSuccess ) {
 						this.isSuccess = true;
 					}
 				}.bind( this ),
 				on304 : function() {
 					this.handleMerge304.apply( this,$A( arguments ));
-					this.updateMergeLog();
 				}.bind( this ),
 				on10408: this.handleMergeTimeout.bind( this,option )
 			});
@@ -799,12 +796,6 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 			widget.widgetConf.deleteDate = deleteDate;
 		}
 		
-		if(IS_Portal.rssSearchBoxList[widget.id]){
-			if(IS_Portal.rssSearchBoxList[widget.id].parentNode){
-				IS_Portal.rssSearchBoxList[widget.id].parentNode.removeChild( IS_Portal.rssSearchBoxList[widget.id] );
-			}
-			delete IS_Portal.rssSearchBoxList[widget.id];
-		}
 	}
 	
 	/**
@@ -1000,27 +991,11 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 			// When Multi is promoted, empty Multi is created for a moment; then if widgetContent.innerHTML is used, system does not work properly
 //			widget.elm_widgetContent.innerHTML = IS_R.lb_noDiplayItem;
 			
-			//widget.headerContent.close(false, true);
 			IS_EventDispatcher.newEvent('loadComplete', widget.id, null);
 		}
 	};
 	
 	this.autoReloadContents = function () {
-		var rssReaders = this.getRssReaders();
-		for(var i in rssReaders){
-//			if(rssReaders[i].widgetConf && rssReaders[i].widgetConf.isChecked){
-			if(rssReaders[i].widgetConf ){
-				var convUrl = escapeXMLEntity(rssReaders[i].getUserPref("url"));
-				var autoRefreshCount = IS_Portal.autoRefCountList[convUrl];
-				if(!autoRefreshCount){
-					autoRefreshCount = 0;
-				}
-				IS_Portal.autoRefCountList[convUrl] = ++autoRefreshCount;
-				
-				var cmd = new IS_Commands.UpdateRssMetaRefreshCommand("1",rssReaders[i].getUserPref("url"),rssReaders[i].title);
-				IS_Request.LogCommandQueue.addCommand(cmd);
-			}
-		}
 		this.loadContents( true );
 	}
 	
@@ -1110,15 +1085,6 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 	}
 	this.handleMerge304 = function( req,obj ) {
 		this.mergeRssReader.content.stopLatestMarkRotate();
-	}
-	this.updateMergeLog = function() {
-		var errorUrls = $H( this.mergeRssReader.content.rss.errors ||{}).keys();
-		this.getRssReaders().each( function( rssReader ) {
-			var url = rssReader.content.getUrl();
-			if( !errorUrls.contains( url ) && !rssReader.isAuthenticationFailed()) {
-				IS_Widget.updateLog("2",url,url );
-			}
-		});
 	}
 	this.handleMerge404 = function( req,obj ) {
 		if( !this.mergeRssReader.isSuccess ) {
@@ -1301,68 +1267,6 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 		return IS_Portal.getWidget("w_" + feedId);
 	}
 
-	this.searchBuildMenuContent = function(){
-		this.checkEnableRssSearch();
-		return IS_Widget.RssReader.searchBuildMenuContent(widget, this.disabledSearchList);
-	}
-	
-	this.searchDisable = function(){
-		IS_Widget.RssReader.searchDisable(widget);
-	}
-	
-	this.searchEnable = function(){
-		IS_Widget.RssReader.searchEnable(widget);
-	}
-	
-	this.searchApplyIconStyle = function(div){
-		div.style.display = "none";
-		if(IS_Portal.SearchEngines.isLoaded) {
-			if( this.checkEnableRssSearch() )
-			  div.style.display = "block";
-		} else {
-			IS_Portal.SearchEngines.loadConf();
-			setTimeout(this.searchApplyIconStyle.bind(this, div), 100);
-			return;
-		}
-
-		var disabledTitleList = [];
-		var rssReaders = this.getRssReaders();
-		for(var i = 0; i < rssReaders.length;i++){
-			if(!IS_Portal.SearchEngines.matchRssSearch(rssReaders[i].getUserPref("url"))){
-				disabledTitleList.push(rssReaders[i].title);
-			}
-		}
-		var msgDiv = div.getElementsByClassName("rssSearchMsg")[0];
-
-		if(disabledTitleList.length > 0) {
-			msgDiv.style.display = "block";
-			//					var msg = "※";
-			var msg = IS_R.lb_attention;
-			for(var i = 0; i < disabledTitleList.length; i++) {
-				if(i > 0) msg += ", ";
-				msg += "[" + disabledTitleList[i] + "]";
-			}
-
-			msg += IS_R.ms_notCoverage;
-			msgDiv.innerHTML = msg;
-		} else {
-			msgDiv.innerHTML = "";
-			msgDiv.style.display = "none";
-		}
-	};
-	
-	this.checkEnableRssSearch = function() {
-		var enabled = false;
-		
-		var subWidgets = IS_Portal.getSubWidgetList(widget.id,widget.tabId );
-		for (var i=0; i < subWidgets.length; i++){
-			if(IS_Portal.SearchEngines.matchRssSearch(subWidgets[i].getUserPref("url"))){
-				enabled = true;
-			}
-		}
-		return enabled;
-	};
-	
 	//Set detailed time
 	this.dateIconHandler = function (e) {
 		try{
@@ -1528,27 +1432,6 @@ IS_Widget.MultiRssReader.prototype.classDef = function() {
 				this.loadContents();
 			}
 		}
-	}
-	
-	this.accessStatsApplyIconStyle = function( div ) {
-		div.style.display = "none";
-		if( this.isTimeDisplayMode() &&
-			widget.widgetPref.useAccessStat && /true/i.test( widget.widgetPref.useAccessStat.value ) ) {
-			if( this.mergeRssReader.content && this.mergeRssReader.content.rss &&
-				this.getRssReaders().find( function( rssReader ) {
-				var errorUrls = $H(this.mergeRssReader.content.rss.errors ||{}).keys();
-				
-				return !errorUrls.contains( rssReader.getUserPref("url") );
-			}.bind( this )) ) {
-				div.style.display = "";
-			} else {
-				setTimeout( this.accessStatsApplyIconStyle.bind( this,div ),100 );
-			}
-		}
-	}
-	this.accessStatsIconHandler = function( div ) {
-		IS_Widget.RssReader.showAccessStats(widget);
-		widget.headerContent.hiddenMenu.hide();
 	}
 };
 

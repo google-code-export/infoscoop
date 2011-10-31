@@ -36,20 +36,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		
 		widget.elm_widgetBox.style.backgroundColor = "#fff";
 		
-		if( Browser.isSafari1 ) {
-			// Not be minimized if window size is changed after getting back from maximization
-			widget.turnbackMaximize = ( function() {
-				var func = widget.turnbackMaximize;
-				
-				return function() {
-					$("maximizeRssDetailTd_" +this.id).style.height =
-						$("MaximizeItemList_"+this.id ).style.height = 100;
-					
-					func.apply( widget );
-				}
-			})();
-		}
-		
 		this.buildMaximizeRssContent();
 		
 		$( widget.elm_widgetContent ).addClassName("RssReader");
@@ -121,12 +107,9 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		var dragBarTd = lrTable.firstChild.firstChild.childNodes[1];
 		dragBarTd.id = 'maximizeDragBar_'+widget.id;
 		dragBarTd.style.width = 5;
-		if( Browser.isSafari1 )
-			dragBarTd.appendChild( IS_Widget.RssReader.RssItemRender.createTable(1,1))
 		
-
 		dragBarTd.title = IS_R.ms_customizeWidthByDrag;
-		dragBarTd.style.cursor = ( !Browser.isSafari1? "col-resize" : "e-resize" );
+		dragBarTd.style.cursor = "col-resize";
 		
 		Event.observe(dragBarTd, 'mousedown', this.drag.dragStart, false,widget.id);
 		
@@ -238,6 +221,8 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		filterContent.appendChild( filterForm );
 
 		var titleRow = filterForm.firstChild.childNodes[0];
+
+
 		titleRow.childNodes[0].style.fontSize = "9pt";
 		titleRow.childNodes[0].style.whiteSpace = "nowrap";
 		titleRow.childNodes[0].appendChild( document.createTextNode(
@@ -700,34 +685,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		rsslink.style.overflow = "visible";
 		titleTd.appendChild(rsslink);
 		
-		//Edit title with corresponding to Atompub
-		var rssTitleEdit = document.createElement("input");
-		rssTitleEdit.id = "maximizeRssTitleEdit_" + widget.id;
-		rssTitleEdit.style.display = "none";
-		titleTd.appendChild(rssTitleEdit);
-		
-		//Fixed button for AtomPub
-		var atomPubPost = document.createElement("input");
-		atomPubPost.id = "maximizeRssAtomPubPost_" + widget.id;
-		atomPubPost.type = "button";
-
-		atomPubPost.value = IS_R.lb_refresh;
-		atomPubPost.style.display = "none";
-		titleTd.appendChild(atomPubPost);
-		var atomPubDelete = document.createElement("input");
-		atomPubDelete.id = "maximizeRssAtomPubDelete_" + widget.id;
-		atomPubDelete.type = "button";
-
-		atomPubDelete.value = IS_R.lb_delete;
-		atomPubDelete.style.display = "none";
-		titleTd.appendChild(atomPubDelete);
-		
-		//Show dinamic button for AtomPub
-		var atomPubButtons = document.createElement("div");
-		atomPubButtons.id = "maximizeRssAtomPubButtons_" + widget.id;
-		atomPubButtons.className = "maximizeRssAtomPubButtons";
-		titleTd.appendChild(atomPubButtons);
-		
 		var titleTr = document.createElement("tr");
 		titleTr.appendChild(titleTd);
 		titleTBody.appendChild(titleTr);
@@ -777,46 +734,7 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		rssDescText.className = "maximizeRssDescText";
 		rssDesc.appendChild(rssDescText);
 		
-		//Edit description with corresponding to AtomPub
-		var rssDescEdit = document.createElement("textarea");
-		rssDescEdit.id = "maximizeRssDescEdit_" + widget.id;
-		rssDescEdit.style.display = "none";
-		itemDescTd.appendChild(rssDescEdit);
-		
-		var rssSummaryEdit = document.createElement("textarea");
-		rssSummaryEdit.id = "maximizeRssSummaryEdit_" +widget.id;
-		rssSummaryEdit.style.display = "none";
-		rssSummaryEdit.style.width = "100%";
-		rssSummaryEdit.style.height = "100%";
-		itemDescTd.appendChild(rssSummaryEdit);
-		
 		detailTd.appendChild( itemTable );
-		
-		var rssToggleEditElementButton = $( document.createElement("a"));
-		rssToggleEditElementButton.id = "maximizeRssToggleEditElementButton_" +widget.id;
-		rssToggleEditElementButton.href = "javascript:void(0)";
-		rssToggleEditElementButton.className = "maximizeToggleEditElement";
-		rssToggleEditElementButton.style.display = "none";
-		dateTd.insertBefore( rssToggleEditElementButton,dateTd.firstChild );
-		
-		Event.observe( rssToggleEditElementButton,"click",function(e){
-			toggleEditElement(e);
-			Event.stop(e);
-		},false,widget.id );
-	}
-	function toggleEditElement( toSummary ) {
-		var rssToggleEditElementButton = $("maximizeRssToggleEditElementButton_" +widget.id );
-		var rssDescEdit = $("maximizeRssDescEdit_" + widget.id );
-		var rssSummaryEdit = $("maximizeRssSummaryEdit_" +widget.id );
-		var display = !toSummary || ( rssSummaryEdit.style.display == "none");
-		rssToggleEditElementButton.innerHTML = display ?
-			IS_R.lb_editDesc:
-			IS_R.lb_editSummary;
-		rssToggleEditElementButton.title = IS_R.getResource(
-			IS_R.ms_toggleEditElementByClick,
-				[display ?"content":"summary"]);
-		rssSummaryEdit.style.display = ( display ? "":"none");
-		rssDescEdit.style.display = (!display ? "":"none");
 	}
 	
 	function buildTools( toolBarDiv ){
@@ -919,7 +837,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		this.initFilter(this.currentCategory);
 		
 		if(rssReaders.length > 2){
-			$('maximizeCategoryCombobox').show();
 			$('maximizeCategoryCombobox').style.width = "";
 			IS_Event.unloadCache(widget.id +"_category_pulldown");
 			$('maximizeCategoryCombobox').innerHTML = "";
@@ -929,7 +846,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 			this.buildCategoryComboBox($('maximizeCategoryCombobox'), categoryNo);
 		}else{
 			$('maximizeCategoryCombobox').style.width = 0;
-			$('maximizeCategoryCombobox').hide();
 		}
 		
 		this.updateFilterState();
@@ -1002,13 +918,9 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 				content.rssItems.each( function( rssItem ) {
 					if( rssItem ) {
 						rssItem.selected = false;
-						rssItem.atompub_checked = false;
 					}
 				});
 			}
-			
-			//Delete the event of buttom that shows description desplay for AtomPub
-			//IS_Event.unloadCache(rssReader.id + "_desc");
 		});
 		
 		// iframe disconnected with root is not loaded, and the old contents is shown at next time
@@ -1033,12 +945,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		//widget.loadContents();
 		
 		 this.loadCategoryContents(this.currentCategory);
-		
-		this._getOriginalRssReaders().collect( function( rssReader ) {
-			var url = rssReader.getUserPref("url");
-			if( url && !rssReader.isAuthenticationFailed() )
-				IS_Widget.updateLog("2",url,url );
-		});
 	}
 	
 	/**
@@ -1096,7 +1002,9 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 	this.adjustMaximizeHeight = function() {
 		this.lazyAdjusting = false;
 		
-		var maximizeHeight = getWindowSize(false) -findPosY( widget.elm_widget ) -65;
+		var maximizeHeight = getWindowHeight() - findPosY( widget.elm_widgetContent ) - 2;
+		if(parseInt(widget.elm_widgetContent.style.height) == (maximizeHeight + 2) )return;
+		
 		var rssDetailTd = $("maximizeRssDetailTd_" +widget.id);
 		if( !rssDetailTd )
 			return;
@@ -1106,7 +1014,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		var itemListDiv = $("MaximizeItemList_"+widget.id );
 		
 		var toolbarHeight = self.toolBarContent.elm_toolBar.offsetHeight;
-		
 		try{
 			var detailTdDisplay = rssDetailTd.style.display;
 			if( Browser.isFirefox )
@@ -1134,14 +1041,16 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 				  this.currentCategory.maximizeRender.rssContentView.setViewportHeight(itemListHeight);
 			}
 			
-			var detailHeight = getWindowSize(false) -findPosY( widget.elm_widget ) -65
-				-( Browser.isIE ? 20:0 ) -toolbarHeight;
+			var detailHeight = maximizeHeight - 48 - toolbarHeight;
 			
 			rssDetailTd.style.height = detailHeight;
 			if( Browser.isFirefox )
 				rssDetailTable.style.display = detailTdDisplay;
 			
-			widget.elm_widget.style.height = maximizeHeight;
+			var rssDesc = $("maximizeRssDesc_"+widget.id );
+			rssDesc.style.height = ( maximizeHeight - 140 );
+			
+			widget.elm_widgetContent.style.height = maximizeHeight;
 		}catch(e){
 
 			msg.warn( IS_R.getResource( IS_R.ms_errorOnWindowResize,[e]));
@@ -1154,31 +1063,17 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		if(contents) {	// fix #844
 			try{
 				var adjustWidth = getWindowSize(true) - findPosX(contents) - 32;
-				contents.style.width = adjustWidth + "px";
 				
 				// for desc
 				var maximizeDetailTd = $("maximizeRssDetailTd_"+widget.id );
 				var maximizeRssDescDiv = $("maximizeRssDetail_"+widget.id );
 				if(maximizeRssDescDiv && maximizeDetailTd ){
-					maximizeRssDescDiv.style.width = 0;
-					
-					var rssDescText = $("maximizeRssDescText_"+widget.id );
+					//var rssDescText = $("maximizeRssDescText_"+widget.id );
 					var rssDesc = $("maximizeRssDesc_"+widget.id );
-					var reView = false;
-					if(rssDesc.style.display != "none"){
-						rssDescText.style.display = "none";
-						reView = true;
-					}
 					var descWidth = maximizeDetailTd.offsetWidth;
-					maximizeRssDescDiv.style.width = descWidth;
-					if(reView){
-						if(rssDesc.offsetWidth > 0){
-							// Specify width of rssDescText
-							rssDescText.style.width = rssDesc.offsetWidth - 8;
-							rssDescText.style.height = rssDesc.offsetHeight - 16;
-						}
-						rssDescText.style.display = "block";
-					}
+					// Specify width of rssDescText
+					rssDesc.style.width = (adjustWidth * 0.66);
+					
 				}
 			}catch(e){
 
@@ -1254,13 +1149,12 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 		}else{
 			isIframeView = widget.getBoolUserPref("iframeview");
 		}
-		
 		if(this.viewTimer) clearTimeout(this.viewTimer);
 		
-		if( isIframeView && rssItem.link.length == 0 &&( rssItem.description && rssItem.description != ""))
+		if( isIframeView && rssItem.link.length == 0 && (rssItem.link_ajaxproxy_text || rssItem.description && rssItem.description != ""))
 			isIframeView = false;
-		
-		if( !isIframeView && rssItem.link.length != 0 &&!( rssItem.description && rssItem.description != "") )
+			
+		if( !isIframeView && rssItem.link.length > 0 && !rssItem.link_ajaxproxy_text && !( rssItem.description && rssItem.description != "") )
 			isIframeView = true;
 		
 		/* Ignore parameter of userPref if viewType is specified in iframe viewing mode */
@@ -1299,23 +1193,6 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 			maxIframe.src = "js/widgets/maximize/maximizeForbiddenURL.jsp?url=" + encodeURIComponent(rssItem.link);
 		}else{
 			maxIframe.src = rssItem.link;
-		}
-		if(rssItem.rssUrls){
-			IS_Widget.MaximizeRssReader.mergeContentClicked(rssItem);
-		}else{
-			var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-			IS_Widget.MaximizeRssReader.contentClicked(rssItem.link,feedWidget.getUserPref("url"),rssItem.title,startDateTime);
-		}
-	}
-	this.handleTitleATagClick = function(rssItem, aTag) {
-		this.iframeViewMode(aTag);
-		
-		if(rssItem.rssUrls){
-			IS_Widget.MaximizeRssReader.mergeContentClicked(rssItem,aTag);
-		} else {
-			var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-			IS_Widget.MaximizeRssReader.contentClicked(
-				rssItem.link,widget.getUserPref("url"),rssItem.title,startDateTime, aTag);
 		}
 	}
 	this.clearDetail = function(){
@@ -1359,9 +1236,7 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 			} else {
 				aTag.target = "_blank";
 			}
-			IS_Event.observe( aTag, "click",
-				this.handleTitleATagClick.bind( this,rssItem,aTag ),
-						false,widget.id );
+			IS_Event.observe( aTag, "click",this.iframeViewMode.bind(this, aTag), false, widget.id );
 		} else {
 			//rsslink.innerHTML = rssTitle;
 			rsslink.appendChild(document.createTextNode(rssTitle));
@@ -1406,7 +1281,36 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 				rssDescText.style.height = rssDescTextHeight;
 			}
 		}
-		rssDescText.innerHTML = IS_Widget.RssReader.RssItemRender.normalizeDesc( rssItem.description );
+		if(rssItem.description)
+			rssDescText.innerHTML = IS_Widget.RssReader.RssItemRender.normalizeDesc( rssItem.description );
+		else{
+			rssDescText.innerHTML = "<div class=\"rss_summary\"><img src=\"" +  imageURL + "indicator.gif\"/> Loading...</div>"; 
+			var opt = {
+				method: 'get',
+				asynchronous: true,
+				onSuccess:function(req, obj){
+					rssDescText.innerHTML = req.responseText;
+				}.bind(self),
+				onException:function(req, obj){
+				  alert('Retrieving summary is failed:' + obj);
+				},
+		 	  onFailure:function(req, obj){
+				  alert('Retrieving summary is failed:' + obj);
+		 	 	}
+			}
+			var authType;
+			var _authType = widget.getUserPref("authType");
+			if(_authType){
+				authType = _authType.split(' ')[0];
+				//authParameNames = _authType.split(' ')[1]; //TODO:
+			}
+			if(authType){
+				opt.requestHeaders = [];
+				opt.requestHeaders.push("authType");
+				opt.requestHeaders.push(authType);
+			}
+			AjaxRequest.invoke(is_getProxyUrl(rssItem.link_ajaxproxy_text, "NoOperation"), opt);
+		}
 		rssDescText.scrollTop = 0;
 		if(rssDescText) {
 			var descLinks = rssDescText.getElementsByTagName("a");
@@ -1430,114 +1334,7 @@ IS_Widget.MaximizeRssReader.prototype.classDef = function() {
 				}
 			}
 		}
-		
-		//Button for AtomPub
-		var rssAtomPubEdit = $("maximizeRssAtomPubButtons_" + widget.id);
-		var rssTitleEdit = $("maximizeRssTitleEdit_"+widget.id );
-		rssTitleEdit.style.display = "none";
-		var rssDescEdit = $("maximizeRssDescEdit_"+widget.id );
-		rssDescEdit.style.display = "none";
-		var rssSummaryEditButton = $("maximizeRssToggleEditElementButton_" +widget.id );
-		rssSummaryEditButton.style.display = "none";
-		var rssSummaryEdit = $("maximizeRssSummaryEdit_" +widget.id );
-		rssSummaryEdit.style.display ="none";
-		rssAtomPubEdit.innerHTML = "";
-		IS_Event.unloadCache(feedWidget.id + "_desc");
-		var atomPubPost = $("maximizeRssAtomPubPost_"+widget.id );
-		var atomPubDelete = $("maximizeRssAtomPubDelete_"+widget.id );
-		atomPubPost.style.display = "none";
-		atomPubDelete.style.display = "none";
-		if(!feedWidget.isMulti){
-			if(rssItem.link_edit && feedWidget.content.rss) {
-				if(!feedWidget.content.rss.atompub_buttons){
-					var atomPubEdit = document.createElement("input");
-					atomPubEdit.type = "button";
-
-					atomPubEdit.value = IS_R.lb_edit;
-					rssAtomPubEdit.appendChild(atomPubEdit);
-					IS_Event.observe(atomPubEdit, "click", function(){
-						if( !feedWidget.content.rss.entriesXml )
-							feedWidget.content.rss.entriesXml = IS_Widget.MaximizeRssReader.getEntriesXml( feedWidget );
-						
-						rssTitleEdit.value = rssTitle;
-						rssDescEdit.style.width = rssDescEdit.style.height = "100%";
-						rssTitleEdit.style.display = "";
-						
-						var entryElm = feedWidget.content.rss.entriesXml[rssItem.link].element;
-						var contentElm = entryElm.getElementsByTagName("content")[0];
-						var summaryElm = entryElm.getElementsByTagName("summary")[0];
-						rssDescEdit.value = ( contentElm ?( contentElm.textContent || contentElm.text ):"");
-						rssSummaryEdit.value = ( summaryElm ?( summaryElm.textContent || summaryElm.text ):"");
-						var displayContent = !( contentElm || !summaryElm )
-						if( displayContent ) {
-							rssDescEdit.style.display = "";
-						} else {
-							rssSummaryEdit.style.display = "";
-						}
-						toggleEditElement( !displayContent );
-						
-//						if( contentElm && summaryElm )
-							rssSummaryEditButton.style.display = "";
-						
-						rsslink.style.display = "none";
-						rssDesc.style.display = "none";
-						atomPubEdit.style.display = "none";
-						
-						IS_Event.observe(atomPubPost, "click", IS_Widget.MaximizeRssReader.postAtomPub.bind(this, feedWidget, rssItem,{ method: "post"}), false, feedWidget.id + "_desc");
-						IS_Event.observe(atomPubDelete, "click", IS_Widget.MaximizeRssReader.postAtomPub.bind(this, feedWidget, rssItem,{ method: "delete"}), false, feedWidget.id + "_desc");
-						atomPubPost.style.display = "";
-						atomPubDelete.style.display = "";
-					}, feedWidget.id + "_desc");
-					
-					Event.observe( rssDescEdit,"focus",function() {
-						widget.keybind.enable = false;
-					}.bind( this ),feedWidget.id + "_desc");
-					Event.observe( rssDescEdit,"blur",function() {
-						widget.keybind.enable = true;
-					}.bind( this ),feedWidget.id + "_desc");
-				} else if(feedWidget.atomPubEach) {
-					var buttonElms = feedWidget.buttonElms;
-					for (var i = 0; i < buttonElms.length; i++) {
-						var buttonDef = IS_Widget.MaximizeRssReader.extractButtonDef( buttonElms[i] );
-						
-						var button = document.createElement("input");
-						button.type = "button";
-						button.value = buttonDef.title;
-						rssAtomPubEdit.appendChild(button);
-						
-						IS_Event.observe(button, "click", IS_Widget.MaximizeRssReader.postAtomPub.bind(this, feedWidget, rssItem,buttonDef ), false, feedWidget.id + "_desc");
-					}
-				}
-			}
-		}
-		
-		// Log: Save RssMeta
-		if(rssItem.rssUrls){
-			for(var i=0; i<rssItem.rssUrls.length ;i++){
-				var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-				IS_Widget.updateLog("1",rssItem.link,rssItem.rssUrls[i]);
-				IS_Widget.updateRssMeta("0",rssItem.link,rssItem.rssUrls[i],rssItem.title,startDateTime);
-			}
-		}else{
-			var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-			IS_Widget.updateLog("1",rssItem.link,feedWidget.getUserPref("url"));
-			IS_Widget.updateRssMeta("0",rssItem.link,feedWidget.getUserPref("url"),rssItem.title,startDateTime);
-		}
 	};
-};
-
-IS_Widget.MaximizeRssReader.contentClicked = function (url, rssUrl, title, pubDate) {
-	IS_Widget.updateLog("0",url,rssUrl);
-	IS_Widget.updateRssMeta("0",url,rssUrl,title,pubDate);
-};
-		
-IS_Widget.MaximizeRssReader.mergeContentClicked = function (rssItem) {
-	for(var i=0; i<rssItem.rssUrls.length ;i++){
-		IS_Widget.updateLog("0",rssItem.link,rssItem.rssUrls[i]);
-		
-		var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-		IS_Widget.updateRssMeta("0",rssItem.link,rssItem.rssUrls[i],rssItem.title,startDateTime);
-	}
 };
 IS_Widget.MaximizeRssReader.Drag = IS_Class.create();
 IS_Widget.MaximizeRssReader.Drag.prototype.classDef = function() {
@@ -1631,222 +1428,3 @@ IS_Widget.MaximizeRssReader.Drag.prototype.classDef = function() {
 		IS_Portal.hideDragOverlay();
 	}
 }
-IS_Widget.MaximizeRssReader.extractButtonDef = function( buttonElement ) {
-	return {
-		element: {
-			name:	buttonElement.getAttribute("tag"),
-			value:	buttonElement.getAttribute("onValue")
-		},
-		method:	buttonElement.getAttribute("method") || "put",
-		title: buttonElement.getAttribute("title")
-	};
-}
-IS_Widget.MaximizeRssReader.atomDisableButtons = function( widget,disabled ) {
-	["MaximizeButtons_" + widget.id, "maximizeRssAtomPubButtons_" + widget.maximize.id].each(function(buttonsId){
-		var buttons = $(buttonsId);
-		console.log(buttonsId,buttons);
-		var inputs = buttons.getElementsByTagName("input");
-		for(var i=0;i<inputs.length;i++){
-			inputs[i].disabled = disabled;
-		}
-		$('maximizeRssAtomPubPost_' + widget.maximize.id).disabled = disabled;
-		$('maximizeRssAtomPubDelete_' + widget.maximize.id).disabled = disabled;
-	});
-}
-IS_Widget.MaximizeRssReader.getEntriesXml = function( widget ) {
-	IS_Widget.MaximizeRssReader.atomDisableButtons(widget,true);
-	
-	if( !widget.content || !widget.content.rssContent || !widget.content.rssContent.rssItems ){
-		IS_Widget.MaximizeRssReader.atomDisableButtons(widget,false);
-		return;
-	}
-	
-	var entries = {};
-	var opt = {
-		asynchronous: false,
-		method: "get",
-		onSuccess: function(req) {
-			var xml = req.responseXML;
-			var entryElms = xml.getElementsByTagName("entry");
-			for(var j=0; j<entryElms.length; j++){
-				var titles = entryElms[j].getElementsByTagName("title");
-				var title = titles && titles.length > 0 && titles[0].firstChild ?
-					titles[0].firstChild.nodeValue : IS_R.lb_notitle;
-				var entryLinkElms = entryElms[j].getElementsByTagName("link");
-				var entryLinks = {};
-				for(var k=0; entryLinkElms && k<entryLinkElms.length; k++){
-					var rel = entryLinkElms[k].getAttribute("rel");
-					if(!rel) rel = "alternate";
-					entryLinks[rel] = entryLinkElms[k].getAttribute("href");
-				}
-				entries[entryLinks["alternate"]] = {
-					element: entryElms[j],
-					atomLink: entryLinks["edit"],
-					title: title
-				};
-			}
-		},
-		onException: function(req, e){
-
-			alert(IS_R.getResource(
-				IS_R.ms_atomRegetonException,
-				[getText(e)])
-			);
-		},
-		onFailure: function(req, e){
-
-			alert(IS_R.getResource(
-				IS_R.ms_atomRegetFailure,
-				[req.status, req.statusText])
-			);
-		},
-		onComplete: function(req, e){
-			IS_Widget.MaximizeRssReader.atomDisableButtons(widget,false);
-		}
-	};
-	var authCredentialId = widget.getUserPref("authCredentialId");
-	if(authCredentialId){
-		if(!opt.requestHeaders)opt.requestHeaders = new Array();
-		opt.requestHeaders.push("authCredentialId");
-		opt.requestHeaders.push(authCredentialId);
-	}
-	var url = widget.getUserPref("url");
-	//Post reqest again to get XML of entry that is put
-	AjaxRequest.invoke(is_getProxyUrl(url, "XML"), opt);
-	
-	return entries;
-}
-IS_Widget.MaximizeRssReader.postAtomPub = function( widget, rssItem, buttonDef ){
-	IS_Widget.MaximizeRssReader.atomDisableButtons(widget,true);
-	try {
-		IS_Widget.MaximizeRssReader._postAtomPub( widget,rssItem,buttonDef );
-	} catch( ex ) {
-		IS_Widget.MaximizeRssReader.atomDisableButtons(widget,false);
-		
-		throw ex;
-	}
-	IS_Widget.MaximizeRssReader.atomDisableButtons(widget,false);
-}
-IS_Widget.MaximizeRssReader._postAtomPub = function( widget, rssItem, buttonDef ){
-	var entries = widget.content.rss.entriesXml;
-	var entryUrls = [];
-	if(!rssItem) {
-		if( !widget.content || !widget.content.rssContent || !widget.content.rssContent.rssItems )
-			return;
-		
-		var rssItems = widget.content.rssContent.rssItems;
-		rssItems.each( function( rssItem ) {
-			if( rssItem.atompub_checked )
-				entryUrls.push( rssItem.link );
-		});
-		
-		if(entryUrls.length == 0)
-			return;
-	} else {
-		entryUrls.push( rssItem.link );
-	}
-	
-	for( var i=0;i<entryUrls.length;i++ ) {
-		var entryUrl = entryUrls[i];
-		if(!entryUrl) continue;
-		
-		var entry = entries[ entryUrl ];
-		if(!entry) {
-			alert(IS_R.getResource(
-				IS_R.ms_enrtyNotFound,
-				[entryUrl])
-			);
-			return false;
-		}
-		
-		var entryElm = entry.element.cloneNode( true );
-		var entryDoc = entryElm.ownerDocument;
-		
-		var method = buttonDef.method.toLowerCase();
-		
-		var element = buttonDef.element;
-		if( element && element.name && element.value){
-			var appendElm = is_createElementNS(entryDoc, element.name, "http://www.beacon-it.co.jp/infoscoop/atompub");
-			appendElm.appendChild(entryDoc.createTextNode(element.value));
-			
-			entryElm.appendChild(appendElm);
-		} else if(method != "delete") {
-			method = "put";//use "put", not "delete" becaue of no new post
-			
-			var titleElm = entryElm.getElementsByTagName("title")[0];
-			if(!titleElm){
-				titleElm = entryDoc.createElement("title");
-				entryElm.insertBefore(titleElm, entryElm.firstChild);
-			}
-			var titleInput = $("maximizeRssTitleEdit_" + widget.maximize.id);
-			for(var i=0;i<titleElm.childNodes.length;){
-				titleElm.removeChild(titleElm.childNodes[i]);
-			}
-			titleElm.appendChild(entryDoc.createTextNode(titleInput.value));
-			
-			$A([{
-				tagName: "content",
-				value: $("maximizeRssDescEdit_" +widget.maximize.id).value
-			},{
-				tagName: "summary",
-				value: $("maximizeRssSummaryEdit_" +widget.maximize.id).value
-			}]).each( function( item ) {
-				var element = entryElm.getElementsByTagName( item.tagName )[0];
-				if( !item.value && !element )
-					return;
-				
-				if( !element ){
-					element = entryDoc.createElement( item.tagName );
-					entryElm.appendChild( element );
-				} else {
-					while( element.firstChild ) element.removeChild( element.firstChild );
-				}
-				element.appendChild( entryDoc.createTextNode( item.value ));
-			});
-		}
-		
-		if( IS_Widget.MaximizeRssReader.postOneEntry( widget,entryUrl,entry,method,is_innerXML(entryElm) ) )
-			break;
-	}
-	
-	widget.loadContents();
-}
-IS_Widget.MaximizeRssReader.postOneEntry = function( widget,entryUrl,entry,method,entryXml ){
-	var isError = false;
-	var putOpt = {
-		method: method == "get" || method == "delete" ? "get" : "post",
-		contentType: "application/atom+xml",
-		requestHeaders: ["MSDPortal-method", method],
-		asynchronous: false,
-		postBody: entryXml,
-		onSuccess: function(req){
-			msg.debug(entryUrl + ":success");
-		},
-		onException: function(req, e){
-
-			alert(IS_R.getResource(
-				IS_R.ms_atompubPostonException,
-				[entry.title, getText(e), entryUrl])
-			);
-			isError = true;
-		},
-		onFailure: function(req, e){
-
-			alert(IS_R.getResource(
-				IS_R.ms_atompubPostonFauilure,
-				[entry.title, req.status, req.statusText, entryUrl])
-			);
-			isError = true;
-		}
-	};
-	var authCredentialId = widget.getUserPref("authCredentialId");
-	if(authCredentialId){
-		putOpt.requestHeaders.push("authCredentialId");
-		putOpt.requestHeaders.push(authCredentialId);
-	}
-	AjaxRequest.invoke(is_getProxyUrl(entry.atomLink, "NoOperation"), putOpt);
-	//AjaxRequest.invoke(entry.atomLink, putOpt);
-	
-	return isError;
-}
-			

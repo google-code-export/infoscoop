@@ -19,12 +19,15 @@
 	float:left;
 	cursor:pointer;
 	font-size:0.82em;
-	color:#7777cc;
 	margin:2px;	
 }
 
+.menuTreeItemIcon{
+	position:absolute;
+	z-Index:900;
+}
+
 div.treeMenuTitle{
-	float:left;
 	margin-left: 2px;
 	font-size:0.9em;
 }
@@ -153,9 +156,7 @@ height:20px;
 .ygtvitem {  } 
 
 /* the style of the div around each node's collection of children */
-.ygtvchildren {
-/* 	margin-left: 10px; */
-}
+.ygtvchildren { }  
 
 /* html .ygtvchildren { height:2%; }  */
 

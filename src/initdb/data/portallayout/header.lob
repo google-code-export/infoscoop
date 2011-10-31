@@ -1,32 +1,28 @@
-<table width="100%" height="53px" cellspacing="0" cellpadding="0" style="background:url(skin/imgs/head_blue.png)">
-	<tbody>
-		<tr>
-			<td><a href="javascript:void(0)" onclick="javascript:IS_Portal.goHome();return false;"><img src="skin/imgs/infoscoop.gif" alt="infoScoop" border="0" style="margin:0 0 0 20px;" height="45"/></a>
-			</td>
-			<td>
-				<form name="searchForm" onsubmit="javascript:IS_Portal.SearchEngines.buildSearchTabs(document.getElementById('searchTextForm').value);return false;">
-				<div style="float:right;margin-right:5px">
-					<table>
-						<tbody>
-							<tr>
-								<td colspan="2" align="right" style="font-size:80%;">
-									<#if session.getAttribute("Uid")??>%{lb_welcome}${session.getAttribute("loginUserName")}%{lb_san}
-									<#else><a href="login.jsp">%{lb_login}</a>
-									</#if>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<input id="searchTextForm" type="text" style="width:200px;height:23px;float:left;"/>
-									<input type="submit" value="%{lb_search}" style="padding:0 0.4em;"/>
-									<span id="editsearchoption">%{lb_searchOption}</span>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-				</form>
-			</td>
-		</tr>
-	</tbody>
-</table>
+<div class="header">
+	<div class="left">
+		<div class="logo">
+			<a href="#" onclick=""><img class="logo_img" src="skin/imgs/header/infoscoop4g_logo.png" alt="infoScoop"/></a>
+		</div>
+		<div class="launcher">
+				<a href="#" onclick="IS_Portal.goHome();"><span class="label" id="home" >ホーム</span></a>
+				<a href="http://mail.google.com/a/${session.getAttribute('Domain')}/" target="_blank"><span class="label" id="mail" >メール</span></a>
+				<a href="https://www.google.com/calendar/hosted/${session.getAttribute('Domain')}/" target="_blank"><span class="label" id="calendar" >カレンダー</span></a>
+				<a href="http://docs.google.com/a/${session.getAttribute('Domain')}/" target="_blank"><span class="label" id="document" >ドキュメント</span></a>
+				<#if (isadmin?string == "true")>
+					<a href="./manager/home/index" target="_blank"><span class="label" id="admin" >管理画面</span></a>
+				</#if>
+		</div>
+	</div>
+	<div class="right">
+		<!--<div class="search">
+				<input class="search_box" type="text"/>
+				<a class="submit_button" href="#">検索</a>
+		</div>-->
+		<div class="text">
+			<span class="account">
+				<b>${session.getAttribute('Uid')}</b>
+			</span>
+			<span class="logout"><a href="logout">ログアウト</a></span>
+		</div>
+	</div>
+</div>

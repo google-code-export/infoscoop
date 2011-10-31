@@ -37,10 +37,8 @@ ISA_DefaultPanel.CommandItemEditor.prototype.classDef = function() {
 	this.buildEditorWindow = function(form){
 		var editorDiv = document.createElement("div");
 		commandItem.title;
-		var editorFieldSet = document.createElement("div");
-		editorDiv.className = "modalConfigSet";
-		var editorFieldSetLegend = document.createElement("p");
-		editorFieldSetLegend.className = "modalConfigSetHeader";
+		var editorFieldSet = document.createElement("fieldset");
+		var editorFieldSetLegend = document.createElement("legend");
 		editorFieldSetLegend.appendChild(document.createTextNode(ISA_R.getResource(ISA_R.alb_settingOf,[commandItem.title])));
 		editorFieldSet.appendChild(editorFieldSetLegend);
 		editorFieldSet.appendChild(form);
@@ -243,21 +241,24 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 		setTimeout(viewForm, 10);
 	},
 	build: function(formDiv) {
-		formDiv.appendChild(
-			$.DIV({style:"clear:both;padding:3px;"},
-				  $.DIV({}, ISA_R.alb_selectTemplate),
-				  $.DIV({style:"color:red;fontWeight:bold"},ISA_R.alb_destroyOldSettings)
-					)
-			);
-		
+		var messageLabel = document.createElement("div");
+		messageLabel.style.clear = "both";
+		messageLabel.appendChild(document.createTextNode(ISA_R.alb_selectTemplate));
+		var messageNotice = document.createElement("span");
+		messageNotice.style.color = "red";
+		messageNotice.style.fontWeight = "bold";
+		messageNotice.appendChild(document.createTextNode(ISA_R.alb_destroyOldSettings));
+		messageLabel.appendChild(document.createElement("br"));
+		messageLabel.appendChild(messageNotice);
+		formDiv.appendChild(messageLabel);
+		formDiv.appendChild(document.createElement("br"));
 		// This must be increased if any file is added to admin/staticPanel
-		var adjustToWindowHeight = (this.isaDefaultPanel.displayRoleJsons[this.isaDefaultPanel.displayRoleId] && this.isaDefaultPanel.displayRoleJsons[this.isaDefaultPanel.displayRoleId].adjustToWindowHeight ? true : false);
 		for(var i=0; i < 8; i++){
 			var json = {};
 			json = this.templates.setStaticLayout(json, i);
 			if(!json) continue;
-			var nothing = (!adjustToWindowHeight && i == 0);
-			formDiv.appendChild(this.buildLayout(json, nothing,i));
+			var nothing = (i == 0);
+			formDiv.appendChild(this.buildLayout(json, nothing));
 		}
 		
 		var buttonDiv = document.createElement("div");
@@ -271,16 +272,16 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 		IS_Event.observe(closeButton, "click", this.hide.bind(this), false, "_adminPanel");
 		formDiv.appendChild(buttonDiv);
 	},
-	buildLayout: function(json, isNothing, i) {
+	buildLayout: function(json, isNothing) {
 		var self = this;
 		var layoutDiv = document.createElement("div");
 		layoutDiv.className = "staticLayout";
 		layoutDiv.innerHTML = json.layout;
 		this.drawOutLine(layoutDiv);
-		var layoutMouseOver = function(i) {
+		var layoutMouseOver = function(e) {
 			layoutDiv.style.backgroundColor = "#7777cc";
 		};
-		var layoutMouseOut = function(i) {
+		var layoutMouseOut = function(e) {
 			layoutDiv.style.backgroundColor = "";
 		};
 		var layoutClick = function(e) {
@@ -296,9 +297,9 @@ ISA_DefaultPanel.prototype.selectLayoutModal = {
 				e.stopPropagation();
 			}
 		};
-		IS_Event.observe(layoutDiv, 'mouseover', layoutMouseOver.bind(this,i), false, "_adminPanel");
-		IS_Event.observe(layoutDiv, 'mouseout', layoutMouseOut.bind(this,i), false, "_adminPanel");
-		IS_Event.observe(layoutDiv, 'click', layoutClick.bind(this,i), false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'mouseover', layoutMouseOver, false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'mouseout', layoutMouseOut, false, "_adminPanel");
+		IS_Event.observe(layoutDiv, 'click', layoutClick, false, "_adminPanel");
 		IS_Event.observe(layoutDiv, 'click', eventCancelBubble, false, "_adminPanel");
 		return layoutDiv;
 	},
@@ -667,9 +668,6 @@ ISA_DefaultPanel.prototype.templates = {
 		//Give id attribute to HTML
 		//TODO Is class="column" suite for Widget?
 		var regexp = new RegExp("class=\"static_column\"");
-		if(Browser.isIE){
-			regexp = new RegExp("class=static_column");
-		}
 		var newhtml = "";
 		var s = html;
 		var cnt = 0;
@@ -700,25 +698,31 @@ ISA_DefaultPanel.prototype.templates = {
 	},
 	getStaticLayout: function(number){
 		if(this.layouts[number]) return this.layouts[number];
-		
-		var defaultPanel = ISA_DefaultPanel.defaultPanel;
-		var targetClass = (defaultPanel.displayRoleJsons[defaultPanel.displayRoleId] && defaultPanel.displayRoleJsons[defaultPanel.displayRoleId].adjustToWindowHeight)
-			? 'staticLayoutAdjustHeight' : 'staticLayout';
-		$jq("#select_layout_modal ." + targetClass).each(function(idx, element){
-			this.layouts[idx] = $jq(element).html();
-		}.bind(this));
-		
-//		this.layouts[number] = html;
-//		return html;
-		return this.layouts[number];
+		var url = adminHostPrefix + "/staticPanel/" + number + ".html";
+		var html = null;
+		var opt = {
+			method: 'get' ,
+			asynchronous:false,
+			onSuccess: function(response){
+				html = response.responseText;
+			},
+			on404: function(t) {
+				msg.error(ISA_R.ams_fixedAreaTemplateNF+'(' + url + ')' + t.status + " - " + t.statusText);
+			},
+			onFailure: function(t) {
+				msg.error(ISA_R.ams_fixedAreaTemplateNR+'(' + url + ')' + t.status + " - " + t.statusText);
+			},
+			onException: function(r, t){
+				msg.error(ISA_R.ams_fixedAreaTemplateNR+'(' + url + ')' + getErrorMessage(t));
+			}
+		};
+		AjaxRequest.invoke(url, opt);
+		this.layouts[number] = html;
+		return html;
 	},
 	// Set for default fixed area
-	setStaticLayout0: function(jsonObject, number){
-//		for(var i=0; i < 8; i++)
-//		  this.getStaticLayout(i);
-		this.getStaticLayout();
-		
-		return this.setStaticLayout(jsonObject, (number ? number : 3));
+	setStaticLayout0: function(jsonObject){
+		return this.setStaticLayout(jsonObject, 3);
 	},
 	/**
 		Set fixed area of command bar

@@ -18,31 +18,25 @@
 package org.infoscoop.web;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 import org.apache.commons.collections.MultiHashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infoscoop.dao.AuthCredentialDAO;
-import org.infoscoop.dao.OAuthConsumerDAO;
 import org.infoscoop.dao.model.AuthCredential;
-import org.infoscoop.dao.model.OAuthConsumerProp;
-import org.infoscoop.dao.model.OAuthGadgetUrl;
 import org.infoscoop.service.AuthCredentialService;
-import org.infoscoop.service.OAuthService;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class ProxyCredentialManageServlet extends HttpServlet {
 
@@ -63,38 +57,13 @@ public class ProxyCredentialManageServlet extends HttpServlet {
 		try {
 			if("list".equals(command)){
 				response.setHeader("Content-Type", "text/xml; charset=UTF-8");
-				List<AuthCredential> credentialList = AuthCredentialDAO.newInstance().select(uid);
-				List<OAuthConsumerProp> consumers = OAuthConsumerDAO.newInstance().getConsumersByUid(uid);
-				List<String> idList = new ArrayList<String>();
+				List credentialList = AuthCredentialDAO.newInstance().select(uid);
 				try {
 					JSONArray json = new JSONArray();
-					for(Iterator<AuthCredential> it = credentialList.iterator(); it.hasNext();){
+					for(Iterator it = credentialList.iterator(); it.hasNext();){
 						AuthCredential c = (AuthCredential)it.next();
 						json.put(c.toJSON());
 					}
-					
-					JSONObject oauthJSON;					
-					for(Iterator<OAuthConsumerProp> i = consumers.iterator(); i.hasNext();){
-						oauthJSON = new JSONObject();
-						OAuthConsumerProp consumerProp = i.next();
-						String id = consumerProp.getId();
-						if(idList.contains(id))
-							continue;
-
-						oauthJSON.put("service_name", consumerProp.getServiceName());
-						oauthJSON.put("authType", "OAuth");
-						oauthJSON.put("description", consumerProp.getDescription());
-						Set<OAuthGadgetUrl> gadgetUrls = consumerProp.getOAuthGadgetUrl();
-						JSONArray gadgetUrlArr = new JSONArray();
-						for(Iterator<OAuthGadgetUrl> j = gadgetUrls.iterator(); j.hasNext();){
-							gadgetUrlArr.put(j.next().getGadgetUrl());
-						}
-						oauthJSON.put("gadget_urls", gadgetUrlArr);
-						idList.add(id);
-						
-						json.put(oauthJSON);
-					}
-					
 					response.getWriter().write(json.toString());
 					response.getWriter().flush();
 				} catch (JSONException e) {
@@ -165,9 +134,6 @@ public class ProxyCredentialManageServlet extends HttpServlet {
 			}else if("del".equals(command)){
 				String credentialId = request.getParameter("id");
 				AuthCredentialService.getHandle().removeCredential(uid, credentialId);
-			}else if("del_oauth".equals(command)){
-				String serviceName = request.getParameter("service_name");
-				OAuthService.getHandle().deleteOAuthTokens(uid, serviceName);
 			}else{
 				response.sendError(500);
 			}

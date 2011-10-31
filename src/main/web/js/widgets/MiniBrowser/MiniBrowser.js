@@ -78,11 +78,11 @@ IS_Widget.MiniBrowser.prototype.classDef = function() {
 		}
 		var url = widget.replaceUserPref(widget.getUserPref("url"));
 		var iframeSrc = widget.iframe.src;
-		var pattern = new RegExp("(("+hostPrefix+"(/manager/.*)?)|\\.)/blank\\.html");
+		var pattern = new RegExp("(("+hostPrefix+"(/admin|/manager/.*)?)|\\.)/blank\\.html");
 		if(!pattern.test(iframeSrc)){
 			widget.iframe.contentWindow.location.reload( true );
 		}else{
-			widget.iframe.src = "./iframe.jsp?url="+encodeURIComponent( url )+ "&scrolling=auto";
+			widget.iframe.src = hostPrefix + "/iframe.jsp?url="+encodeURIComponent( url )+ "&scrolling=auto";
 		}
 	};
 	this.refresh = function() {
@@ -357,7 +357,7 @@ IS_Widget.MiniBrowser.validateUserPref = {
 			required: true,
 			regex: '^(([1-9][0-9]*)|([1-9]))$',
 
-			regexMsg: IS_R.ms_gtOneNum
+			regexMsg: IS_R.ms_gtZeroNum
 		});
 	},
 	url:function(value){

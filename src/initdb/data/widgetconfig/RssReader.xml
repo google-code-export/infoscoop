@@ -2,7 +2,6 @@
 <widgetConfiguration type="RssReader" autoRefresh="true" title="!{lb_RssReader}" backgroundColor="#FFFFFF" singleton="true" icon="feed.gif">
 	<WidgetPref datatype="bool" display_name="!{lb_titleEdit}" name="titleEdit" value="true"/>
 	<WidgetPref datatype="string" display_name="!{lb_dateTimeFormat}" name="dateTimeFormat" value="yyyy/MM/dd HH:mm:ssZ"/>
-	<WidgetPref datatype="bool" display_name="!{lb_useAccessStat}" name="useAccessStat" value="true"/>
 	<!--here write to the function that generates the custom icon display on the side of the article of RSS. 
 	<WidgetPref name="rssItemCustomIcons" datatype="json">
 	<![CDATA[
@@ -63,7 +62,6 @@
 		<EnumValue display_value="postCredential" value="postCredential"/>
 		<EnumValue display_value="postPortalCredential" value="postPortalCredential"/>
 		<EnumValue display_value="sendPortalCredentialHeader" value="sendPortalCredentialHeader"/>
-		<EnumValue display_value="signed" value="signed"/>
 	</UserPref>
 	<UserPref default_value="" datatype="string" name="titleFilter" display_name="!{lb_filterByTitle}"
 		description="!{lb_filterByTitleDescription}"/>
@@ -74,8 +72,6 @@
 	<Header>
 		<menu alt="!{lb_decreaseitem}" imgUrl="arrow_up.gif" staticDisabled="true" type="widgetRssUp"/>
 		<menu alt="!{lb_increaseitem}" imgUrl="arrow_down.gif" staticDisabled="true" type="widgetRssDown"/>
-		<menu alt="!{lb_accessStats}" imgUrl="group.gif" type="accessStats"/>
-		<menu alt="!{lb_search}" imgUrl="zoom.gif" type="search"/>
 		<menu alt="!{lb_dateDisplay}" imgUrl="display_time.gif" type="date"/>
 		<menu alt="!{lb_lineFeed}" imgUrl="display_break.gif" type="lineFeed"/>
 	</Header>

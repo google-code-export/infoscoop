@@ -73,7 +73,7 @@ IS_Validator.validate = function(value, opt){
  */
 IS_Validator.checkByServer = function(value, method, length){
 	var error = false;
-	var url = hostPrefix + "/validation";
+	var url = findHostURL() + "/validation";
 	var ajaxOpt = {
 		method: 'post' ,
 		asynchronous:false,

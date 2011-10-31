@@ -16,16 +16,13 @@
  */
 
 @charset "UTF-8";
-a:link {color:#0000cc; }
-a:visited { color:#551a8b; }
-a:active { color:#ff0000; }
 
 body{
- margin:0;
- padding:0;
- overflow-y: scroll; 
- font-size:100%;
- font-family:'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','ＭＳ Ｐゴシック',sans-serif;
+	margin:0;
+	padding:0;
+	overflow-y: scroll; 
+	font-size:100%;
+	font-family:'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','ＭＳ Ｐゴシック',sans-serif;
 }
 
 th{
@@ -34,16 +31,6 @@ th{
 
 td{
  font-size:100%;
-}
-
-a
-{
-	text-decoration: none;
-}
-
-a:hover
-{
-	text-decoration: underline;
 }
 
 fieldset {
@@ -69,12 +56,7 @@ fieldset {
 	text-align:center;
 	padding:2px;
 }
-#tabLoadProgressBar {
-	background-color: cyan;
-}
-#tabLoadProgressCount {
-	text-align: right;
-}
+
 /** message bar */
 
 #portal-iframe {
@@ -86,7 +68,10 @@ fieldset {
 	vertical-align:top;
 	width:100%;
 }
-
+.infoScoop #panels .panel {
+	margin:5px 10px;
+	padding:10px;
+}
 #portal-header{
 	width: 100%;
 	margin-top:0px;
@@ -104,7 +89,6 @@ body.fixedPortalHeader #panels .panel{
 
 .column {
 	float:left;
-	margin-top: 5px;
 }
 
 .adjustBarOver {
@@ -150,21 +134,6 @@ body.fixedPortalHeader #panels .panel{
 	margin-left : 0px;
 	margin-bottom: 5px;
 
-}
-
-.search{
-	margin-top:5px;
-	margin-right:5px;
-	float:right;
-	background-color:transparent;
-	text-align:right;
-	color:white;
-}
-
-.iframeURLError {
-	border : 1px solid #999;
-	width : 100%;
-	color : #f00;
 }
 
 * html .widgetMenuCloser {
@@ -260,6 +229,9 @@ body.fixedPortalHeader #panels .panel{
 	position: absolute;
 /*	cursor:col-resize;*/
 }
+#siteMenuOpen #blank{
+	height:16px;
+}
 #siteMenuGhost{
 	border-left:1px solid #999999;
 	position: absolute;
@@ -324,68 +296,6 @@ body.fixedPortalHeader #panels .panel{
 	border:0;
 	padding-left:5px;
 	background-color:ghostwhite;
-}
-
-
-div#search-iframe{
-	padding-top: 2px;
-}
-div#search-iframe div.search_tabs{
-	clear: left;
-	border: 1px solid gray;
-}
-
-/* Search Engine */
-
-.infoScoop .SearchEngine ul.search_tabs.tabs a.tab {
-	text-align: right;
-}
-.infoScoop .SearchEngine ul.search_tabs.tabs a.tab.multi {
-	padding-right: 18px;
-}
-.infoScoop .SearchEngine ul.search_tabs.tabs a.tab font.nohit {
-	font-size: 9pt;
-	color: #000;
-}
-.infoScoop .SearchEngine ul.search_tabs.tabs a.tab font.hit {
-	font-size: 9pt;
-	color: #F00;
-}
-.infoScoop .SearchEngine ul.search_tabs.tabs a.tab .indicator {
-	float:left;
-	border:0;
-	vertical-align: text-bottom;
-	margin-top: 2px;
-	margin-left: 5px;
-}
-.infoScoop .SearchEngine ul.search_tabs a.tab div.titleMore {
-	position: absolute;
-	top: 2px;
-	right: 2px;
-	width: 13px;
-	height: 13px;
-	background: url(./imgs/bullet_arrow_down.gif) no-repeat;
-}
-.infoScoop div.search_titles {
-	border : 1px solid #000;
-	background-color : #fff;
-	position : absolute;
-	padding : 3px;
-/*	font-size : 65%;*/
-	font-size: 10px;
-}
-.infoScoop .SearchEngine ul.search_tabs.tabs div.shield {
-	position: absolute;
-	width: 100%;
-	_width: expression( eval( this.parentNode.offsetWidth ));
-	height: 100%;
-	_height: expression( eval( this.parentNode.offsetHeight ));
-	left: 0;
-	top: 0;
-	
-	background-color: black;
-	filter : alpha(opacity=0);
-	opacity: 0;
 }
 
 /* Control.Tab */
@@ -464,38 +374,8 @@ div#search-iframe div.search_tabs{
 }
 
 /* IFrameToolbar */
-
-.infoScoop #articleShare {
-	font-size: 10.5pt;
-	width: 100%;
-}
-
-.infoScoop #articleShare.comment .userSearchPanel,
-.infoScoop #articleShare.comment .searchEndButton {
-	display: none;
-}
-
-.infoScoop #articleShare.userSearch .userSearchPanel {
-	display: table-row;
-}
-.infoScoop #articleShare.userSearch .userSearchButton,
-.infoScoop #articleShare.userSearch .searchEndButton {
-	display: inline;
-}
-
-.infoScoop #articleShare.userSearch .userSearchButton,
-.infoScoop #articleShare.userSearch .commentPanel,
-.infoScoop #articleShare.userSearch .transmissionButton,
-.infoScoop #articleShare.userSearch .cancelButton {
-	display: none;
-}
-
 .iframeToolBar {
 	background-color:#DDDBD5;
-}
-
-.infoScoop #iframe-tool-bar .toolBarTable {
-	width: 100% !important;
 }
 
 .infoScoop .iframetoolbar .toolbar-item {
@@ -524,8 +404,7 @@ div#search-iframe div.search_tabs{
 	width: 100%;
 }
 
-.infoScoop .iframetoolbar.no-url .toolbar-item.mail,
-.infoScoop .iframetoolbar.no-url .toolbar-item.message {
+.infoScoop .iframetoolbar.no-url .toolbar-item.mail {
 	opacity : 0.5;
 	_background-color: #DDD;
 	color: darkgray;
@@ -533,4 +412,24 @@ div#search-iframe div.search_tabs{
 .infoScoop .iframetoolbar.no-url .toolbar-item.pressed {
 	margin-top: 0px;
 	padding-bottom: 2px;
+}
+/*デモ用Google Adsence*/
+#abg {
+	color:#FFFFFF;
+	font-family:arial,sans-serif;
+	font-size:12px;
+	font-weight:bold;
+	white-space:nowrap;
+}
+.al {
+	font-family:arial,sans-serif;
+	font-size:11px;
+	line-height:14px;
+	white-space:nowrap;
+}
+.al .alt, .al a {
+	color:#000000;
+	font-weight:normal;
+	text-decoration:underline;
+	white-space:nowrap;
 }

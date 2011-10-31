@@ -18,9 +18,7 @@
 IS_Widget.RssReaderDescriptionList = [];
 IS_Widget.RssReaderDescriptionWithScrollList = [];
 IS_Widget.RssReader.RssItemRender = function() {
-	this.init = true;
-	
-	
+	this.init = true;	
 };
 IS_Widget.RssReader.RssItemRender.render = function (widget, tbodyNode, rssItem, br, pubDate, itemNumber) {
 	var div = IS_Widget.RssReader.RssItemRender.getInstance().render({
@@ -149,16 +147,26 @@ IS_Widget.RssReader.RssItemRender.prototype.render = function ( context,rssItem,
 	
 	this.buildRssDesc( widget,opt );
 	
-	if( !rssItem.description || ( ""+rssItem.description.replace(/\s/,"") ).length == 0 ) {
+	if( (!rssItem.description || ( ""+rssItem.description.replace(/\s/,"") ).length == 0 ) && !rssItem.link_ajaxproxy_text ) {
 		this.rssDetail.style.display = this.rssDetail1.style.display = "none";
 	} else {
 		this.rssDetail.style.display = this.rssDetail1.style.display = "";
 	}
 	
-	this.init = false;
+	//this.init = false;
 	
 	return this.tr;
 };
+
+
+//TODO:refactering
+var google_docs_category_icon = {
+	"http://schemas.google.com/docs/2007#folder":"folder.png",
+	"http://schemas.google.com/docs/2007#document": "document.png",
+	"http://schemas.google.com/docs/2007#spreadsheet":"spreadsheet.png",
+	"http://schemas.google.com/docs/2007#drawing":"drawing.png",
+	"http://schemas.google.com/docs/2007#presentation":"presentation.png"
+}
 IS_Widget.RssReader.RssItemRender.prototype.buildRssItemDiv = function( widget,opt,noLink ) {
 	var init = this.init;
 	
@@ -173,6 +181,18 @@ IS_Widget.RssReader.RssItemRender.prototype.buildRssItemDiv = function( widget,o
 		//Prepare title link
 		this.rssItemDiv = document.createElement("div");
 		this.rssItemDiv.className = "rssItem";
+		
+		if(rssItem.category){
+			var categories = rssItem.category;
+			for ( i = 0; i <  categories.length; i++){
+				var icon = google_docs_category_icon[categories[i]];
+				if(icon){
+					var img = $.IMG({src:imageURL + '/docs/' + icon, className:"rssItemIcon"});
+					this.rssItemDiv.appendChild(img);
+					break;
+				}				
+			}
+		}
 		
 		this.aTag = document.createElement('a');
 		this.rssItemDiv.appendChild(this.aTag);
@@ -236,6 +256,9 @@ IS_Widget.RssReader.RssItemRender.prototype.buildRssItemDiv = function( widget,o
 //		aTag.innerHTML = rssTitle;
 		this.aTag.appendChild(document.createTextNode(this.rssTitle));
 		this.aTag.title = this.rssTitle;
+		if(rssItem.gmail_unread)
+			this.aTag.style.fontWeight = "bold";
+			
 		if( itemDisplay == "newwindow" )
 			this.aTag.target="_blank";
 		else if(itemDisplay == "inline")
@@ -378,7 +401,7 @@ IS_Widget.RssReader.RssItemRender.prototype.buildTitle = function( widget,opt ) 
 	this.rssDetail1.firstChild.innerHTML = IS_R.lb_descLink;
 	this.rssDetail1.id = widget.id + '_item_'+ itemNumber + '_more1';
 	
-	if(rssItem.description && rssItem.description.length > 0) {
+	if( (!rssItem.description || ( ""+rssItem.description.replace(/\s/,"") ).length == 0 ) && !rssItem.link_ajaxproxy_text ) {
 //		rssDetailNobr.appendChild(document.createTextNode("description>>"));
 		this.rssDetail1.style.display = "";
 	} else {
@@ -438,7 +461,7 @@ IS_Widget.RssReader.RssItemRender.prototype.buildPubDate = function( widget,opt 
 	
 	this.rssDetail.id = widget.id + '_item_'+ itemNumber + '_more';
 	this.rssDetail.firstChild.innerHTML = IS_R.lb_descLink;
-	if(rssItem.description && rssItem.description.length > 0) {
+	if( (!rssItem.description || ( ""+rssItem.description.replace(/\s/,"") ).length == 0 ) && !rssItem.link_ajaxproxy_text ) {
 //		rssDetailNobr.appendChild(document.createTextNode("description>>"));
 		
 		this.rssDetail.style.display = "";
@@ -575,7 +598,38 @@ IS_Widget.RssReader.RssItemRender.prototype.postRender = function( ctx,rssItem,i
 }
 IS_Widget.RssReader.RssItemRender.prototype.buildDesc = function( widget,rssDesc,rssItem ) {
 	var html = IS_Widget.RssReader.RssItemRender.getCategoryHtml(rssItem.category);
-	html += IS_Widget.RssReader.RssItemRender.normalizeDesc(rssItem.description, widget.content.rss.isIntranet);
+	if(rssItem.description)
+		html += IS_Widget.RssReader.RssItemRender.normalizeDesc(rssItem.description, widget.content.rss.isIntranet);
+	else{
+		html += "<div class=\"rss_summary\"><img src=\"" +  imageURL + "indicator.gif\"/> Loading...</div>";
+		var opt = {
+			method: 'get',
+			asynchronous: true,
+			onSuccess:function(rssDesc, req, obj){
+				var rssDescSummary = rssDesc.getElementsByTagName('div')[0];
+				rssDescSummary.innerHTML = req.responseText;
+				IS_Widget.RssReader.RssItemRender.adjustRssDesc();
+			}.bind(self, rssDesc),
+			onException:function(req, obj){
+			  alert('Retrieving summary is failed:' + obj);
+			},
+		   onFailure:function(req, obj){
+			  alert('Retrieving summary is failed:' + obj);
+		  	}
+		}
+		var authType;
+		var _authType = widget.getUserPref("authType");
+		if(_authType){
+			authType = _authType.split(' ')[0];
+			//authParameNames = _authType.split(' ')[1]; //TODO:
+		}
+		if(authType){
+			opt.requestHeaders = [];
+			opt.requestHeaders.push("authType");
+			opt.requestHeaders.push(authType);
+		}
+		AjaxRequest.invoke(is_getProxyUrl(rssItem.link_ajaxproxy_text, "NoOperation"), opt);
+	}
 	rssDesc.innerHTML = html;
 	var descLinks = rssDesc.getElementsByTagName("a");
 	if(descLinks) {
@@ -783,9 +837,6 @@ IS_Widget.RssReader.RssItemRender.prototype.displayInlineDesc = function( widget
 	var headerDiv = widget.parent ? widget.parent.elm_widgetHeader : widget.elm_widgetHeader;
 	if(headerDiv && headerDiv.offsetWidth > 0){
 		var offset = scrolling ? 16 : 0;
-		if( Browser.isSafari1 )
-			offset += 1;
-		
 		var browserOffset = Browser.isIE ? 2 : 1;
 		//rssDesc.style.width = (headerDiv.offsetWidth - offset - browserOffset) + "px";
 		var width = (headerDiv.offsetWidth - offset - browserOffset);
@@ -797,18 +848,6 @@ IS_Widget.RssReader.RssItemRender.prototype.displayInlineDesc = function( widget
 		IS_Widget.RssReaderDescriptionWithScrollList.push(descObj);
 	else
 		IS_Widget.RssReaderDescriptionList.push(descObj);
-
-	var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-	if(rssItem.rssUrls && widget.getUserPref("displayMode") != "category"){
-		for(var i=0; i<rssItem.rssUrls.length ;i++){
-			IS_Widget.updateLog("1",rssItem.link,rssItem.rssUrls[i]);
-			IS_Widget.updateRssMeta("0",rssItem.link,rssItem.rssUrls[i],rssItem.title,startDateTime);
-		}
-	} else {
-		IS_Widget.updateLog("1",rssItem.link,widget.getUserPref("url"));
-		IS_Widget.updateRssMeta("0",rssItem.link,widget.getUserPref("url"),rssItem.title,startDateTime);
-	}
-			
 
 	this.rssDetail.firstChild.innerHTML = escapeHTMLEntity(IS_R.lb_closeLink);
 	this.rssDetail1.firstChild.innerHTML = escapeHTMLEntity(IS_R.lb_closeLink);
@@ -881,18 +920,6 @@ IS_Widget.RssReader.RssItemRender.prototype.hideInlineDesc = function( widget,rs
 }
 			
 IS_Widget.RssReader.RssItemRender.prototype.displayPopupDesc = function( widget,rssItem ) {
-	if(rssItem.rssUrls && widget.getUserPref("displayMode") != "category"){
-		for(var i=0; i<rssItem.rssUrls.length ;i++){
-			var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-			IS_Widget.updateLog("1",rssItem.link,rssItem.rssUrls[i]);
-			IS_Widget.updateRssMeta("0",rssItem.link,rssItem.rssUrls[i],rssItem.title,startDateTime);
-		}
-	}else{
-		var startDateTime = (rssItem.rssDate)? rssItem.rssDate.getTime() : "";
-		IS_Widget.updateLog("1",rssItem.link,widget.getUserPref("url"));
-		IS_Widget.updateRssMeta("0",rssItem.link,widget.getUserPref("url"),rssItem.title,startDateTime);
-	}
-	
 	IS_Widget.RssReader.RssItemRender.hideRssDesc();
 	IS_Widget.RssReader.RssItemRender.displayedRssDescId = this.descId;
 	if( IS_Widget.RssReader.RssItemRender.adjustRssDesc() )
@@ -1302,12 +1329,7 @@ IS_Widget.adjustDescWidth = function() {
 	}
 	
 	function adjustDescObjWidth( obj,offset ) {
-		if( Browser.isSafari1 ) {
-			var widget = obj.widget;
-			if( widget.tabId != IS_Portal.currentTabId ) 
-				return;
-		}
-		
+
 		obj.headerDiv = obj.widget.parent? obj.widget.parent.elm_widgetHeader : obj.widget.elm_widgetHeader;
 		
 		var headerWidth = obj.headerDiv.offsetWidth;
@@ -1368,4 +1390,5 @@ IS_Widget.RssReader.RssItemRender.normalizeDesc = function( desc, isIntranet ) {
 		return desc;
 	else
 		return html_sanitize(desc, function(url){return url;},function(id){return id;});
+	return desc;
 }

@@ -10,17 +10,14 @@
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
 		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
 	<mvc:annotation-driven/>
-
+	
+	<!-- /manager/でアクセスしたときのルーティング -->
 	<mvc:view-controller path="/" view-name="redirect:/manager/home/index"/>
-
+	
+	<!-- それ以外はコントローラ名/メソッド名で自動ルーティング -->
 	<context:component-scan base-package="org.infoscoop.manager.controller" />
 	<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping"/>
-
-	<!-- Configures Interceptors -->
-	<mvc:interceptors>
-		<bean class="org.infoscoop.manager.controller.AuthenticationInterceptor" />
-	</mvc:interceptors>
-
+	
 	<bean id="tilesConfigurer"
 		class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
 		<property name="definitions">
@@ -29,13 +26,13 @@
 			</list>
 		</property>
 	</bean>
-
+	
 	<bean id="viewResolver"
 		class="org.springframework.web.servlet.view.UrlBasedViewResolver">
 		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
 		<property name="prefix" value="/WEB-INF/jsp/admin/"/>
 		<property name="suffix" value=".jsp"/>
 	</bean>
-
+	
 	<tx:annotation-driven />
 </beans>

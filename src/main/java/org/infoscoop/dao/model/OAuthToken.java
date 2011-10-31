@@ -24,10 +24,12 @@ public class OAuthToken extends BaseOAuthToken {
 	 */
 	public OAuthToken (
 		org.infoscoop.dao.model.OAUTH_TOKEN_PK id,
+		java.lang.String gadgetUrl,
 		java.lang.String tokenSecret) {
 
 		super (
 			id,
+			gadgetUrl,
 			tokenSecret);
 	}
 

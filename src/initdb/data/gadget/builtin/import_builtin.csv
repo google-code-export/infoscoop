@@ -1,0 +1,4 @@
+,"MiniBrowser","/","MiniBrowser.xml",<LOB FILE='builtin/MiniBrowser.xml' />
+,"MultiRssReader","/","MultiRssReader.xml",<LOB FILE='builtin/MultiRssReader.xml' />
+,"RssReader","/","RssReader.xml",<LOB FILE='builtin/RssReader.xml' />
+,"GoogleRssReader","/","GoogleRssReader.xml",<LOB FILE='builtin/GoogleRssReader.xml' />

@@ -21,10 +21,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-
+import org.infoscoop.account.DomainManager;
 import org.infoscoop.dao.WidgetDAO;
 import org.infoscoop.dao.model.base.BaseWidget;
-import org.infoscoop.util.StringUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,17 +46,28 @@ public class Widget extends BaseWidget {
 	public Widget (java.lang.String id) {
 		super(id);
 	}
-	
-	public Widget(String tabId, Long deleteDate, String widgetId, String uid){
-		super.setTabid(tabId);
-		super.setDeletedate(deleteDate);
-		super.setWidgetid(widgetId);
-		super.setUid(uid);
+
+	/**
+	 * Constructor for required fields
+	 */
+	public Widget (
+		java.lang.String id,
+		java.lang.Long createdate) {
+
+		super (
+			id,
+			createdate);
 	}
 
 /*[CONSTRUCTOR MARKER END]*/
 
-	
+	@Override
+	protected void initialize() {
+		super.initialize();
+		this.setFkDomainId(DomainManager.getContextDomainId());
+		this.setDeletedate(Long.valueOf(0));
+	}
+
 	public JSONObject toJSONObject() throws JSONException{
 		JSONObject json = new JSONObject();
 		json.put("id", this.getWidgetid());
@@ -67,7 +77,6 @@ public class Widget extends BaseWidget {
 		json.put("title", super.getTitle());
 		json.put("siblingId", super.getSiblingid());
 		json.put("parentId", super.getParentid());
-		json.put("menuId", super.getMenuid());
 		json.put("type", super.getType());
 
 		JSONObject userPrefsJson = new JSONObject();
@@ -97,6 +106,8 @@ public class Widget extends BaseWidget {
 		json.put("deleteDate", this.getDeletedate());
 		json.put("ignoreHeader", this.isIgnoreHeader());
 		json.put("noBorder", this.isNoBorder());
+		if (this.getIconUrl() != null)
+			json.put("iconUrl", this.getIconUrl());
 		
 		return json;
 	}
@@ -175,15 +186,29 @@ public class Widget extends BaseWidget {
 			}
 		}
 	}
-
-	public String getMenuid() {
-		return StringUtil.getNullSafe( super.getMenuid() );
-	}
 	
 	@Override
 	public void setTitle(String title) {
-		if (title != null && title.length() > 80)
+		if (title.length() > 80)
 			title = title.substring(0, 80);
 		super.setTitle(title);
 	}
+	
+	private String iconUrl;
+
+	public String getIconUrl() {
+		if(this.iconUrl != null)
+			return iconUrl;
+		else if(super.getMenuItem() != null)
+			return super.getMenuItem().getGadgetInstance().getIcon();
+		return null;
+	}
+
+	public void setIconUrl(String iconUrl) {
+		this.iconUrl = iconUrl;
+	}
+
+	public boolean isMenuUpdatedBoolean() {
+		return (super.getMenuUpdated() == 1);
+	} 
 }

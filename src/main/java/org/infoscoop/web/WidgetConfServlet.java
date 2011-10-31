@@ -18,22 +18,28 @@
 package org.infoscoop.web;
 
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.security.auth.Subject;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.SAXParserFactory;
-
 
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.infoscoop.acl.ISPrincipal;
+import org.infoscoop.acl.SecurityController;
+import org.infoscoop.service.GadgetService;
 import org.infoscoop.util.I18NUtil;
-import org.infoscoop.dao.WidgetDAO;
-import org.infoscoop.service.WidgetConfService;
-import org.infoscoop.util.SpringUtil;
 import org.infoscoop.widgetconf.WidgetConfUtil;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -87,7 +93,6 @@ public class WidgetConfServlet extends HttpServlet {
 
 		Locale locale = request.getLocale();
 
-		WidgetConfService service = (WidgetConfService) SpringUtil.getBean("WidgetConfService");
 		try {
 			String json = null;
 			//if (types != null) {
@@ -98,14 +103,15 @@ public class WidgetConfServlet extends HttpServlet {
 			if(type != null) {
 				if( type.startsWith("g_")) {
 					type = type.substring(2);
-
 					json = getGadgetConfJson( request,type,locale );
 				} else {
-					json = service.getWidgetConfJsonByType(type, locale, true);
+					json = GadgetService.getHandle()
+							.getGadgetJson(type, locale).toString();
 				}
 			} else {
 				String uid = (String) request.getSession().getAttribute("Uid");
-				json = service.getWidgetConfsJson(uid, locale);
+				json = GadgetService.getHandle()
+						.getGadgetConfsJson(uid, locale);
 			}
 
 			writer.write(json);
@@ -141,7 +147,21 @@ public class WidgetConfServlet extends HttpServlet {
 				true);
 		jsonObj = WidgetConfUtil.gadgetJSONtoPortalGadgetJSON( jsonObj );
 
-		return I18NUtil.resolve(I18NUtil.TYPE_WIDGET, jsonObj.toString(1),
+		String json = jsonObj.toString(1);
+		String domainName = null;
+		Subject loginUser = SecurityController.getContextSubject();
+		for(ISPrincipal p :loginUser.getPrincipals(ISPrincipal.class))
+			if(ISPrincipal.DOMAIN_PRINCIPAL == p.getType())
+				domainName = p.getDisplayName();
+		Pattern patternDomeinName = Pattern.compile( "__IS_DOMAIN_NAME__" );
+		Matcher matcherDomainName = patternDomeinName.matcher(json);
+		if(matcherDomainName.find())
+			json = matcherDomainName.replaceAll(domainName);
+		
+		String gadgetLocationUrl = type.substring(0, type.lastIndexOf('/'));
+		json = WidgetConfUtil.replaceGadgetLocationUrl(json, gadgetLocationUrl);
+		
+		return I18NUtil.resolve(I18NUtil.TYPE_WIDGET, json,
 				locale, true);
 	}
 }

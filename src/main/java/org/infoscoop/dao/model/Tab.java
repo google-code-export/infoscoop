@@ -18,10 +18,8 @@
 package org.infoscoop.dao.model;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,6 +36,10 @@ public class Tab extends BaseTab {
 	private static final long serialVersionUID = 1L;
 	
 	private boolean isTrashDynamicPanelWidgets;
+
+	private boolean disabledDynamicPanel;
+
+	private boolean adjustStaticHeight;
 
 /*[CONSTRUCTOR MARKER BEGIN]*/
 	public Tab () {
@@ -81,16 +83,11 @@ public class Tab extends BaseTab {
 		}
 	}
 	
-
-	public JSONObject toJSONObject( Collection dynamicWidgets,Collection staticWidgets ) throws JSONException {
-		return toJSONObject( dynamicWidgets,staticWidgets,new HashMap() );
-	}
-	public JSONObject toJSONObject( 
+	public JSONObject toJSONObject( String layout,
 			Collection dynamicWidgets,Collection staticWidgets,Map resMap ) throws JSONException{
 		
 		JSONObject json = new JSONObject();
 		json.put("uid", getUid());
-		json.put("defaultUid", super.getDefaultuid());
 		json.put("tabId", getTabId());
 		json.put("tabName",I18NUtil.replace( super.getName(), resMap ) );
 //		json.put("tabNumber", this.tabNumber);
@@ -98,8 +95,8 @@ public class Tab extends BaseTab {
 		json.put("tabNumber", super.getOrder() != null ?
 				String.valueOf(super.getOrder()) : "");
 		json.put("tabType", super.getType());
-		json.put("widgetLastModified", super.getWidgetlastmodified());
 		json.put("property", getProperties());
+		json.put("staticPanelLayout", layout);
 
 		JSONObject staticPanel = new JSONObject();
 		for(Iterator it = staticWidgets.iterator(); it.hasNext(); ){
@@ -114,6 +111,8 @@ public class Tab extends BaseTab {
 				json.put("isTrashDynamicPanelWidgets", true);
 			}
 		}
+		json.put("adjustStaticHeight", this.adjustStaticHeight);
+		
 		JSONObject dynamicPanel = new JSONObject();
 		for (Iterator it = dynamicWidgets.iterator(); it.hasNext();) {
 			Widget widget = (Widget) it.next();
@@ -125,12 +124,7 @@ public class Tab extends BaseTab {
 	}
 
 	public boolean isDisabledDynamicPanel() {
-		Integer disableddynamicpanel = super.getDisableddynamicpanel();
-		return disableddynamicpanel != null && disableddynamicpanel == 1;
-	}
-
-	public void setDisabledDynamicPanelBool(boolean disableddynamicpanel) {
-		super.setDisableddynamicpanel(disableddynamicpanel ? 1 : 0);
+		return this.disabledDynamicPanel;
 	}
 
 	public boolean isTrashDynamicPanelWidgets() {
@@ -139,5 +133,13 @@ public class Tab extends BaseTab {
 
 	public void setTrashDynamicPanelWidgets(boolean isTrashDynamicPanelWidgets) {
 		this.isTrashDynamicPanelWidgets = isTrashDynamicPanelWidgets;
+	}
+
+	public void setDisabledDynamicPanel(boolean b) {
+		this.disabledDynamicPanel = b;
+	}
+
+	public void setAdjustStaticHeight(boolean b) {
+		this.adjustStaticHeight = b;
 	}
 }

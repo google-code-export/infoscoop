@@ -39,6 +39,8 @@ if( isPreview == null )
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="Expires" content="Thu, 01 Dec 1994 16:00:00 GMT">
+	<meta http-equiv="X-UA-Compatible" content="IE=8">
+	<link rel="shortcut icon" href="favicon.ico" >
 	<title></title>
 	<!--start styles css-->
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/styles.css">
@@ -54,14 +56,13 @@ if( isPreview == null )
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/widget.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/groupsettingmodal.css">
 
-    <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/message.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/minibrowser.css">
-    <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/ranking.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/widgetranking.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/rssreader.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/maximizerssreader.css">
-    <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/information.css">
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/ticker.css">
+    <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/header.css">
+    <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/skin/theme.css">
 	<!--end styles css-->
 
 	<!-- prototype-window -->
@@ -69,9 +70,14 @@ if( isPreview == null )
     <link rel="stylesheet" type="text/css" href="<%=staticContentURL%>/js/lib/prototype-window-1.3/themes/alphacube.css">
     <link rel="stylesheet" type="text/css" href="portallayout?type=css">
 
-    <script src="js/resources/resourceBundle.jsp"></script>
+	<%
+		String lang = request.getLocale().getLanguage();
+		if(!lang.equals("ja") && !lang.equals("en"))
+			lang = "en";
+	%>
+    <script src="js/resources/resources_<%=lang%>.js"></script>
 
-    <script src="js/gadget/features/core:rpc:pubsub:infoscoop.js?c=1"></script>
+    <script src="jssrv/gadget/features/core:rpc:pubsub:infoscoop.js?c=1"></script>
 	<%
 		//org.infoscoop.web.SessionManagerFilter.LOGINUSER_ID_ATTR_NAME
 		String uid = (String) session.getAttribute("Uid");
@@ -90,7 +96,7 @@ if( isPreview == null )
 			country : "<%=request.getLocale().getCountry() %>",
 			japaneseOnly : false
 		};
-		var is_userId = <%=uid != null ? "\"" + uid.replace("\\", "\\\\") + "\"" : "null" %>;
+		var is_userId = <%=uid != null ? "\"" + uid + "\"" : "null" %>;
 		var is_userName = <%=userName != null ?  "\"" + userName + "\"" : "null" %>;
 		var is_isAdministrator = <%=isAdmin != null ? isAdmin.booleanValue() : false%>;
 		//dojo.require("dojo.dom");
@@ -139,7 +145,6 @@ if( isPreview == null )
     <script src="<%=staticContentURL%>/js/SiteMap.js"></script>
     <script src="<%=staticContentURL%>/js/TreeMenu.js"></script>
     <script src="<%=staticContentURL%>/js/AddContentPane.js"></script>
-    <script src="<%=staticContentURL%>/js/search/SearchEngine.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/Widget.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/WidgetHeader.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/WidgetEdit.js"></script>
@@ -158,18 +163,11 @@ if( isPreview == null )
     <script src="<%=staticContentURL%>/js/widgets/maximize/MaximizeRssItemRender.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/maximize/MaximizeRssItemSelection.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/maximize/MaximizeRssCategory.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/information/Information.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/information/Information2.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/calendar/Calendar.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/calendar/iCalendar.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/ticker/Ticker.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/ranking/Ranking.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/ranking/RankingRender.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/MiniBrowser/MiniBrowser.js"></script>
     <script src="<%=staticContentURL%>/js/widgets/MiniBrowser/FragmentMiniBrowser.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/WidgetRanking/WidgetRanking.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/Message/Message.js"></script>
-    <script src="<%=staticContentURL%>/js/widgets/Message/MaximizeMessage.js"></script>
     <!--end script-->
    	<script type="text/javascript">
 		var rsaPK = new RSAKey();
@@ -189,7 +187,6 @@ if( isPreview == null )
 			if(preference.property.theme)
 				IS_Portal.theme.currentTheme = eval( '(' + preference.property.theme + ')' );
 			IS_Portal.preference = preference.property;
-			IS_Portal.SearchEngines.searchOption = preference.property.searchOption ? eval('(' + preference.property.searchOption+ ')') : {};
 		}
 	</script>
 
@@ -202,7 +199,7 @@ if( isPreview == null )
     	replaceRegExp : new RegExp("(/widsrv|/customization|/mnusrv)"),
     	cancelRegExp : new RegExp("/comsrv|/mnuchksrv"),
 		rewriteUrl: function(url){
-			if(this.replaceRegExp.test(url) && !/\/adminpreview/.test(url)) {
+			if(this.replaceRegExp.test(url)) {
 				var newurl = url.replace(this.replaceRegExp, "/adminpreview$1");
 				<%
 				for(int i = 0; i < principalParams.size(); i++){
@@ -221,71 +218,65 @@ if( isPreview == null )
 	};
     </script>
 	<%}%>
-	<%
-	String isSelectProfilePreview = request.getParameter(org.infoscoop.web.CheckDuplicateUidFilter.IS_PREVIEW);
-	String isSelectProfilePreviewUid = request.getParameter("Uid");
-    if(isSelectProfilePreview != null && "true".equalsIgnoreCase( isSelectProfilePreview ) ){
-    %>
-    <script type="text/javascript">
-    var IS_Preview = {
-        	replaceRegExp : new RegExp("(/widsrv|/customization|/mnusrv)"),
-        	cancelRegExp : new RegExp("/comsrv"),
-    		rewriteUrl: function(url){
-    			if(this.replaceRegExp.test(url)) {
-    				var newurl = url + (url.indexOf("?") > 0 ? "&" : "?") + "<%= org.infoscoop.web.CheckDuplicateUidFilter.IS_PREVIEW %>=true&Uid=<%= isSelectProfilePreviewUid%>";
-    				return newurl;
-    			} else if(this.cancelRegExp.test(url)) {
-    				return false;
-    			}
-    			return url;
-    		}
-    	};
-    </script>
-    <%
-    }
-	%>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-19564588-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
  </head>
 
-	<body style="margin-top:0;padding-top:0;" class="infoScoop">
+	<body style="margin-top:0;padding-top:0;vertical-align:top;" class="infoScoop">
 		<div id="portal-header"></div>
 		<div id="portal-body">
 		<div id="error-msg-bar" style="display:none;"></div>
 		<div id="message-bar" style="display:none;"><div id="message-list"></div><div id="message-list-more" style="display:none;"></div><div id="message-bar-controles"></div></div>
 		<table width="100%" border="0" cellspacing="0" cellpadding="0"><tbody><tr><td id="portal-site-aggregation-menu"></td></tr></tbody></table>
-		<table style="clear:both;" cellpadding="0" cellspacing="0" width="100%" id="portal-maincontents-table">
+		<table width="100%" border="0" cellspacing="0" cellpadding="0" id="command-bar" style="display:none;">
 			<tbody>
 				<tr>
-					<td id="siteMenu" valign="top">
-						<div id="portal-tree-menucontainer">
-							<div id="portal-tree-menu" ></div>
-							<div id="portal-rss-search" style="padding:1px;"></div>
-							<div id="portal-my-sitemap" ></div>
-						</div>
+					<td>
+						<div id="portal-command"></div>
 					</td>
-					<td id="siteMenuOpenTd" align="left"><div id="siteMenuOpen"/></td>
-					<td colspan="3" valign="top" align="left">
-						<table width="100%" border="0" cellspacing="0" cellpadding="0" id="command-bar">
-							<tbody>
-								<tr>
-									<td><div id="portal-command"></div></td>
-									<td width="16px"><img id="messageIcon" src="<%=staticContentURL%>/skin/imgs/information.gif" style="cursor:pointer;" onclick="javascript:msg.showPopupDialog();"/></td>
-								</tr>
-							</tbody>
-						</table>
-						<div id="portal-iframe-url"></div>
-						<div id="panels" style="display:;">
-						  <div id="tab-container"></div>
-						  <div id="maximize-panel" style="display:none;"></div>
-						</div>
-						<div id="portal-iframe" style="display:none;">
-							<iframe id="ifrm" name="ifrm" src="./blank.html" FrameBorder="0" style="width:100%;height768px;border:none;scrolling:auto;"></iframe>
-						</div>
-						<div id="iframe-tool-bar"></div>
-						<div id="search-iframe" style="display:none;"></div>
-					</td>
+					<td width="16px"><img id="messageIcon" src="<%=staticContentURL%>/skin/imgs/information.gif" style="cursor:pointer;" onclick="javascript:msg.showPopupDialog();"/></td>
 				</tr>
 			</tbody>
 		</table>
+		<div id="portal-maincontents-table" style="clear:both;">
+			<table cellpadding="0" cellspacing="0" width="100%">
+				<tbody>
+					<tr>
+					<tr>
+						<td id="siteMenu" valign="top">
+							<div id="portal-tree-menucontainer">
+								<div id="portal-tree-menu" ></div>
+								<div id="portal-rss-search" style="padding:1px;"></div>
+								<div id="portal-my-sitemap" ></div>
+							</div>
+						</td>
+						<td id="siteMenuOpenTd" align="left"><div id="siteMenuOpen"/></td>
+						<td colspan="3" valign="top" align="left">
+							
+							<div id="panels" style="display:;">
+							  <div id="tab-container"></div>
+							  <div id="maximize-panel" style="display:none;"></div>
+							</div>
+							<div id="portal-iframe" style="display:none;">
+								<iframe id="ifrm" name="ifrm" src="./blank.html" FrameBorder="0" style="width:100%;height768px;border:none;scrolling:auto;"></iframe>
+							</div>
+							<div id="iframe-tool-bar"></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 		</div>
 	</body>
 	<script>

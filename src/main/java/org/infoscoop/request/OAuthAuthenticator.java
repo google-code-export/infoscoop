@@ -17,9 +17,13 @@
 
 package org.infoscoop.request;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +40,14 @@ import net.oauth.signature.RSA_SHA1;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.infoscoop.dao.OAuth3LeggedConsumerDAO;
 import org.infoscoop.dao.OAuthCertificateDAO;
-import org.infoscoop.dao.OAuthConsumerDAO;
+import org.infoscoop.dao.model.OAuth3LeggedConsumer;
 import org.infoscoop.dao.model.OAuthCertificate;
-import org.infoscoop.dao.model.OAuthConsumerProp;
 import org.infoscoop.request.ProxyRequest.OAuthConfig;
 import org.infoscoop.service.OAuthService;
 import org.infoscoop.util.RequestUtil;
@@ -112,7 +118,8 @@ public class OAuthAuthenticator implements Authenticator {
 					oauthConfig.userAuthorizationURL,
 					oauthConfig.accessTokenURL);
 		
-		OAuthConsumerProp consumerProp = OAuthConsumerDAO.newInstance().getConsumer(oauthConfig.getGadgetUrl(), name);
+		OAuth3LeggedConsumer consumerProp = OAuth3LeggedConsumerDAO.newInstance()
+				.getConsumer(oauthConfig.getGadgetUrl(), name);
 		if(consumerProp == null)
 			throw new ProxyAuthenticationException("Consumer key and secret is not set for " + oauthConfig.getGadgetUrl());
 		OAuthCertificate certificate = OAuthCertificateDAO.newInstance().get();
@@ -143,7 +150,7 @@ public class OAuthAuthenticator implements Authenticator {
 			consumer.setProperty(RSA_SHA1.PRIVATE_KEY, certificate.getPrivateKey());
 		}
 		
-		consumers.put(oauthConfig.getGadgetUrl() + "\t" + name, consumer);
+		consumers.put(consumerProp.getGadgetUrl() + "\t" + name, consumer);
 		return consumer;
 	}
 
@@ -202,5 +209,4 @@ public class OAuthAuthenticator implements Authenticator {
 				, "consumer", consumerName //
 				);
 	}
-
 }

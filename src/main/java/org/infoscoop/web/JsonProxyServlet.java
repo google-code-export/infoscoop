@@ -44,7 +44,6 @@ import org.infoscoop.dao.OAuthTokenDAO;
 import org.infoscoop.dao.model.OAuthToken;
 import org.infoscoop.request.Authenticator;
 import org.infoscoop.request.ProxyRequest;
-import org.infoscoop.request.filter.DetectTypeFilter;
 import org.infoscoop.service.OAuthService;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -111,6 +110,7 @@ public class JsonProxyServlet extends HttpServlet {
 		NONE,
 		SIGNED,
 		OAUTH,
+		TWO_LEGGED_OAUTH,
 		SEND_PORTAL_UID_HEADER,
 		POST_PORTAL_UID,
 		BASIC;
@@ -144,6 +144,8 @@ public class JsonProxyServlet extends HttpServlet {
 			for( Enumeration values=req.getHeaders( name );values.hasMoreElements(); ) {
 				String value = ( String )values.nextElement();
 				vlist.add( value );
+				
+//				System.out.println(name+":\t"+value );
 			}
 		}
 		
@@ -180,6 +182,8 @@ public class JsonProxyServlet extends HttpServlet {
 	}
 	private JSONObject invokeJSONProxyRequest( HttpSession session, String uid,Map<String,String> params,Map<String,List<String>> rheaders ) throws Exception {
 		AuthType authz = AuthType.as( params.get("authz") );
+//		String container = params.get("container");
+//		String gadget = params.get("gadget");
 		
 		HttpMethods httpMethod = HttpMethods.as( params.get("httpMethod"));
 		String url = params.get("url");
@@ -229,6 +233,12 @@ public class JsonProxyServlet extends HttpServlet {
 			}
 			
 			proxy.setOauthConfig(oauthConfig);
+			break;
+		case TWO_LEGGED_OAUTH:
+			headers.put("authType","oauth2Legged");
+			oauthServiceName = params.get("OAUTH_SERVICE_NAME");
+			ProxyRequest.OAuthConfig oauth2leggedConfig = proxy.new OAuthConfig(oauthServiceName);
+			proxy.setOauthConfig(oauth2leggedConfig);
 			break;
 		case SIGNED:
 			headers.put("authType", "signed");
@@ -282,7 +292,7 @@ public class JsonProxyServlet extends HttpServlet {
 
 		int status = httpMethod.invokeProxyRequest( proxy );
 		
-		String bodyStr = getResponseBodyAsStringWithAutoDetect( proxy );
+		String bodyStr = proxy.getResponseBodyAsStringWithAutoDetect();
 
 		urlJson.put("body",bodyStr);
 
@@ -312,23 +322,7 @@ public class JsonProxyServlet extends HttpServlet {
 		}
 		return json;
 	}
-
-	private String getResponseBodyAsStringWithAutoDetect( ProxyRequest proxy ) throws Exception {
-		byte[] body = ProxyRequest.stream2Bytes( proxy.getResponseBody());
-		
-		String contentType = null;
-		List<String> contentTypes = proxy.getResponseHeaders("Content-Type");
-		if( contentTypes.size() > 0 )
-			contentType = contentTypes.get( contentTypes.size() -1 );
-		
-		String encoding = DetectTypeFilter.getContentTypeCharset( contentType );
-//		if( encoding == null )
-//			encoding = DetectTypeFilter.findEncoding( new ByteArrayInputStream( body ) );
-		if( encoding == null )
-			encoding = "UTF-8";
-		
-		return new String( body,encoding );
-	}
+	
 	private Map<String,String> extractHeadersParam( String headerData ) throws UnsupportedEncodingException {
 		Map<String,String> headers = new HashMap<String,String>();
 	    if( headerData != null && headerData.length() > 0 ) {

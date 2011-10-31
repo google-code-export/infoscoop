@@ -47,6 +47,7 @@ public class OAuthCallbackServlet extends HttpServlet {
 			final OAuthMessage requestMessage = OAuthServlet.getMessage(
 					request, null);
 			OAuthConsumer consumer = OAuthAuthenticator.getConsumer(gadgetUrl, consumerName);
+			
 			OAuthAccessor accessor = new OAuthAccessor(consumer);
 			OAuthToken token = OAuthTokenDAO.newInstance().getAccessToken(uid,
 					gadgetUrl, consumerName);
