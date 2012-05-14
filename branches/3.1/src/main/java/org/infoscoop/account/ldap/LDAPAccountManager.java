@@ -500,7 +500,7 @@ public class LDAPAccountManager implements IAccountManager{
 		String mail = null;
 		if( propAttrMap.containsKey("user_email"))
 			mail = getAttribute( attrs,propAttrMap.get("user_email"));
-
+		
 		String displayName = null;
 		if( userNameAttr != null ) {
 			displayName = getAttribute( attrs,this.userNameAttr );
@@ -514,6 +514,12 @@ public class LDAPAccountManager implements IAccountManager{
 
 
 		LDAPAccount user = new LDAPAccount( dn,uid,mail,displayName,groupName );
+		
+		// case: multiple email -> implementation setter & getter emails here.
+		List<String> mails = new ArrayList<String>();
+		if(mail!=null) mails.add(mail);
+		user.setMails(mails);
+		
 		return user;
 	}
 

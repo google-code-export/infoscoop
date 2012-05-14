@@ -17,6 +17,8 @@
 
 package org.infoscoop.account;
 
+import java.util.List;
+
 
 public interface IAccount {
 	String getUid();
@@ -24,4 +26,5 @@ public interface IAccount {
 	String getMail();
 	String getGroupName();
 	IGroup[] getGroups();
+	List<String> getMails();
 }
